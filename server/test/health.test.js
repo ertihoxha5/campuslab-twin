@@ -36,3 +36,19 @@ test("an unknown endpoint uses the shared not-found response", async () => {
   assert.equal(body.error.code, "NOT_FOUND");
   assert.equal(body.error.message, "Burimi i kërkuar nuk u gjet.");
 });
+
+test("malformed JSON uses the shared Albanian validation response", async () => {
+  const response = await fetch(`${baseUrl}/api/health`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: '{"e pavlefshme"',
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 422);
+  assert.equal(body.success, false);
+  assert.equal(body.error.code, "VALIDATION_ERROR");
+  assert.deepEqual(body.error.details.body, [
+    "Formati JSON i kërkesës nuk është i vlefshëm.",
+  ]);
+});

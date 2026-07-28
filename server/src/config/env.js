@@ -6,11 +6,22 @@ const environmentSchema = z.object({
     .default("development"),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   CLIENT_ORIGIN: z.url("CLIENT_ORIGIN duhet të jetë një URL e vlefshme."),
-  DB_HOST: z.string().trim().min(1, "DB_HOST është i detyrueshëm."),
+  DB_HOST: z
+    .string({ error: "DB_HOST është i detyrueshëm." })
+    .trim()
+    .min(1, "DB_HOST është i detyrueshëm."),
   DB_PORT: z.coerce.number().int().min(1).max(65535).default(3306),
-  DB_NAME: z.string().trim().min(1, "DB_NAME është i detyrueshëm."),
-  DB_USER: z.string().trim().min(1, "DB_USER është i detyrueshëm."),
-  DB_PASSWORD: z.string().min(1, "DB_PASSWORD është i detyrueshëm."),
+  DB_NAME: z
+    .string({ error: "DB_NAME është i detyrueshëm." })
+    .trim()
+    .min(1, "DB_NAME është i detyrueshëm."),
+  DB_USER: z
+    .string({ error: "DB_USER është i detyrueshëm." })
+    .trim()
+    .min(1, "DB_USER është i detyrueshëm."),
+  DB_PASSWORD: z
+    .string({ error: "DB_PASSWORD është i detyrueshëm." })
+    .min(1, "DB_PASSWORD është i detyrueshëm."),
   DB_CONNECTION_LIMIT: z.coerce.number().int().min(1).max(50).default(10),
 });
 
