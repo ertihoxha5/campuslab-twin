@@ -9,10 +9,12 @@
     "build": "node --check src/index.js && node --check src/app.js",
     "db:migrate": "node scripts/migrate.js",
     "db:rollback": "node scripts/rollback.js",
+    "db:seed": "node scripts/seed.js",
     "lint": "eslint .",
     "test": "node --test"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",

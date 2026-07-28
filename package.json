@@ -11,6 +11,7 @@
     "build": "npm run build --workspace client && npm run build --workspace server",
     "db:migrate": "npm run db:migrate --workspace server",
     "db:rollback": "npm run db:rollback --workspace server",
+    "db:seed": "npm run db:seed --workspace server",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "format": "prettier --write .",
