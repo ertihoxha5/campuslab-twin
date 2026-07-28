@@ -22,8 +22,9 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.1",
     "helmet": "^8.1.0",
-    "mysql2": "^3.14.3",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
+    "mysql2": "^3.14.3",
     "pino-http": "^10.5.0",
     "zod": "^4.0.17"
   },

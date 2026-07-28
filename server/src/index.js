@@ -6,6 +6,8 @@ import {
   createDatabasePool,
 } from "./database/pool.js";
 import { createRegistrationService } from "./modules/university-registrations/service.js";
+import { createAuthRepository } from "./modules/auth/repository.js";
+import { createAuthService } from "./modules/auth/service.js";
 import { createRegistrationLogoStorage } from "./storage/registration-logo-storage.js";
 
 loadEnvironmentFile();
@@ -16,9 +18,17 @@ const registrationService = createRegistrationService({
   pool: databasePool,
   logoStorage: createRegistrationLogoStorage(),
 });
+const authService = createAuthService({
+  repository: createAuthRepository(databasePool),
+  accessSecret: config.JWT_ACCESS_SECRET,
+  accessTokenMinutes: config.ACCESS_TOKEN_MINUTES,
+  refreshTokenDays: config.REFRESH_TOKEN_DAYS,
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
+  authService,
+  secureCookies: config.NODE_ENV === "production",
 });
 
 async function startServer() {

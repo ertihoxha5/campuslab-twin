@@ -12,6 +12,9 @@ const validEnvironment = {
   DB_USER: "campuslab_test",
   DB_PASSWORD: "test-only",
   DB_CONNECTION_LIMIT: "5",
+  JWT_ACCESS_SECRET: "test-only-secret-with-at-least-32-characters",
+  ACCESS_TOKEN_MINUTES: "15",
+  REFRESH_TOKEN_DAYS: "7",
 };
 
 test("environment values are validated and coerced", () => {
@@ -19,6 +22,7 @@ test("environment values are validated and coerced", () => {
 
   assert.equal(environment.PORT, 3000);
   assert.equal(environment.DB_CONNECTION_LIMIT, 5);
+  assert.equal(environment.ACCESS_TOKEN_MINUTES, 15);
 });
 
 test("missing required environment values produce a clear startup error", () => {

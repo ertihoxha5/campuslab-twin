@@ -23,6 +23,11 @@ const environmentSchema = z.object({
     .string({ error: "DB_PASSWORD është i detyrueshëm." })
     .min(1, "DB_PASSWORD është i detyrueshëm."),
   DB_CONNECTION_LIMIT: z.coerce.number().int().min(1).max(50).default(10),
+  JWT_ACCESS_SECRET: z
+    .string({ error: "JWT_ACCESS_SECRET është i detyrueshëm." })
+    .min(32, "JWT_ACCESS_SECRET duhet të ketë të paktën 32 karaktere."),
+  ACCESS_TOKEN_MINUTES: z.coerce.number().int().min(5).max(60).default(15),
+  REFRESH_TOKEN_DAYS: z.coerce.number().int().min(1).max(30).default(7),
 });
 
 export function parseEnvironment(source) {
