@@ -73,6 +73,7 @@ export function createUniversityRegistrationRouter({ registrationService }) {
         const registration = await registrationService.register(
           request.body,
           request.file,
+          { ipAddress: request.ip?.slice(0, 45) ?? null },
         );
 
         return success(response, {

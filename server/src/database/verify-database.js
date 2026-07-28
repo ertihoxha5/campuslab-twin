@@ -4,6 +4,8 @@ const requiredTables = [
   "universities",
   "university_registration_requests",
   "platform_admins",
+  "platform_refresh_tokens",
+  "platform_activity_logs",
   "users",
   "roles",
   "user_roles",
@@ -33,6 +35,8 @@ const tenantTables = requiredTables.filter(
       "universities",
       "university_registration_requests",
       "platform_admins",
+      "platform_refresh_tokens",
+      "platform_activity_logs",
       "roles",
     ].includes(table),
 );

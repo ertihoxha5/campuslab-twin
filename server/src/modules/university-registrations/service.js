@@ -10,7 +10,7 @@ export function createRegistrationService({
   passwordRounds = 12,
 }) {
   return {
-    async register(input, logoFile) {
+    async register(input, logoFile, context = {}) {
       const registration = validateRegistrationInput(input);
       const { password } = registration;
       const safeRegistration = { ...registration };
@@ -38,11 +38,14 @@ export function createRegistrationService({
       ]);
 
       try {
-        return await repository.create({
-          ...safeRegistration,
-          passwordHash,
-          logoPath,
-        });
+        return await repository.create(
+          {
+            ...safeRegistration,
+            passwordHash,
+            logoPath,
+          },
+          context,
+        );
       } catch (error) {
         await logoStorage.remove(logoPath);
         throw error;

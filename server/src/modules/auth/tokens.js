@@ -30,11 +30,45 @@ export function createAccessToken(user, { secret, expiresInMinutes }) {
   );
 }
 
+export function createPlatformAccessToken(
+  administrator,
+  { secret, expiresInMinutes },
+) {
+  return jwt.sign(
+    {
+      roles: ["platform_admin"],
+      type: "platform_admin",
+    },
+    secret,
+    {
+      subject: String(administrator.id),
+      expiresIn: `${expiresInMinutes}m`,
+      issuer: "campuslab-twin",
+      audience: "campuslab-twin-platform",
+    },
+  );
+}
+
 export function verifyAccessToken(token, secret) {
   try {
     return jwt.verify(token, secret, {
       issuer: "campuslab-twin",
       audience: "campuslab-twin-web",
+    });
+  } catch {
+    throw new AppError({
+      status: 401,
+      code: "UNAUTHENTICATED",
+      message: "Sesioni juaj nuk është i vlefshëm. Ju lutemi kyçuni përsëri.",
+    });
+  }
+}
+
+export function verifyPlatformAccessToken(token, secret) {
+  try {
+    return jwt.verify(token, secret, {
+      issuer: "campuslab-twin",
+      audience: "campuslab-twin-platform",
     });
   } catch {
     throw new AppError({

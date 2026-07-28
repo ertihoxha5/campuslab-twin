@@ -1,4 +1,4 @@
-import { query } from "../../database/query.js";
+import { query, withTransaction } from "../../database/query.js";
 
 export function createRegistrationRepository(pool) {
   return {
@@ -28,32 +28,48 @@ export function createRegistrationRepository(pool) {
       return rows[0] ?? null;
     },
 
-    async create(registration) {
-      const result = await query(
-        pool,
-        `INSERT INTO university_registration_requests (
-           university_name, acronym, institution_type, city, address,
-           official_website, description, representative_name,
-           representative_email, representative_phone, password_hash,
-           temporary_logo_path, status
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-        [
-          registration.universityName,
-          registration.acronym,
-          registration.institutionType,
-          registration.city,
-          registration.address,
-          registration.officialWebsite,
-          registration.description || null,
-          registration.representativeName,
-          registration.representativeEmail,
-          registration.representativePhone || null,
-          registration.passwordHash,
-          registration.logoPath,
-        ],
-      );
+    async create(registration, context = {}) {
+      return withTransaction(pool, async (connection) => {
+        const result = await query(
+          connection,
+          `INSERT INTO university_registration_requests (
+             university_name, acronym, institution_type, city, address,
+             official_website, description, representative_name,
+             representative_email, representative_phone, password_hash,
+             temporary_logo_path, status
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+          [
+            registration.universityName,
+            registration.acronym,
+            registration.institutionType,
+            registration.city,
+            registration.address,
+            registration.officialWebsite,
+            registration.description || null,
+            registration.representativeName,
+            registration.representativeEmail,
+            registration.representativePhone || null,
+            registration.passwordHash,
+            registration.logoPath,
+          ],
+        );
+        await query(
+          connection,
+          `INSERT INTO platform_activity_logs
+             (action, entity_type, entity_id, description, metadata_json, ip_address)
+           VALUES (
+             'university_registration.submitted',
+             'university_registration_request',
+             ?,
+             'U dorëzua një kërkesë e re për regjistrim universiteti.',
+             JSON_OBJECT('acronym', ?),
+             ?
+           )`,
+          [result.insertId, registration.acronym, context.ipAddress ?? null],
+        );
 
-      return { id: result.insertId };
+        return { id: result.insertId };
+      });
     },
   };
 }

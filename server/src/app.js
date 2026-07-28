@@ -6,6 +6,7 @@ import helmet from "helmet";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { createUniversityRegistrationRouter } from "./modules/university-registrations/router.js";
 import { createAuthRouter } from "./modules/auth/router.js";
+import { createPlatformAuthRouter } from "./modules/platform-auth/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -15,6 +16,7 @@ export function createApp({
   rateLimitEnabled = process.env.NODE_ENV !== "test",
   registrationService,
   authService,
+  platformAuthService,
   secureCookies = process.env.NODE_ENV === "production",
 } = {}) {
   const app = express();
@@ -67,6 +69,13 @@ export function createApp({
 
   if (authService) {
     app.use("/api/auth", createAuthRouter({ authService, secureCookies }));
+  }
+
+  if (platformAuthService) {
+    app.use(
+      "/api/platform/auth",
+      createPlatformAuthRouter({ platformAuthService, secureCookies }),
+    );
   }
 
   app.use(notFoundHandler);

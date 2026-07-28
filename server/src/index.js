@@ -8,6 +8,8 @@ import {
 import { createRegistrationService } from "./modules/university-registrations/service.js";
 import { createAuthRepository } from "./modules/auth/repository.js";
 import { createAuthService } from "./modules/auth/service.js";
+import { createPlatformAuthRepository } from "./modules/platform-auth/repository.js";
+import { createPlatformAuthService } from "./modules/platform-auth/service.js";
 import { createRegistrationLogoStorage } from "./storage/registration-logo-storage.js";
 
 loadEnvironmentFile();
@@ -24,10 +26,17 @@ const authService = createAuthService({
   accessTokenMinutes: config.ACCESS_TOKEN_MINUTES,
   refreshTokenDays: config.REFRESH_TOKEN_DAYS,
 });
+const platformAuthService = createPlatformAuthService({
+  repository: createPlatformAuthRepository(databasePool),
+  accessSecret: config.JWT_ACCESS_SECRET,
+  accessTokenMinutes: config.ACCESS_TOKEN_MINUTES,
+  refreshTokenDays: config.REFRESH_TOKEN_DAYS,
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
   authService,
+  platformAuthService,
   secureCookies: config.NODE_ENV === "production",
 });
 
