@@ -7,6 +7,10 @@ import {
   verifyAccessToken,
 } from "./tokens.js";
 import { validateLoginInput } from "./validation.js";
+import {
+  validateForgotPasswordInput,
+  validateResetPasswordInput,
+} from "./validation.js";
 
 const invalidCredentials = () =>
   new AppError({
@@ -42,6 +46,8 @@ export function createAuthService({
   accessSecret,
   accessTokenMinutes = 15,
   refreshTokenDays = 7,
+  passwordResetMinutes = 30,
+  passwordResetNotifier = { send: async () => {} },
 }) {
   function issueAccessToken(user) {
     return createAccessToken(user, {
@@ -147,6 +153,53 @@ export function createAuthService({
         await repository.revokeSession({
           tokenHash: hashToken(refreshToken),
           ...context,
+        });
+      }
+    },
+
+    async forgotPassword(input, context = {}) {
+      const { email } = validateForgotPasswordInput(input);
+      const candidates = await repository.findUsersByEmail(email);
+      const user = candidates.find(
+        (candidate) =>
+          candidate.userStatus === "active" &&
+          candidate.universityStatus === "active",
+      );
+
+      if (user) {
+        const token = createRefreshToken();
+        const expiresAt = new Date(
+          Date.now() + passwordResetMinutes * 60 * 1000,
+        );
+        await repository.createPasswordReset({
+          user,
+          tokenHash: hashToken(token),
+          expiresAt,
+          ...context,
+        });
+        await passwordResetNotifier.send({
+          email: user.email,
+          fullName: user.fullName,
+          token,
+          expiresAt,
+        });
+      }
+    },
+
+    async resetPassword(input, context = {}) {
+      const reset = validateResetPasswordInput(input);
+      const passwordHash = await bcrypt.hash(reset.password, 12);
+      const consumed = await repository.consumePasswordReset({
+        tokenHash: hashToken(reset.token),
+        passwordHash,
+        ...context,
+      });
+
+      if (!consumed) {
+        throw new AppError({
+          status: 422,
+          code: "INVALID_RESET_TOKEN",
+          message: "Lidhja e rikuperimit nuk është e vlefshme ose ka skaduar.",
         });
       }
     },

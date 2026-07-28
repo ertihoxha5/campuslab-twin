@@ -31,6 +31,8 @@ before(async () => {
     async logout(token) {
       assert.equal(token, "refresh-token");
     },
+    async forgotPassword() {},
+    async resetPassword() {},
   };
 
   server = createApp({
@@ -100,6 +102,36 @@ test("logout invalidates and clears session cookies", async () => {
   const response = await fetch(`${baseUrl}/api/auth/logout`, {
     method: "POST",
     headers: { Cookie: "clt_refresh=refresh-token" },
+  });
+  const cookies = response.headers.getSetCookie();
+
+  assert.equal(response.status, 200);
+  assert.ok(cookies.some((cookie) => cookie.startsWith("clt_access=;")));
+  assert.ok(cookies.some((cookie) => cookie.startsWith("clt_refresh=;")));
+});
+
+test("forgot password always returns a generic response", async () => {
+  const response = await fetch(`${baseUrl}/api/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "panjohur@uni-test.edu" }),
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.success, true);
+  assert.match(body.data.message, /Nëse email-i/);
+});
+
+test("reset password clears existing session cookies", async () => {
+  const response = await fetch(`${baseUrl}/api/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      token: "one-time-reset-token-that-is-long-enough",
+      password: "Fjalekalim!2027",
+      confirmPassword: "Fjalekalim!2027",
+    }),
   });
   const cookies = response.headers.getSetCookie();
 

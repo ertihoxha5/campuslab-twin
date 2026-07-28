@@ -185,6 +185,92 @@ export function createAuthRepository(pool) {
         });
       });
     },
+
+    async createPasswordReset({ user, tokenHash, expiresAt, ipAddress }) {
+      return withTransaction(pool, async (connection) => {
+        await query(
+          connection,
+          `UPDATE password_reset_tokens
+           SET used_at = UTC_TIMESTAMP(3)
+           WHERE university_id = ? AND user_id = ? AND used_at IS NULL`,
+          [user.universityId, user.id],
+        );
+        await query(
+          connection,
+          `INSERT INTO password_reset_tokens
+             (university_id, user_id, token_hash, expires_at, requested_ip_address)
+           VALUES (?, ?, ?, ?, ?)`,
+          [user.universityId, user.id, tokenHash, expiresAt, ipAddress],
+        );
+        await insertActivity(connection, {
+          user,
+          action: "auth.password_reset_requested",
+          description: "U kërkua rikuperimi i fjalëkalimit.",
+          ipAddress,
+        });
+      });
+    },
+
+    async consumePasswordReset({ tokenHash, passwordHash, ipAddress }) {
+      return withTransaction(pool, async (connection) => {
+        const rows = await query(
+          connection,
+          `SELECT
+             prt.id,
+             prt.university_id AS universityId,
+             prt.user_id AS userId,
+             u.status AS userStatus,
+             un.status AS universityStatus
+           FROM password_reset_tokens prt
+           INNER JOIN users u
+             ON u.id = prt.user_id AND u.university_id = prt.university_id
+           INNER JOIN universities un ON un.id = prt.university_id
+           WHERE prt.token_hash = ?
+             AND prt.used_at IS NULL
+             AND prt.expires_at > UTC_TIMESTAMP(3)
+             AND u.deleted_at IS NULL
+           FOR UPDATE`,
+          [tokenHash],
+        );
+        const reset = rows[0];
+
+        if (
+          !reset ||
+          reset.userStatus !== "active" ||
+          reset.universityStatus !== "active"
+        ) {
+          return false;
+        }
+
+        await query(
+          connection,
+          `UPDATE users
+           SET password_hash = ?, updated_at = UTC_TIMESTAMP(3)
+           WHERE id = ? AND university_id = ?`,
+          [passwordHash, reset.userId, reset.universityId],
+        );
+        await query(
+          connection,
+          "UPDATE password_reset_tokens SET used_at = UTC_TIMESTAMP(3) WHERE id = ?",
+          [reset.id],
+        );
+        await query(
+          connection,
+          `UPDATE refresh_tokens
+           SET revoked_at = UTC_TIMESTAMP(3)
+           WHERE university_id = ? AND user_id = ? AND revoked_at IS NULL`,
+          [reset.universityId, reset.userId],
+        );
+        await insertActivity(connection, {
+          user: { id: reset.userId, universityId: reset.universityId },
+          action: "auth.password_reset_completed",
+          description: "Fjalëkalimi u ndryshua përmes rikuperimit.",
+          ipAddress,
+        });
+
+        return true;
+      });
+    },
   };
 }
 

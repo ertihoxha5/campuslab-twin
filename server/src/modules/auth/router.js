@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { success } from "../../utils/api-response.js";
 import {
   ACCESS_COOKIE,
@@ -74,6 +75,46 @@ export function createAuthRouter({ authService, secureCookies = false }) {
     clearSessionCookies(response);
     return success(response, {
       data: { message: "Dolët me sukses nga CampusLab Twin." },
+    });
+  });
+
+  const recoveryLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+      success: false,
+      error: {
+        code: "RATE_LIMITED",
+        message:
+          "Keni bërë shumë kërkesa rikuperimi. Ju lutemi provoni përsëri më vonë.",
+      },
+    },
+  });
+
+  router.post(
+    "/forgot-password",
+    recoveryLimiter,
+    async (request, response) => {
+      await authService.forgotPassword(request.body, requestContext(request));
+      return success(response, {
+        data: {
+          message:
+            "Nëse email-i i përket një llogarie aktive, udhëzimet e rikuperimit do të dërgohen.",
+        },
+      });
+    },
+  );
+
+  router.post("/reset-password", recoveryLimiter, async (request, response) => {
+    await authService.resetPassword(request.body, requestContext(request));
+    clearSessionCookies(response);
+    return success(response, {
+      data: {
+        message:
+          "Fjalëkalimi u ndryshua me sukses. Tani mund të kyçeni përsëri.",
+      },
     });
   });
 

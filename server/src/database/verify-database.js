@@ -9,6 +9,7 @@ const requiredTables = [
   "user_roles",
   "user_laboratory_assignments",
   "refresh_tokens",
+  "password_reset_tokens",
   "laboratories",
   "laboratory_zones",
   "equipment",

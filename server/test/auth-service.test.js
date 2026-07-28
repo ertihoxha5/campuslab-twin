@@ -117,3 +117,97 @@ test("logout hashes the refresh token before revocation", async () => {
   assert.equal(revoked.tokenHash, hashToken("refresh-token"));
   assert.notEqual(revoked.tokenHash, "refresh-token");
 });
+
+test("forgot password stores only a hash and sends the one-time token", async () => {
+  const user = await activeUser();
+  let persisted;
+  let delivered;
+  const service = createAuthService({
+    repository: {
+      findUsersByEmail: async () => [user],
+      createPasswordReset: async (reset) => {
+        persisted = reset;
+      },
+    },
+    accessSecret: secret,
+    passwordResetNotifier: {
+      send: async (message) => {
+        delivered = message;
+      },
+    },
+  });
+
+  await service.forgotPassword({ email: user.email });
+
+  assert.equal(persisted.tokenHash, hashToken(delivered.token));
+  assert.notEqual(persisted.tokenHash, delivered.token);
+  assert.equal(persisted.token, undefined);
+});
+
+test("forgot password silently handles unknown accounts", async () => {
+  let notified = false;
+  const service = createAuthService({
+    repository: {
+      findUsersByEmail: async () => [],
+    },
+    accessSecret: secret,
+    passwordResetNotifier: {
+      send: async () => {
+        notified = true;
+      },
+    },
+  });
+
+  await assert.doesNotReject(() =>
+    service.forgotPassword({ email: "panjohur@uni-test.edu" }),
+  );
+  assert.equal(notified, false);
+});
+
+test("reset password hashes the password and consumes the token", async () => {
+  let consumed;
+  const service = createAuthService({
+    repository: {
+      consumePasswordReset: async (reset) => {
+        consumed = reset;
+        return true;
+      },
+    },
+    accessSecret: secret,
+  });
+
+  await service.resetPassword({
+    token: "one-time-reset-token-that-is-long-enough",
+    password: "Fjalekalim!2027",
+    confirmPassword: "Fjalekalim!2027",
+  });
+
+  assert.equal(
+    consumed.tokenHash,
+    hashToken("one-time-reset-token-that-is-long-enough"),
+  );
+  assert.equal(
+    await bcrypt.compare("Fjalekalim!2027", consumed.passwordHash),
+    true,
+  );
+  assert.equal(consumed.password, undefined);
+});
+
+test("expired or reused reset tokens return a safe Albanian error", async () => {
+  const service = createAuthService({
+    repository: {
+      consumePasswordReset: async () => false,
+    },
+    accessSecret: secret,
+  });
+
+  await assert.rejects(
+    () =>
+      service.resetPassword({
+        token: "expired-reset-token-that-is-long-enough",
+        password: "Fjalekalim!2027",
+        confirmPassword: "Fjalekalim!2027",
+      }),
+    (error) => error.code === "INVALID_RESET_TOKEN" && error.status === 422,
+  );
+});
