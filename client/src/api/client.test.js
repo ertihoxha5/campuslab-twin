@@ -53,4 +53,31 @@ describe("apiRequest", () => {
       new ApiError({ message: "Gabim", code: "TEST", status: 400 }),
     ).toBeInstanceOf(Error);
   });
+
+  it("sends multipart forms without forcing a JSON content type", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ success: true, data: { id: 1 } }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const form = new FormData();
+    form.set("universityName", "Universiteti i Testimit");
+
+    await apiRequest("/api/public/university-registrations", {
+      method: "POST",
+      body: form,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/public/university-registrations",
+      expect.objectContaining({
+        body: form,
+        headers: expect.not.objectContaining({
+          "Content-Type": "application/json",
+        }),
+      }),
+    );
+  });
 });

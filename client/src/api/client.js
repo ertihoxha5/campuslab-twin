@@ -14,15 +14,16 @@ export async function apiRequest(
   path,
   { method = "GET", body, headers, signal } = {},
 ) {
+  const isFormData = body instanceof FormData;
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method,
     credentials: "include",
     headers: {
       Accept: "application/json",
-      ...(body ? { "Content-Type": "application/json" } : {}),
+      ...(body && !isFormData ? { "Content-Type": "application/json" } : {}),
       ...headers,
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     signal,
   });
 
