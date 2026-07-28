@@ -4,6 +4,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
+import { createUniversityRegistrationRouter } from "./modules/university-registrations/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -11,6 +12,7 @@ export function createApp({
   clientOrigin = "http://localhost:5173",
   logging = process.env.NODE_ENV !== "test",
   rateLimitEnabled = process.env.NODE_ENV !== "test",
+  registrationService,
 } = {}) {
   const app = express();
 
@@ -52,6 +54,13 @@ export function createApp({
       },
     });
   });
+
+  if (registrationService) {
+    app.use(
+      "/api/public",
+      createUniversityRegistrationRouter({ registrationService }),
+    );
+  }
 
   app.use(notFoundHandler);
   app.use(errorHandler);

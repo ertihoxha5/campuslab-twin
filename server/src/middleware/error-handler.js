@@ -20,6 +20,15 @@ export function errorHandler(error, _request, response, next) {
     });
   }
 
+  if (error.name === "MulterError") {
+    const message =
+      error.code === "LIMIT_FILE_SIZE"
+        ? "Logoja nuk duhet të jetë më e madhe se 2 MB."
+        : "Logoja nuk mund të përpunohej.";
+
+    return validationFailure(response, { logo: [message] });
+  }
+
   const status = Number.isInteger(error.status) ? error.status : 500;
 
   if (status >= 500) {

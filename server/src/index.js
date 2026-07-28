@@ -5,12 +5,21 @@ import {
   checkDatabaseConnection,
   createDatabasePool,
 } from "./database/pool.js";
+import { createRegistrationService } from "./modules/university-registrations/service.js";
+import { createRegistrationLogoStorage } from "./storage/registration-logo-storage.js";
 
 loadEnvironmentFile();
 
 const config = parseEnvironment(process.env);
 const databasePool = createDatabasePool(config);
-const app = createApp({ clientOrigin: config.CLIENT_ORIGIN });
+const registrationService = createRegistrationService({
+  pool: databasePool,
+  logoStorage: createRegistrationLogoStorage(),
+});
+const app = createApp({
+  clientOrigin: config.CLIENT_ORIGIN,
+  registrationService,
+});
 
 async function startServer() {
   try {
