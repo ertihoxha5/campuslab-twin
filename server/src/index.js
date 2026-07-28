@@ -1,10 +1,12 @@
-import "dotenv/config";
 import { createApp } from "./app.js";
 import { parseEnvironment } from "./config/env.js";
+import { loadEnvironmentFile } from "./config/load-environment.js";
 import {
   checkDatabaseConnection,
   createDatabasePool,
 } from "./database/pool.js";
+
+loadEnvironmentFile();
 
 const config = parseEnvironment(process.env);
 const databasePool = createDatabasePool(config);

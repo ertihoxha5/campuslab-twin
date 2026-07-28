@@ -20,12 +20,20 @@ copy .env.example .env
 npm run dev
 ```
 
+Në PowerShell mund të përdorni:
+
+```powershell
+Copy-Item .env.example .env
+```
+
 - Klienti: `http://localhost:5173`
 - API: `http://localhost:3000`
 - Kontrolli i API-së: `GET http://localhost:3000/api/health`
 
 Përditësoni vlerat `DB_*` në `.env` për instalimin tuaj lokal të MySQL. Serveri
 ndalon me një mesazh të qartë nëse konfigurimi mungon ose lidhja me MySQL dështon.
+Skedari lexohet gjithmonë nga rrënja e projektit, pavarësisht nëse serveri niset
+nga skripti kryesor apo nga workspace-i `server`.
 
 ## Komandat
 
