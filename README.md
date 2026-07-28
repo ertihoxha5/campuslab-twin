@@ -53,6 +53,7 @@ demonstruese:
 ```bash
 npm run db:migrate
 npm run db:seed
+npm run db:verify
 ```
 
 `db:migrate` krijon bazën kur ajo nuk ekziston, aplikon migrimet sipas versionit
@@ -64,6 +65,8 @@ npm run db:rollback
 ```
 
 Seed-i është idempotent dhe krijon dy universitete me të dhëna të ndryshme.
+`db:verify` kontrollon skemën reale, kolonat dhe indekset tenant, foreign keys,
+bcrypt hash-et dhe dallimin e të dhënave të dy universiteteve.
 Llogaritë lokale përdorin vlerën `DEMO_ACCOUNT_PASSWORD` nga `.env`. Email-et
 demonstruese janë:
 

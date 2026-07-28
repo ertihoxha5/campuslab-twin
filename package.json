@@ -12,6 +12,7 @@
     "db:migrate": "npm run db:migrate --workspace server",
     "db:rollback": "npm run db:rollback --workspace server",
     "db:seed": "npm run db:seed --workspace server",
+    "db:verify": "npm run db:verify --workspace server",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "format": "prettier --write .",

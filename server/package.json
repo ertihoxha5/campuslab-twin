@@ -10,6 +10,7 @@
     "db:migrate": "node scripts/migrate.js",
     "db:rollback": "node scripts/rollback.js",
     "db:seed": "node scripts/seed.js",
+    "db:verify": "node scripts/verify-database.js",
     "lint": "eslint .",
     "test": "node --test"
   },
@@ -26,8 +27,8 @@
     "zod": "^4.0.17"
   },
   "devDependencies": {
-    "@eslint/js": "^9.33.0",
-    "eslint": "^9.33.0",
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
     "globals": "^16.3.0"
   }
 }
