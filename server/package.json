@@ -7,6 +7,8 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "build": "node --check src/index.js && node --check src/app.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:rollback": "node scripts/rollback.js",
     "lint": "eslint .",
     "test": "node --test"
   },
