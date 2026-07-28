@@ -77,8 +77,36 @@ demonstruese janë:
 Këto janë vetëm llogari zhvillimi. Ndryshoni fjalëkalimin demonstrues dhe mos e
 përdorni në prodhim.
 
-Klienti dërgon kërkesa te API me `credentials: "include"`. Gjendja fillestare e
-autentikimit është qëllimisht e panjohur; ajo do të lidhet me sesionin real në
-CLT-03 dhe nuk zëvendësohet me përdorues demonstrues.
+Klienti dërgon kërkesa te API me `credentials: "include"`. Autentikimi përdor
+access JWT jetëshkurtër dhe refresh token të rrotulluar në cookie `HttpOnly`.
+Token-at nuk ruhen në `localStorage`; databaza ruan vetëm hash-et e refresh/reset
+token-ave. Universitetet joaktive, të refuzuara ose të pezulluara nuk mund të
+hyjnë në workspace.
+
+## API e autentikimit
+
+Endpoint-et e universitetit:
+
+- `POST /api/public/university-registrations`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `GET /api/auth/me`
+- `POST /api/auth/logout`
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password`
+
+Endpoint-et e administratorit të platformës:
+
+- `POST /api/platform/auth/login`
+- `POST /api/platform/auth/refresh`
+- `GET /api/platform/auth/me`
+- `POST /api/platform/auth/logout`
+
+Sesioni i administratorit të platformës përdor cookie, audience JWT dhe tabela
+të veçanta nga sesionet tenant. Veprimet e autentikimit dhe regjistrimit
+auditohen. `forgot-password` kthen gjithmonë të njëjtën përgjigje publike,
+pavarësisht nëse llogaria ekziston. Dërgimi real i email-it bëhet përmes
+adapter-it `passwordResetNotifier`; konfigurimi i një ofruesi email-i mbetet
+integrim i ambientit të vendosjes dhe token-i nuk shkruhet në log apo databazë.
 
 Mos vendosni sekrete reale në skedarët `.env.example`.

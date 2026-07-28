@@ -3,6 +3,7 @@ import { test } from "node:test";
 import bcrypt from "bcrypt";
 import { createPlatformAuthService } from "../src/modules/platform-auth/service.js";
 import { hashToken } from "../src/modules/auth/tokens.js";
+import { createAccessToken } from "../src/modules/auth/tokens.js";
 
 const secret = "platform-test-secret-with-at-least-32-characters";
 
@@ -79,5 +80,21 @@ test("platform refresh tokens rotate and cannot be replayed", async () => {
   await assert.rejects(
     () => service.refresh(original),
     (error) => error.code === "INVALID_CREDENTIALS",
+  );
+});
+
+test("a university access token cannot authenticate a platform administrator", async () => {
+  const universityToken = createAccessToken(
+    { id: "11", universityId: "7", roles: ["university_admin"] },
+    { secret, expiresInMinutes: 15 },
+  );
+  const service = createPlatformAuthService({
+    repository: {},
+    accessSecret: secret,
+  });
+
+  await assert.rejects(
+    () => service.currentAdministrator(universityToken),
+    (error) => error.code === "UNAUTHENTICATED" && error.status === 401,
   );
 });

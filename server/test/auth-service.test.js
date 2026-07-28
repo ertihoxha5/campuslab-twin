@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { createAuthService } from "../src/modules/auth/service.js";
 import { hashToken } from "../src/modules/auth/tokens.js";
 
@@ -98,6 +99,36 @@ test("modified access tokens are rejected", async () => {
 
   await assert.rejects(
     () => service.currentUser("modified.token.value"),
+    (error) => error.code === "UNAUTHENTICATED" && error.status === 401,
+  );
+});
+
+test("missing and expired access tokens are rejected", async () => {
+  const service = createAuthService({
+    repository: {},
+    accessSecret: secret,
+  });
+  const expired = jwt.sign(
+    {
+      universityId: "7",
+      roles: ["university_admin"],
+      type: "university",
+    },
+    secret,
+    {
+      subject: "11",
+      expiresIn: -1,
+      issuer: "campuslab-twin",
+      audience: "campuslab-twin-web",
+    },
+  );
+
+  await assert.rejects(
+    () => service.currentUser(),
+    (error) => error.code === "INVALID_CREDENTIALS" && error.status === 401,
+  );
+  await assert.rejects(
+    () => service.currentUser(expired),
     (error) => error.code === "UNAUTHENTICATED" && error.status === 401,
   );
 });
