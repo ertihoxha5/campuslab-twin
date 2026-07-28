@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import {
-  Activity,
   ArrowRight,
   BarChart3,
   Box,
   Building2,
   Check,
   ChevronRight,
-  CircleGauge,
   FlaskConical,
+  Gauge,
   Leaf,
   Menu,
   Moon,
   Radio,
   ShieldCheck,
   Sun,
+  Thermometer,
+  Users,
   Wrench,
   X,
   Zap,
@@ -223,45 +224,75 @@ function ApiStatus() {
   );
 }
 
-function TwinPreview() {
+function ProductStage() {
   return (
     <div
-      className="twin-preview"
-      aria-label="Pamje demonstruese e Digital Twin"
+      className="product-stage"
+      aria-label="Pamje e platformës CampusLab Twin"
     >
-      <div className="preview-toolbar">
-        <span>LAB-RRK-01</span>
-        <span className="live-label">
-          <span />
-          Simulim aktiv
-        </span>
-      </div>
-      <div className="lab-map">
-        <div className="map-room">
-          <span className="desk desk-one" />
-          <span className="desk desk-two" />
-          <span className="desk desk-three" />
-          <span className="server-rack" />
-          <span className="sensor sensor-one">23.8°</span>
-          <span className="sensor sensor-two">612</span>
-          <span className="map-label">Laboratori i rrjeteve</span>
+      <div className="stage-window">
+        <div className="stage-topbar">
+          <div className="stage-wordmark">
+            <FlaskConical size={15} aria-hidden="true" />
+            CampusLab Twin
+          </div>
+          <ApiStatus />
+          <div className="stage-user" aria-hidden="true">
+            AB
+          </div>
         </div>
-      </div>
-      <div className="preview-metrics">
-        <div>
-          <Activity size={18} aria-hidden="true" />
-          <span>Gjendja</span>
-          <strong>91%</strong>
-        </div>
-        <div>
-          <Zap size={18} aria-hidden="true" />
-          <span>Energjia</span>
-          <strong>4.2 kW</strong>
-        </div>
-        <div>
-          <CircleGauge size={18} aria-hidden="true" />
-          <span>Sensorë</span>
-          <strong>12/12</strong>
+
+        <div className="stage-workspace">
+          <aside className="stage-sidebar" aria-hidden="true">
+            <span className="is-active" />
+            <span />
+            <span />
+            <span />
+            <span />
+          </aside>
+
+          <div className="stage-main">
+            <div className="stage-heading">
+              <div>
+                <span>Digital Twin 3D</span>
+                <strong>Laboratori i rrjeteve</strong>
+              </div>
+              <span className="simulation-chip">Simulim aktiv</span>
+            </div>
+
+            <div className="stage-content">
+              <div className="stage-lab">
+                <span className="stage-wall wall-top" />
+                <span className="stage-wall wall-side" />
+                <span className="stage-table table-one" />
+                <span className="stage-table table-two" />
+                <span className="stage-table table-three" />
+                <span className="stage-rack" />
+                <span className="stage-marker marker-one">23.8°</span>
+                <span className="stage-marker marker-two">612 ppm</span>
+                <span className="stage-lab-label">LAB-RRK-01</span>
+              </div>
+
+              <aside className="stage-insights">
+                <p>Gjendja e laboratorit</p>
+                <div>
+                  <Gauge size={17} aria-hidden="true" />
+                  <span>Shëndeti</span>
+                  <strong>91%</strong>
+                </div>
+                <div>
+                  <Thermometer size={17} aria-hidden="true" />
+                  <span>Temperatura</span>
+                  <strong>23.8°C</strong>
+                </div>
+                <div>
+                  <Users size={17} aria-hidden="true" />
+                  <span>Persona</span>
+                  <strong>18</strong>
+                </div>
+              </aside>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -270,135 +301,110 @@ function TwinPreview() {
 
 function HomePage() {
   return (
-    <>
-      <section className="hero-section">
-        <div className="container hero-grid">
-          <div className="hero-content">
-            <ApiStatus />
-            <p className="eyebrow">Digital Twin për universitetet</p>
-            <h1>
-              Laboratori juaj.
-              <br />
-              <span>Plotësisht i kuptueshëm.</span>
-            </h1>
-            <p className="hero-copy">
-              Një platformë e vetme për të parë, simuluar dhe përmirësuar çdo
-              laborator — nga sensori te vendimi.
-            </p>
-            <div className="hero-actions">
-              <Button asChild size="lg">
-                <Link to="/kontakti">
-                  Kërko demonstrim
-                  <ArrowRight size={18} aria-hidden="true" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/si-funksionon">Shih si funksionon</Link>
-              </Button>
-            </div>
-            <div className="trust-row">
-              <span>
-                <Check size={16} aria-hidden="true" /> Pa pajisje IoT të
-                detyrueshme
-              </span>
-              <span>
-                <Check size={16} aria-hidden="true" /> Të dhëna të izoluara
-              </span>
-            </div>
-          </div>
-          <TwinPreview />
-        </div>
-      </section>
-
-      <section className="section section-bordered">
-        <div className="container statement-grid">
-          <p className="section-index">01 — Platforma</p>
-          <div>
-            <h2>Jo vetëm të dhëna. Një pasqyrë e laboratorit tuaj.</h2>
-            <p className="section-lead">
-              CampusLab Twin bashkon hapësirën fizike, pajisjet dhe sinjalet
-              digjitale në një sistem që stafi mund ta kuptojë dhe ta përdorë.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Çfarë fitoni</p>
-              <h2>Kontroll nga një pamje e vetme.</h2>
-            </div>
-            <Link className="arrow-link" to="/funksionalitetet">
-              Të gjitha funksionalitetet
-              <ArrowRight size={17} aria-hidden="true" />
+    <div className="apple-home">
+      <section className="apple-hero">
+        <div className="container apple-hero-inner">
+          <p className="apple-kicker">
+            Digital Twin për laboratorët universitarë
+          </p>
+          <h1>
+            Laboratori juaj,
+            <br />
+            <span>i qartë në çdo moment.</span>
+          </h1>
+          <p className="apple-hero-copy">
+            Monitoroni pajisjet, energjinë dhe kushtet laboratorike në një
+            platformë të vetme, të sigurt dhe të thjeshtë për t’u përdorur.
+          </p>
+          <div className="apple-actions">
+            <Button asChild size="lg">
+              <Link to="/kontakti">
+                Kërko demonstrim
+                <ArrowRight size={18} aria-hidden="true" />
+              </Link>
+            </Button>
+            <Link className="apple-text-link" to="/funksionalitetet">
+              Shiko funksionalitetet
+              <ChevronRight size={17} aria-hidden="true" />
             </Link>
           </div>
-          <div className="feature-grid">
-            {features.slice(0, 3).map((feature, index) => (
-              <article className="feature-card" key={feature.title}>
-                <span className="card-number">0{index + 1}</span>
-                <feature.icon size={25} aria-hidden="true" />
-                <h3>{feature.title}</h3>
-                <p>{feature.text}</p>
-                <Link
-                  to="/funksionalitetet"
-                  aria-label={`Më shumë: ${feature.title}`}
-                >
-                  <ChevronRight size={18} aria-hidden="true" />
-                </Link>
-              </article>
-            ))}
+        </div>
+        <div className="container">
+          <ProductStage />
+        </div>
+      </section>
+
+      <section className="apple-intro">
+        <div className="container apple-intro-grid">
+          <p className="apple-section-label">Një pamje e vetme</p>
+          <div>
+            <h2>Çdo sinjal. Çdo pajisje. Një kuptim i përbashkët.</h2>
+            <p>
+              CampusLab Twin e kthen kompleksitetin e laboratorit në informacion
+              të qartë për administratorët, menaxherët dhe teknikët.
+            </p>
           </div>
         </div>
       </section>
 
-      <section className="section dark-panel-section">
-        <div className="container impact-panel">
-          <div>
-            <p className="eyebrow">Vendime më të mira</p>
-            <h2>Nga reagimi te parandalimi.</h2>
-          </div>
-          <div className="impact-list">
-            <div>
-              <span>01</span>
-              <p>Kapni kushtet jonormale para se të bëhen incidente.</p>
-            </div>
-            <div>
-              <span>02</span>
-              <p>Planifikoni mirëmbajtjen sipas gjendjes reale të pajisjeve.</p>
-            </div>
-            <div>
-              <span>03</span>
-              <p>
-                Provoni skenarë të sigurt me të dhëna qartësisht të simuluara.
-              </p>
-            </div>
-          </div>
+      <section className="apple-values">
+        <div className="container apple-values-grid">
+          <article>
+            <Radio size={24} aria-hidden="true" />
+            <h3>Monitorim i vazhdueshëm</h3>
+            <p>
+              Vlera të simuluara në kohë reale, me pragje dhe gjendje të
+              kuptueshme.
+            </p>
+          </article>
+          <article>
+            <ShieldCheck size={24} aria-hidden="true" />
+            <h3>Privatësi institucionale</h3>
+            <p>
+              Të dhënat dhe përdoruesit e çdo universiteti qëndrojnë plotësisht
+              të izoluar.
+            </p>
+          </article>
+          <article>
+            <Wrench size={24} aria-hidden="true" />
+            <h3>Veprim në kohën e duhur</h3>
+            <p>
+              Alarmet dhe mirëmbajtja lidhen drejtpërdrejt me pajisjen
+              përkatëse.
+            </p>
+          </article>
         </div>
       </section>
 
-      <section className="section">
-        <div className="container stats-grid">
+      <section className="apple-focus">
+        <div className="container apple-focus-inner">
           <div>
-            <strong>3</strong>
-            <span>laboratorë demonstrues</span>
+            <p className="apple-section-label">Projektuar për qartësi</p>
+            <h2>Më pak zhurmë. Më shumë kontroll.</h2>
+            <p>
+              Nga një laborator i vetëm te një universitet i tërë, çdo rol sheh
+              vetëm informacionin që i duhet për të marrë vendimin e radhës.
+            </p>
+            <Link className="apple-text-link" to="/si-funksionon">
+              Si funksionon
+              <ChevronRight size={17} aria-hidden="true" />
+            </Link>
           </div>
-          <div>
-            <strong>24/7</strong>
-            <span>monitorim i simuluar</span>
+          <div className="focus-metrics" aria-label="Të dhëna demonstruese">
+            <div>
+              <strong>24/7</strong>
+              <span>monitorim i simuluar</span>
+            </div>
+            <div>
+              <strong>100%</strong>
+              <span>izolim i universitetit</span>
+            </div>
           </div>
-          <div>
-            <strong>100%</strong>
-            <span>izolim ndërmjet universiteteve</span>
-          </div>
-          <p>Të gjitha shifrat janë pjesë e demonstrimit të prototipit.</p>
         </div>
       </section>
 
       <CallToAction />
-    </>
+    </div>
   );
 }
 
