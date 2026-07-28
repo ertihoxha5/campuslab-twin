@@ -1,7 +1,33 @@
+import { useEffect, useState } from "react";
 import { ArrowRight, FlaskConical } from "lucide-react";
 import { Link, Route, Routes } from "react-router-dom";
+import { api } from "@/api/client.js";
+import { Button } from "@/components/ui/button.jsx";
 
 function HomePage() {
+  const [apiStatus, setApiStatus] = useState("loading");
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    api
+      .get("/api/health", { signal: controller.signal })
+      .then(() => setApiStatus("connected"))
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          setApiStatus("unavailable");
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  const statusLabel = {
+    loading: "Po lidhet...",
+    connected: "API aktive",
+    unavailable: "API e palidhur",
+  }[apiStatus];
+
   return (
     <main className="page-shell">
       <nav className="navigation" aria-label="Navigimi kryesor">
@@ -11,7 +37,13 @@ function HomePage() {
           </span>
           CampusLab Twin
         </Link>
-        <span className="status-badge">Në ndërtim</span>
+        <span
+          className="status-badge"
+          data-status={apiStatus}
+          aria-live="polite"
+        >
+          {statusLabel}
+        </span>
       </nav>
 
       <section className="hero">
@@ -21,10 +53,12 @@ function HomePage() {
           CampusLab Twin lidh hapësirat, pajisjet dhe të dhënat laboratorike në
           një pamje të vetme digjitale.
         </p>
-        <a className="primary-action" href="mailto:info@campuslab.local">
-          Mëso më shumë
-          <ArrowRight size={18} aria-hidden="true" />
-        </a>
+        <Button asChild size="lg">
+          <a href="mailto:info@campuslab.local">
+            Mëso më shumë
+            <ArrowRight size={18} aria-hidden="true" />
+          </a>
+        </Button>
       </section>
     </main>
   );

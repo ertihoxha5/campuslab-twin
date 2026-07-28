@@ -28,6 +28,7 @@ export default [
       ...react.configs["jsx-runtime"].rules,
       ...reactHooks.configs["recommended-latest"].rules,
       ...reactRefresh.configs.vite.rules,
+      "react/prop-types": "off",
     },
     settings: {
       react: {

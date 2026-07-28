@@ -89,6 +89,16 @@ a {
   font-weight: 700;
 }
 
+.status-badge[data-status="connected"] {
+  color: var(--color-cyber-grape-dark);
+}
+
+.status-badge[data-status="unavailable"] {
+  color: #0d0d0f;
+  background: #ffffff;
+  border-color: #0d0d0f;
+}
+
 .hero {
   display: flex;
   max-width: 880px;
@@ -124,28 +134,19 @@ h1 {
   line-height: 1.65;
 }
 
-.primary-action {
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
-  padding: 14px 18px;
-  color: #ffffff;
-  background: var(--color-cyber-grape);
-  border-radius: 10px;
-  font-weight: 750;
-  text-decoration: none;
-}
-
-.primary-action:hover {
-  background: var(--color-cyber-grape-dark);
-}
-
 .centered-page {
   display: grid;
   min-height: 100vh;
   padding: 24px;
   place-content: center;
   text-align: center;
+}
+
+.route-state {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  color: var(--color-muted);
 }
 
 .centered-page h1 {
