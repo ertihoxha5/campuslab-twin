@@ -29,6 +29,8 @@ import { createPlatformActivityRepository } from "./modules/platform-activity/re
 import { createPlatformActivityService } from "./modules/platform-activity/service.js";
 import { createNotificationRepository } from "./modules/notifications/repository.js";
 import { createNotificationService } from "./modules/notifications/service.js";
+import { createDashboardRepository } from "./modules/dashboard/repository.js";
+import { createDashboardService } from "./modules/dashboard/service.js";
 
 loadEnvironmentFile();
 
@@ -86,6 +88,9 @@ const fileService = createFileService({
 const notificationService = createNotificationService({
   repository: createNotificationRepository(databasePool),
 });
+const dashboardService = createDashboardService({
+  repository: createDashboardRepository(databasePool),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -94,6 +99,7 @@ const app = createApp({
   fileService,
   tenantAuthentication,
   notificationService,
+  dashboardService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
