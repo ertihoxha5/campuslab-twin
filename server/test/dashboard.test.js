@@ -51,6 +51,30 @@ test("university administrators receive unrestricted tenant aggregates", async (
   assert.equal(parameters[1], true);
 });
 
+test("dashboard detail collections remain scoped to accessible laboratories", async () => {
+  const calls = [];
+  const repository = createDashboardRepository({
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      return [[]];
+    },
+  });
+  const details = await repository.details({
+    universityId: "6",
+    userId: "14",
+    roles: ["observer"],
+  });
+
+  assert.equal(calls.length, 8);
+  assert.ok(
+    calls.every((call) => call.sql.includes("accessible_laboratories")),
+  );
+  assert.ok(calls.every((call) => call.parameters[0] === "6"));
+  assert.ok(calls.every((call) => call.parameters[1] === false));
+  assert.ok(calls.every((call) => call.parameters[2] === "14"));
+  assert.deepEqual(details.recentAlerts, []);
+});
+
 test("infrastructure health follows documented deterministic penalties", () => {
   assert.equal(
     calculateInfrastructureHealth({
@@ -89,12 +113,26 @@ test("dashboard service returns numeric metrics and simulation provenance", asyn
           totalSensors: "1",
         };
       },
+      async details() {
+        return {
+          recentAlerts: [],
+          latestSensorReadings: [{ id: 3, value: "22.4" }],
+          laboratoryHealth: [],
+          energyTrend: [],
+          equipmentStatus: [],
+          recentActivities: [],
+          upcomingMaintenance: [],
+          laboratories: [],
+        };
+      },
     },
     now: () => new Date("2026-07-29T16:00:00.000Z"),
   });
   const result = await service.summary({});
   assert.equal(result.metrics.laboratories, 3);
   assert.equal(result.metrics.currentPowerWatts, 1450.5);
+  assert.equal(result.latestSensorReadings[0].id, "3");
+  assert.equal(result.latestSensorReadings[0].value, 22.4);
   assert.equal(result.containsSimulatedData, true);
   assert.equal(result.lastUpdatedAt, "2026-07-29T16:00:00.000Z");
 });

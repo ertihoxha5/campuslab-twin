@@ -31,7 +31,10 @@ export function calculateInfrastructureHealth({
 export function createDashboardService({ repository, now = () => new Date() }) {
   return {
     async summary(context) {
-      const raw = await repository.summary(context);
+      const [raw, details] = await Promise.all([
+        repository.summary(context),
+        repository.details(context),
+      ]);
       const metrics = Object.fromEntries(
         Object.entries(raw).map(([key, value]) => [key, numeric(value)]),
       );
@@ -57,7 +60,40 @@ export function createDashboardService({ repository, now = () => new Date() }) {
         },
         lastUpdatedAt: now().toISOString(),
         containsSimulatedData: metrics.simulatedReadingCount > 0,
+        ...normalizeDetails(details),
       };
     },
   };
+}
+
+function normalizeDetails(details) {
+  const numericFields = {
+    latestSensorReadings: ["value"],
+    laboratoryHealth: [
+      "capacity",
+      "equipmentHealth",
+      "onlineSensors",
+      "totalSensors",
+      "activeAlerts",
+    ],
+    energyTrend: ["averagePowerWatts", "energyKwh", "containsSimulation"],
+    equipmentStatus: ["total"],
+    laboratories: ["capacity"],
+  };
+  return Object.fromEntries(
+    Object.entries(details).map(([key, items]) => [
+      key,
+      items.map((item) => ({
+        ...item,
+        ...(numericFields[key] ?? []).reduce(
+          (values, field) => ({
+            ...values,
+            [field]: numeric(item[field]),
+          }),
+          {},
+        ),
+        id: item.id === undefined ? undefined : String(item.id),
+      })),
+    ]),
+  );
 }
