@@ -196,6 +196,11 @@ export function createLaboratoryRepository(pool) {
           ],
         );
         if (laboratory.responsibleUserId) {
+          await ensureLaboratoryAccessAssignment(connection, {
+            universityId,
+            laboratoryId,
+            responsibleUserId: laboratory.responsibleUserId,
+          });
           await writeResponsibleAssignmentAudit(connection, {
             universityId,
             userId,
@@ -274,6 +279,11 @@ export function createLaboratoryRepository(pool) {
           ],
         );
         if (laboratory.responsibleUserId) {
+          await ensureLaboratoryAccessAssignment(connection, {
+            universityId,
+            laboratoryId,
+            responsibleUserId: laboratory.responsibleUserId,
+          });
           await writeResponsibleAssignmentAudit(connection, {
             universityId,
             userId,
@@ -420,5 +430,19 @@ function writeResponsibleAssignmentAudit(
       JSON.stringify({ responsibleUserId }),
       ipAddress,
     ],
+  );
+}
+
+function ensureLaboratoryAccessAssignment(
+  connection,
+  { universityId, laboratoryId, responsibleUserId },
+) {
+  return query(
+    connection,
+    `INSERT INTO user_laboratory_assignments (
+       university_id, user_id, laboratory_id
+     ) VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE assigned_at = assigned_at`,
+    [universityId, responsibleUserId, laboratoryId],
   );
 }

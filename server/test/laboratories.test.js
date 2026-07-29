@@ -233,6 +233,55 @@ test("laboratory creation and tenant audit are atomic", async () => {
   assert.equal(calls[0].parameters[0], "7");
 });
 
+test("assigning a responsible manager grants tenant-scoped laboratory access", async () => {
+  const calls = [];
+  const connection = {
+    async beginTransaction() {},
+    async commit() {},
+    async rollback() {},
+    release() {},
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      if (sql.includes("SELECT user.id")) return [[{ id: 9 }]];
+      if (sql.includes("INSERT INTO laboratories")) {
+        return [{ insertId: 15 }];
+      }
+      return [{ affectedRows: 1 }];
+    },
+  };
+  const repository = createLaboratoryRepository({
+    async getConnection() {
+      return connection;
+    },
+  });
+
+  await repository.create({
+    universityId: "7",
+    userId: "8",
+    ipAddress: "127.0.0.1",
+    laboratory: {
+      name: "Laboratori Test",
+      code: "LAB-15",
+      faculty: "Fakulteti Teknik",
+      building: "B",
+      floor: "3",
+      capacity: 30,
+      responsibleUserId: "9",
+      description: "",
+      status: "active",
+    },
+  });
+
+  const assignment = calls.find(({ sql }) =>
+    sql.includes("INSERT INTO user_laboratory_assignments"),
+  );
+  assert.ok(assignment);
+  assert.deepEqual(assignment.parameters, ["7", "9", 15]);
+  assert.ok(
+    calls.some(({ sql }) => sql.includes("'laboratory.responsible_assigned'")),
+  );
+});
+
 test("laboratory detail never looks up an id without its tenant", async () => {
   const calls = [];
   const repository = createLaboratoryRepository({
