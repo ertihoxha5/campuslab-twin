@@ -1,4 +1,5 @@
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+export const TENANT_SESSION_INVALID_EVENT = "clt:tenant-session-invalid";
 
 export class ApiError extends Error {
   constructor({ message, code = "REQUEST_ERROR", status = 500, details }) {
@@ -30,6 +31,7 @@ export async function apiRequest(
   const payload = await parsePayload(response);
 
   if (!response.ok) {
+    notifyInvalidTenantSession(path, response.status, payload?.error?.code);
     throw new ApiError({
       status: response.status,
       code: payload?.error?.code,
@@ -41,6 +43,25 @@ export async function apiRequest(
   }
 
   return payload;
+}
+
+function notifyInvalidTenantSession(path, status, code) {
+  const isTenantProtectedPath =
+    path.startsWith("/api/") &&
+    !path.startsWith("/api/auth/") &&
+    !path.startsWith("/api/public/") &&
+    !path.startsWith("/api/platform/") &&
+    path !== "/api/health";
+  const sessionIsInvalid =
+    status === 401 || (status === 403 && code === "ACCOUNT_UNAVAILABLE");
+
+  if (
+    isTenantProtectedPath &&
+    sessionIsInvalid &&
+    typeof window !== "undefined"
+  ) {
+    window.dispatchEvent(new Event(TENANT_SESSION_INVALID_EVENT));
+  }
 }
 
 async function parsePayload(response) {

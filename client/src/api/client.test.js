@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { apiRequest, ApiError } from "./client.js";
+import {
+  apiRequest,
+  ApiError,
+  TENANT_SESSION_INVALID_EVENT,
+} from "./client.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -79,5 +83,54 @@ describe("apiRequest", () => {
         }),
       }),
     );
+  });
+
+  it("invalidates only a failed tenant session on protected endpoints", async () => {
+    const listener = vi.fn();
+    window.addEventListener(TENANT_SESSION_INVALID_EVENT, listener);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: false,
+            error: {
+              code: "ACCOUNT_UNAVAILABLE",
+              message: "Universiteti nuk është aktiv.",
+            },
+          }),
+          { status: 403, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+
+    await expect(apiRequest("/api/notifications")).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    expect(listener).toHaveBeenCalledOnce();
+    window.removeEventListener(TENANT_SESSION_INVALID_EVENT, listener);
+  });
+
+  it("does not clear a tenant session for ordinary forbidden responses", async () => {
+    const listener = vi.fn();
+    window.addEventListener(TENANT_SESSION_INVALID_EVENT, listener);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: false,
+            error: { code: "FORBIDDEN", message: "Nuk keni leje." },
+          }),
+          { status: 403, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+
+    await expect(apiRequest("/api/notifications")).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    expect(listener).not.toHaveBeenCalled();
+    window.removeEventListener(TENANT_SESSION_INVALID_EVENT, listener);
   });
 });

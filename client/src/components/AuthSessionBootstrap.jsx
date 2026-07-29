@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { api } from "@/api/client.js";
+import { api, TENANT_SESSION_INVALID_EVENT } from "@/api/client.js";
 import { useAuthStore } from "@/stores/auth-store.js";
 
 let activeSessionRequest;
@@ -13,6 +13,16 @@ export function AuthSessionBootstrap({ children }) {
   const setLoading = useAuthStore((state) => state.setLoading);
   const setSession = useAuthStore((state) => state.setSession);
   const clearSession = useAuthStore((state) => state.clearSession);
+
+  useEffect(() => {
+    const invalidateSession = () => clearSession();
+    window.addEventListener(TENANT_SESSION_INVALID_EVENT, invalidateSession);
+    return () =>
+      window.removeEventListener(
+        TENANT_SESSION_INVALID_EVENT,
+        invalidateSession,
+      );
+  }, [clearSession]);
 
   useEffect(() => {
     if (status === "authenticated" || status === "unauthenticated") {
