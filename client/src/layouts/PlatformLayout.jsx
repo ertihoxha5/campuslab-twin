@@ -1,4 +1,10 @@
-import { Building2, ClipboardList, LogOut, ShieldCheck } from "lucide-react";
+import {
+  Building2,
+  ChartNoAxesCombined,
+  ClipboardList,
+  LogOut,
+  ShieldCheck,
+} from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
@@ -42,6 +48,9 @@ export function PlatformLayout() {
       </header>
       <nav className="platform-nav" aria-label="Navigimi i administrimit">
         <NavLink to="/administrimi" end>
+          <ChartNoAxesCombined size={17} /> Përmbledhja
+        </NavLink>
+        <NavLink to="/administrimi/kerkesat">
           <ClipboardList size={17} /> Kërkesat
         </NavLink>
         <NavLink to="/administrimi/universitetet">

@@ -15,6 +15,7 @@ import { PlatformLayout } from "@/layouts/PlatformLayout.jsx";
 import { PlatformLoginPage } from "@/pages/PlatformLoginPage.jsx";
 import { PlatformRegistrationRequestsPage } from "@/pages/PlatformRegistrationRequestsPage.jsx";
 import { PlatformUniversitiesPage } from "@/pages/PlatformUniversitiesPage.jsx";
+import { PlatformSummaryPage } from "@/pages/PlatformSummaryPage.jsx";
 import { PlatformProtectedRoute } from "@/routes/PlatformProtectedRoute.jsx";
 
 export default function App() {
@@ -36,7 +37,11 @@ export default function App() {
         <Route path="administrimi/kycu" element={<PlatformLoginPage />} />
         <Route element={<PlatformProtectedRoute />}>
           <Route path="administrimi" element={<PlatformLayout />}>
-            <Route index element={<PlatformRegistrationRequestsPage />} />
+            <Route index element={<PlatformSummaryPage />} />
+            <Route
+              path="kerkesat"
+              element={<PlatformRegistrationRequestsPage />}
+            />
             <Route
               path="universitetet"
               element={<PlatformUniversitiesPage />}
