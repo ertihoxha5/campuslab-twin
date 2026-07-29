@@ -29,5 +29,25 @@ export function createPlatformRegistrationRouter({
     return success(response, { data: { registrationRequest } });
   });
 
+  router.patch("/:requestId/decision", async (request, response) => {
+    const result = await service.review(
+      request.params.requestId,
+      request.body,
+      {
+        platformAdminId: request.auth.platformAdminId,
+        ipAddress: request.ip?.slice(0, 45) ?? null,
+      },
+    );
+    return success(response, {
+      data: {
+        result,
+        message:
+          result.status === "approved"
+            ? "Kërkesa u aprovua dhe universiteti u aktivizua."
+            : "Kërkesa u refuzua.",
+      },
+    });
+  });
+
   return router;
 }

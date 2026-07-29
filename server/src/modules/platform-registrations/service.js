@@ -8,6 +8,19 @@ const listSchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+const reviewSchema = z
+  .object({
+    decision: z.enum(["approved", "rejected"]),
+    reason: z.string().trim().max(1000).optional().default(""),
+  })
+  .refine(
+    ({ decision, reason }) => decision !== "rejected" || reason.length >= 3,
+    {
+      path: ["reason"],
+      message: "Arsyeja e refuzimit është e detyrueshme.",
+    },
+  );
+
 const notFound = () =>
   new AppError({
     status: 404,
@@ -51,6 +64,50 @@ export function createPlatformRegistrationService({ repository }) {
       const registration = await repository.findById(id);
       if (!registration) throw notFound();
       return registration;
+    },
+
+    async review(id, input, context) {
+      if (!/^[1-9]\d*$/.test(String(id))) throw notFound();
+      const parsed = reviewSchema.safeParse(input);
+      if (!parsed.success) {
+        throw new AppError({
+          status: 422,
+          code: "VALIDATION_ERROR",
+          message: "Vendimi i shqyrtimit nuk është i vlefshëm.",
+          details: {
+            reason: parsed.error.issues.map((issue) => issue.message),
+          },
+        });
+      }
+
+      try {
+        const result = await repository.review({
+          requestId: id,
+          platformAdminId: context.platformAdminId,
+          decision: parsed.data.decision,
+          reason: parsed.data.reason || null,
+          ipAddress: context.ipAddress,
+        });
+        if (!result) throw notFound();
+        if (result.alreadyReviewed) {
+          throw new AppError({
+            status: 409,
+            code: "ALREADY_REVIEWED",
+            message: "Kjo kërkesë është shqyrtuar më parë.",
+          });
+        }
+        return result;
+      } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+          throw new AppError({
+            status: 409,
+            code: "UNIVERSITY_CONFLICT",
+            message:
+              "Universiteti nuk mund të aktivizohet sepse të dhënat institucionale janë në përdorim.",
+          });
+        }
+        throw error;
+      }
     },
   };
 }
