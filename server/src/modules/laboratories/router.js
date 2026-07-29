@@ -1,8 +1,31 @@
 import { Router } from "express";
+import multer from "multer";
 import { permissions } from "../../authorization/permissions.js";
 import { createLaboratoryAccess } from "../../middleware/require-laboratory-access.js";
 import { requirePermissions } from "../../middleware/require-permission.js";
 import { success } from "../../utils/api-response.js";
+import { AppError } from "../../utils/app-error.js";
+
+const modelUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024, files: 1 },
+});
+
+const receiveModel = (request, response, next) => {
+  modelUpload.single("model")(request, response, (error) => {
+    if (error?.code === "LIMIT_FILE_SIZE") {
+      next(
+        new AppError({
+          status: 422,
+          code: "MODEL_TOO_LARGE",
+          message: "Modeli 3D nuk mund të jetë më i madh se 25 MB.",
+        }),
+      );
+      return;
+    }
+    next(error);
+  });
+};
 
 const tenantContext = (request) => ({
   universityId: request.auth.universityId,
@@ -14,6 +37,7 @@ const tenantContext = (request) => ({
 export function createLaboratoryRouter({
   service,
   zoneService,
+  modelService,
   authenticateTenant,
   laboratoryAccessRepository,
 }) {
@@ -49,6 +73,61 @@ export function createLaboratoryRouter({
           laboratory,
           message: "Laboratori u krijua me sukses.",
         },
+      });
+    },
+  );
+
+  router.post(
+    "/:laboratoryId/model",
+    requirePermissions(permissions.LABORATORIES_MANAGE),
+    requireLaboratoryAccess,
+    receiveModel,
+    async (request, response) => {
+      const model = await modelService.upload(request.file, {
+        ...tenantContext(request),
+        laboratoryId: request.params.laboratoryId,
+      });
+      return success(response, {
+        status: 201,
+        data: { model, message: "Modeli 3D u ngarkua me sukses." },
+      });
+    },
+  );
+
+  router.get(
+    "/:laboratoryId/model",
+    requirePermissions(permissions.LABORATORIES_VIEW),
+    requireLaboratoryAccess,
+    async (request, response, next) => {
+      try {
+        const model = await modelService.getDownload({
+          ...tenantContext(request),
+          laboratoryId: request.params.laboratoryId,
+        });
+        response.sendFile(model.absolutePath, {
+          headers: {
+            "Cache-Control": "private, no-store",
+            "Content-Type": model.mimeType,
+            "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(model.originalName)}`,
+          },
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  router.delete(
+    "/:laboratoryId/model",
+    requirePermissions(permissions.LABORATORIES_MANAGE),
+    requireLaboratoryAccess,
+    async (request, response) => {
+      const model = await modelService.remove({
+        ...tenantContext(request),
+        laboratoryId: request.params.laboratoryId,
+      });
+      return success(response, {
+        data: { model, message: "Modeli 3D u hoq nga laboratori." },
       });
     },
   );

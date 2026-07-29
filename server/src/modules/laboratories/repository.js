@@ -85,6 +85,11 @@ export function createLaboratoryRepository(pool) {
                 laboratory.description,
                 laboratory.responsible_user_id AS responsibleUserId,
                 responsible.full_name AS responsibleUserName,
+                model.id AS modelFileId,
+                model.original_name AS modelOriginalName,
+                model.mime_type AS modelMimeType,
+                model.size_bytes AS modelSizeBytes,
+                model.created_at AS modelCreatedAt,
                 COUNT(DISTINCT zone.id) AS zoneCount,
                 COUNT(DISTINCT equipment.id) AS equipmentCount,
                 COUNT(DISTINCT sensor.id) AS sensorCount,
@@ -94,6 +99,10 @@ export function createLaboratoryRepository(pool) {
          LEFT JOIN users responsible
            ON responsible.id = laboratory.responsible_user_id
           AND responsible.university_id = laboratory.university_id
+         LEFT JOIN stored_files model
+           ON model.id = laboratory.model_file_id
+          AND model.university_id = laboratory.university_id
+          AND model.category = 'model_3d'
          LEFT JOIN laboratory_zones zone
            ON zone.laboratory_id = laboratory.id
           AND zone.university_id = laboratory.university_id

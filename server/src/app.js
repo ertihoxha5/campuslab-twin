@@ -32,6 +32,7 @@ export function createApp({
   dashboardService,
   laboratoryService,
   laboratoryZoneService,
+  laboratoryModelService,
   laboratoryAccessRepository,
   platformRegistrationService,
   platformAuthentication,
@@ -136,6 +137,7 @@ export function createApp({
       createLaboratoryRouter({
         service: laboratoryService,
         zoneService: laboratoryZoneService,
+        modelService: laboratoryModelService,
         authenticateTenant: tenantAuthentication,
         laboratoryAccessRepository,
       }),
