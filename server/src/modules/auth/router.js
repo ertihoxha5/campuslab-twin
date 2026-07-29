@@ -62,6 +62,26 @@ export function createAuthRouter({ authService, secureCookies = false }) {
     return success(response, { data: { user: session.user } });
   });
 
+  router.post("/session", async (request, response) => {
+    const refreshToken = request.cookies[REFRESH_COOKIE];
+    if (!refreshToken) {
+      return success(response, { data: { user: null } });
+    }
+
+    try {
+      const session = await authService.refresh(
+        refreshToken,
+        requestContext(request),
+      );
+      setSessionCookies(response, session);
+      return success(response, { data: { user: session.user } });
+    } catch (error) {
+      if (error.status !== 401 && error.status !== 403) throw error;
+      clearSessionCookies(response);
+      return success(response, { data: { user: null } });
+    }
+  });
+
   router.get("/me", async (request, response) => {
     const user = await authService.currentUser(request.cookies[ACCESS_COOKIE]);
     return success(response, { data: { user } });

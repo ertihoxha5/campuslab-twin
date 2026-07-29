@@ -5,12 +5,7 @@ import { useAuthStore } from "@/stores/auth-store.js";
 let activeSessionRequest;
 
 async function requestCurrentSession() {
-  try {
-    return await api.get("/api/auth/me");
-  } catch (error) {
-    if (error.status !== 401) throw error;
-    return api.post("/api/auth/refresh");
-  }
+  return api.post("/api/auth/session");
 }
 
 export function AuthSessionBootstrap({ children }) {
@@ -32,7 +27,9 @@ export function AuthSessionBootstrap({ children }) {
 
     activeSessionRequest
       .then((response) => {
-        if (active) setSession(response.data.user);
+        if (!active) return;
+        if (response.data.user) setSession(response.data.user);
+        else clearSession();
       })
       .catch(() => {
         if (active) clearSession();

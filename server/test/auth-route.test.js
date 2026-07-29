@@ -98,6 +98,32 @@ test("refresh rotates session cookies", async () => {
   );
 });
 
+test("session restore stays successful for public visitors", async () => {
+  const response = await fetch(`${baseUrl}/api/auth/session`, {
+    method: "POST",
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data.user, null);
+});
+
+test("session restore rotates a valid refresh cookie", async () => {
+  const response = await fetch(`${baseUrl}/api/auth/session`, {
+    method: "POST",
+    headers: { Cookie: "clt_refresh=refresh-token" },
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data.user.id, "11");
+  assert.ok(
+    response.headers
+      .getSetCookie()
+      .some((cookie) => cookie.startsWith("clt_access=new-access-token")),
+  );
+});
+
 test("logout invalidates and clears session cookies", async () => {
   const response = await fetch(`${baseUrl}/api/auth/logout`, {
     method: "POST",
