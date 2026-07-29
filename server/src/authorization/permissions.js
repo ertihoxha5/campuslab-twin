@@ -2,6 +2,7 @@ export const permissions = Object.freeze({
   PLATFORM_UNIVERSITIES_REVIEW: "platform.universities.review",
   PLATFORM_STATISTICS_VIEW: "platform.statistics.view",
   PLATFORM_SETTINGS_MANAGE: "platform.settings.manage",
+  PLATFORM_AUDIT_VIEW: "platform.audit.view",
   UNIVERSITY_PROFILE_MANAGE: "university.profile.manage",
   UNIVERSITY_USERS_MANAGE: "university.users.manage",
   LABORATORIES_CREATE: "laboratories.create",
@@ -41,6 +42,7 @@ export const rolePermissions = Object.freeze({
     permissions.PLATFORM_UNIVERSITIES_REVIEW,
     permissions.PLATFORM_STATISTICS_VIEW,
     permissions.PLATFORM_SETTINGS_MANAGE,
+    permissions.PLATFORM_AUDIT_VIEW,
   ]),
   university_admin: Object.freeze(universityAdministratorPermissions),
   lab_manager: Object.freeze([

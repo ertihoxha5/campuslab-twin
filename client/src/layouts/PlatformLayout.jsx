@@ -4,6 +4,7 @@ import {
   ClipboardList,
   LogOut,
   Settings2,
+  History,
   ShieldCheck,
 } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
@@ -59,6 +60,9 @@ export function PlatformLayout() {
         </NavLink>
         <NavLink to="/administrimi/cilesimet">
           <Settings2 size={17} /> Cilësimet
+        </NavLink>
+        <NavLink to="/administrimi/historiku">
+          <History size={17} /> Historiku
         </NavLink>
       </nav>
       <main className="platform-content">

@@ -1209,6 +1209,75 @@ a {
   cursor: pointer;
 }
 
+.activity-list {
+  display: grid;
+  margin-top: 1.25rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+.activity-list article {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.9rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.activity-list article:last-child {
+  border-bottom: 0;
+}
+
+.activity-icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--cyber-grape) 10%, transparent);
+  color: var(--cyber-grape);
+}
+
+.activity-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.activity-title span {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.activity-list p,
+.activity-list small {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.activity-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.activity-pagination > div {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .platform-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

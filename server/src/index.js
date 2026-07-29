@@ -25,6 +25,8 @@ import { createPlatformUniversityService } from "./modules/platform-universities
 import { createPlatformStatisticsRepository } from "./modules/platform-statistics/repository.js";
 import { createPlatformSettingsRepository } from "./modules/platform-settings/repository.js";
 import { createPlatformSettingsService } from "./modules/platform-settings/service.js";
+import { createPlatformActivityRepository } from "./modules/platform-activity/repository.js";
+import { createPlatformActivityService } from "./modules/platform-activity/service.js";
 
 loadEnvironmentFile();
 
@@ -67,6 +69,9 @@ const platformStatisticsRepository =
 const platformSettingsService = createPlatformSettingsService({
   repository: platformSettingsRepository,
 });
+const platformActivityService = createPlatformActivityService({
+  repository: createPlatformActivityRepository(databasePool),
+});
 const tenantAuthentication = createTenantAuthentication({
   authRepository,
   accessSecret: config.JWT_ACCESS_SECRET,
@@ -88,6 +93,7 @@ const app = createApp({
   platformUniversityService,
   platformStatisticsRepository,
   platformSettingsService,
+  platformActivityService,
   secureCookies: config.NODE_ENV === "production",
 });
 const httpServer = createServer(app);
