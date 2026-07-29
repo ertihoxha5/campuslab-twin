@@ -1105,6 +1105,110 @@ a {
   color: var(--muted);
 }
 
+.platform-settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.platform-settings-card {
+  align-self: start;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+.settings-card-heading {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  color: var(--cyber-grape);
+}
+
+.settings-card-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.settings-card-heading p,
+.settings-toggle small,
+.exception-list small {
+  display: block;
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.settings-toggle input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--cyber-grape);
+}
+
+.exception-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.exception-form label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 650;
+}
+
+.exception-form input,
+.exception-form textarea {
+  width: 100%;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+}
+
+.exception-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+.exception-list article {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+.exception-list p {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.exception-list button {
+  align-self: start;
+  padding: 0.35rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
 .platform-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1598,6 +1702,9 @@ a {
 }
 
 @media (max-width: 860px) {
+  .platform-settings-grid {
+    grid-template-columns: 1fr;
+  }
   .site-container {
     width: min(calc(100% - 32px), 1200px);
   }

@@ -116,11 +116,21 @@ function normalizedHostname(value) {
     .replace(/^www\./, "");
 }
 
-export function validateInstitutionalEmail(email, website) {
+export function validateInstitutionalEmail(email, website, policy = {}) {
   const emailDomain = normalizedHostname(email.split("@").at(-1));
   const websiteDomain = normalizedHostname(new URL(website).hostname);
+  const exceptionMatches = (policy.exceptions ?? []).some(
+    (exception) =>
+      emailDomain === normalizedHostname(exception.emailDomain) &&
+      (!exception.websiteDomain ||
+        websiteDomain === normalizedHostname(exception.websiteDomain)),
+  );
 
-  if (publicEmailDomains.has(emailDomain)) {
+  if (
+    publicEmailDomains.has(emailDomain) &&
+    !policy.allowPublicEmailProviders &&
+    !exceptionMatches
+  ) {
     throw new AppError({
       status: 422,
       code: "PUBLIC_EMAIL_NOT_ALLOWED",
@@ -138,7 +148,11 @@ export function validateInstitutionalEmail(email, website) {
     emailDomain.endsWith(`.${websiteDomain}`) ||
     websiteDomain.endsWith(`.${emailDomain}`);
 
-  if (!domainsMatch) {
+  if (
+    policy.requireWebsiteDomainMatch !== false &&
+    !domainsMatch &&
+    !exceptionMatches
+  ) {
     throw new AppError({
       status: 422,
       code: "INSTITUTIONAL_DOMAIN_MISMATCH",
@@ -153,7 +167,7 @@ export function validateInstitutionalEmail(email, website) {
   }
 }
 
-export function validateRegistrationInput(input) {
+export function validateRegistrationInput(input, policy = {}) {
   const result = registrationSchema.safeParse(input);
 
   if (!result.success) {
@@ -179,6 +193,7 @@ export function validateRegistrationInput(input) {
   validateInstitutionalEmail(
     result.data.representativeEmail,
     result.data.officialWebsite,
+    policy,
   );
 
   return result.data;

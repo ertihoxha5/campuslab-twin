@@ -8,10 +8,22 @@ export function createRegistrationService({
   repository = createRegistrationRepository(pool),
   logoStorage,
   passwordRounds = 12,
+  registrationPolicyProvider,
 }) {
   return {
     async register(input, logoFile, context = {}) {
-      const registration = validateRegistrationInput(input);
+      const policy = registrationPolicyProvider
+        ? await registrationPolicyProvider()
+        : {};
+      if (policy.registrationsOpen === false) {
+        throw new AppError({
+          status: 503,
+          code: "REGISTRATIONS_CLOSED",
+          message:
+            "Regjistrimet e reja janë mbyllur përkohësisht. Provoni përsëri më vonë.",
+        });
+      }
+      const registration = validateRegistrationInput(input, policy);
       const { password } = registration;
       const safeRegistration = { ...registration };
       delete safeRegistration.password;

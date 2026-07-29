@@ -11,6 +11,7 @@ import { createFileRouter } from "./modules/files/router.js";
 import { createPlatformRegistrationRouter } from "./modules/platform-registrations/router.js";
 import { createPlatformUniversityRouter } from "./modules/platform-universities/router.js";
 import { createPlatformStatisticsRouter } from "./modules/platform-statistics/router.js";
+import { createPlatformSettingsRouter } from "./modules/platform-settings/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -27,6 +28,7 @@ export function createApp({
   platformAuthentication,
   platformUniversityService,
   platformStatisticsRepository,
+  platformSettingsService,
   secureCookies = process.env.NODE_ENV === "production",
 } = {}) {
   const app = express();
@@ -123,6 +125,16 @@ export function createApp({
       "/api/platform/statistics",
       createPlatformStatisticsRouter({
         repository: platformStatisticsRepository,
+        authenticatePlatform: platformAuthentication,
+      }),
+    );
+  }
+
+  if (platformSettingsService && platformAuthentication) {
+    app.use(
+      "/api/platform/settings",
+      createPlatformSettingsRouter({
+        service: platformSettingsService,
         authenticatePlatform: platformAuthentication,
       }),
     );

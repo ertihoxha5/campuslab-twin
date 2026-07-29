@@ -16,6 +16,7 @@ import { PlatformLoginPage } from "@/pages/PlatformLoginPage.jsx";
 import { PlatformRegistrationRequestsPage } from "@/pages/PlatformRegistrationRequestsPage.jsx";
 import { PlatformUniversitiesPage } from "@/pages/PlatformUniversitiesPage.jsx";
 import { PlatformSummaryPage } from "@/pages/PlatformSummaryPage.jsx";
+import { PlatformSettingsPage } from "@/pages/PlatformSettingsPage.jsx";
 import { PlatformProtectedRoute } from "@/routes/PlatformProtectedRoute.jsx";
 
 export default function App() {
@@ -46,6 +47,7 @@ export default function App() {
               path="universitetet"
               element={<PlatformUniversitiesPage />}
             />
+            <Route path="cilesimet" element={<PlatformSettingsPage />} />
           </Route>
         </Route>
       </Routes>

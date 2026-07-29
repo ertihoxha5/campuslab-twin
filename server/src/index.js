@@ -23,14 +23,20 @@ import { createPlatformRegistrationService } from "./modules/platform-registrati
 import { createPlatformUniversityRepository } from "./modules/platform-universities/repository.js";
 import { createPlatformUniversityService } from "./modules/platform-universities/service.js";
 import { createPlatformStatisticsRepository } from "./modules/platform-statistics/repository.js";
+import { createPlatformSettingsRepository } from "./modules/platform-settings/repository.js";
+import { createPlatformSettingsService } from "./modules/platform-settings/service.js";
 
 loadEnvironmentFile();
 
 const config = parseEnvironment(process.env);
 const databasePool = createDatabasePool(config);
+const platformSettingsRepository =
+  createPlatformSettingsRepository(databasePool);
 const registrationService = createRegistrationService({
   pool: databasePool,
   logoStorage: createRegistrationLogoStorage(),
+  registrationPolicyProvider: () =>
+    platformSettingsRepository.getRegistrationPolicy(),
 });
 const authRepository = createAuthRepository(databasePool);
 const authService = createAuthService({
@@ -58,6 +64,9 @@ const platformUniversityService = createPlatformUniversityService({
 });
 const platformStatisticsRepository =
   createPlatformStatisticsRepository(databasePool);
+const platformSettingsService = createPlatformSettingsService({
+  repository: platformSettingsRepository,
+});
 const tenantAuthentication = createTenantAuthentication({
   authRepository,
   accessSecret: config.JWT_ACCESS_SECRET,
@@ -78,6 +87,7 @@ const app = createApp({
   platformAuthentication,
   platformUniversityService,
   platformStatisticsRepository,
+  platformSettingsService,
   secureCookies: config.NODE_ENV === "production",
 });
 const httpServer = createServer(app);
