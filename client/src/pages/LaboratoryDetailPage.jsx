@@ -7,13 +7,16 @@ import {
   Cpu,
   MapPin,
   Pencil,
+  Plus,
   RefreshCw,
+  Trash2,
   Users,
   X,
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { LaboratoryForm } from "@/components/LaboratoryForm.jsx";
 import { LaboratoryLayoutPreview } from "@/components/LaboratoryLayoutPreview.jsx";
+import { LaboratoryZoneForm } from "@/components/LaboratoryZoneForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 
@@ -32,6 +35,9 @@ export function LaboratoryDetailPage() {
   const [laboratory, setLaboratory] = useState(null);
   const [zones, setZones] = useState([]);
   const [editing, setEditing] = useState(false);
+  const [editingZone, setEditingZone] = useState(undefined);
+  const [selectedZone, setSelectedZone] = useState(null);
+  const [zoneToDelete, setZoneToDelete] = useState(null);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -95,6 +101,65 @@ export function LaboratoryDetailPage() {
       setMessage({ type: "error", text: error.message });
       setSaving(false);
       setConfirmArchive(false);
+    }
+  }
+
+  async function saveZone(values) {
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const response = editingZone
+        ? await api.put(
+            `/api/laboratories/${laboratoryId}/zones/${editingZone.id}`,
+            values,
+          )
+        : await api.post(`/api/laboratories/${laboratoryId}/zones`, values);
+      const savedZone = response.data.zone;
+      setZones((current) =>
+        editingZone
+          ? current.map((zone) =>
+              String(zone.id) === String(savedZone.id) ? savedZone : zone,
+            )
+          : [...current, savedZone],
+      );
+      setSelectedZone(savedZone);
+      setLaboratory((current) => ({
+        ...current,
+        zoneCount: editingZone
+          ? current.zoneCount
+          : Number(current.zoneCount ?? zones.length) + 1,
+      }));
+      setMessage({ type: "success", text: response.data.message });
+      setEditingZone(undefined);
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteZone() {
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const response = await api.delete(
+        `/api/laboratories/${laboratoryId}/zones/${zoneToDelete.id}`,
+      );
+      setZones((current) =>
+        current.filter((zone) => String(zone.id) !== String(zoneToDelete.id)),
+      );
+      setSelectedZone(null);
+      setLaboratory((current) => ({
+        ...current,
+        zoneCount: Math.max(Number(current.zoneCount ?? zones.length) - 1, 0),
+      }));
+      setMessage({ type: "success", text: response.data.message });
+      setZoneToDelete(null);
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+      setZoneToDelete(null);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -183,9 +248,79 @@ export function LaboratoryDetailPage() {
               <span>Digital Twin</span>
               <h2>Konfigurimi virtual</h2>
             </div>
-            <small>{zones.length} zona të konfiguruara</small>
+            {canManage ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setEditingZone(null)}
+              >
+                <Plus size={15} /> Shto zonë
+              </Button>
+            ) : (
+              <small>{zones.length} zona të konfiguruara</small>
+            )}
           </header>
-          <LaboratoryLayoutPreview zones={zones} />
+          <LaboratoryLayoutPreview
+            zones={zones}
+            selectedZoneId={selectedZone?.id}
+            onSelectZone={setSelectedZone}
+          />
+          {zones.length > 0 && (
+            <div className="virtual-zone-list">
+              {zones.map((zone) => (
+                <button
+                  type="button"
+                  className={
+                    String(selectedZone?.id) === String(zone.id)
+                      ? "is-selected"
+                      : ""
+                  }
+                  key={zone.id}
+                  onClick={() => setSelectedZone(zone)}
+                >
+                  <span>
+                    <strong>{zone.name}</strong>
+                    <small>
+                      {zone.code} · {zone.dimensions?.width ?? 0} ×{" "}
+                      {zone.dimensions?.depth ?? 0} m
+                    </small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+          {selectedZone && (
+            <div className="selected-zone-toolbar">
+              <div>
+                <strong>{selectedZone.name}</strong>
+                <span>
+                  Pozicioni: X {selectedZone.position?.x ?? 0}, Y{" "}
+                  {selectedZone.position?.y ?? 0}, Z{" "}
+                  {selectedZone.position?.z ?? 0}
+                </span>
+              </div>
+              {canManage && (
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingZone(selectedZone)}
+                  >
+                    <Pencil size={14} /> Ndrysho
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setZoneToDelete(selectedZone)}
+                  >
+                    <Trash2 size={14} /> Fshi
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </article>
 
         <aside className="laboratory-detail-panel laboratory-info-panel">
@@ -246,6 +381,73 @@ export function LaboratoryDetailPage() {
               saving={saving}
               submitLabel="Ruaj ndryshimet"
             />
+          </section>
+        </div>
+      )}
+
+      {editingZone !== undefined && (
+        <div className="workspace-modal-backdrop">
+          <section
+            className="workspace-modal zone-form-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="zone-form-title"
+          >
+            <header>
+              <div>
+                <span>Plani virtual</span>
+                <h2 id="zone-form-title">
+                  {editingZone ? "Ndrysho zonën" : "Krijo zonë"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                aria-label="Mbyll konfigurimin e zonës"
+                onClick={() => setEditingZone(undefined)}
+              >
+                <X size={20} />
+              </button>
+            </header>
+            <LaboratoryZoneForm
+              initialZone={editingZone}
+              onSubmit={saveZone}
+              onCancel={() => setEditingZone(undefined)}
+              saving={saving}
+            />
+          </section>
+        </div>
+      )}
+
+      {zoneToDelete && (
+        <div className="workspace-modal-backdrop">
+          <section
+            className="workspace-modal archive-confirmation"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-zone-title"
+          >
+            <header>
+              <div>
+                <span>Plani virtual</span>
+                <h2 id="delete-zone-title">Fshi zonën?</h2>
+              </div>
+            </header>
+            <p>
+              Zona “{zoneToDelete.name}” do të hiqet nga konfigurimi virtual.
+              Fshirja bllokohet nëse ka pajisje ose sensorë të lidhur.
+            </p>
+            <footer>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setZoneToDelete(null)}
+              >
+                Anulo
+              </Button>
+              <Button type="button" onClick={deleteZone} disabled={saving}>
+                {saving ? "Po fshihet…" : "Fshi zonën"}
+              </Button>
+            </footer>
           </section>
         </div>
       )}

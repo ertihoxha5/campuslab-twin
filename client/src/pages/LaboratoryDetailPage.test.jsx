@@ -8,6 +8,7 @@ import { LaboratoryDetailPage } from "./LaboratoryDetailPage.jsx";
 vi.mock("@/api/client.js", () => ({
   api: {
     get: vi.fn(),
+    post: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
   },
@@ -71,7 +72,7 @@ describe("LaboratoryDetailPage", () => {
         name: "Laboratori i Automatizimit",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Zona e Mësimit")).toBeInTheDocument();
+    expect(screen.getAllByText("Zona e Mësimit")).toHaveLength(2);
     expect(screen.getByText("4 / 6")).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith("/api/laboratories/15");
     expect(api.get).toHaveBeenCalledWith("/api/laboratories/15/zones");
@@ -122,6 +123,89 @@ describe("LaboratoryDetailPage", () => {
     expect(
       screen.queryByRole("button", { name: "Arkivo laboratorin" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Shto zonë" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("creates a configured virtual zone and updates the preview", async () => {
+    const newZone = {
+      ...zone,
+      id: "4",
+      name: "Zona e Robotikës",
+      code: "ROBOT-1",
+    };
+    api.post.mockResolvedValue({
+      data: { zone: newZone, message: "Zona u krijua me sukses." },
+    });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Shto zonë" }));
+    fireEvent.change(screen.getByLabelText("Emri i zonës"), {
+      target: { value: "Zona e Robotikës" },
+    });
+    fireEvent.change(screen.getByLabelText("Kodi"), {
+      target: { value: "ROBOT-1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Krijo zonën" }));
+
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith(
+        "/api/laboratories/15/zones",
+        expect.objectContaining({
+          name: "Zona e Robotikës",
+          code: "ROBOT-1",
+          position: { x: 0, y: 0, z: 0 },
+          dimensions: { width: 6, height: 3, depth: 6 },
+          environmentalThresholds: {
+            temperature: { min: 18, max: 26 },
+            humidity: { min: 30, max: 70 },
+            co2: { min: 350, max: 1000 },
+          },
+        }),
+      ),
+    );
+    expect(
+      await screen.findByText("Zona u krijua me sukses."),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Zona e Robotikës")).toHaveLength(3);
+  });
+
+  it("edits and deletes a selected virtual zone", async () => {
+    const updatedZone = { ...zone, name: "Zona e Avancuar" };
+    api.put.mockResolvedValue({
+      data: { zone: updatedZone, message: "Zona u përditësua me sukses." },
+    });
+    api.delete.mockResolvedValue({
+      data: { zone: updatedZone, message: "Zona u fshi me sukses." },
+    });
+    renderPage();
+
+    const zoneButtons = await screen.findAllByRole("button", {
+      name: /Zona e Mësimit/,
+    });
+    fireEvent.click(zoneButtons.at(-1));
+    fireEvent.click(screen.getAllByRole("button", { name: "Ndrysho" }).at(-1));
+    fireEvent.change(screen.getByLabelText("Emri i zonës"), {
+      target: { value: "Zona e Avancuar" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Ruaj zonën" }));
+
+    await waitFor(() =>
+      expect(api.put).toHaveBeenCalledWith(
+        "/api/laboratories/15/zones/3",
+        expect.objectContaining({ name: "Zona e Avancuar" }),
+      ),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Fshi" }));
+    fireEvent.click(screen.getByRole("button", { name: "Fshi zonën" }));
+    await waitFor(() =>
+      expect(api.delete).toHaveBeenCalledWith("/api/laboratories/15/zones/3"),
+    );
+    expect(
+      await screen.findByText("Zona u fshi me sukses."),
+    ).toBeInTheDocument();
   });
 
   it("archives a laboratory only after confirmation", async () => {

@@ -9,7 +9,11 @@ const zoneTypeLabels = {
   safety: "Siguri",
 };
 
-export function LaboratoryLayoutPreview({ zones }) {
+export function LaboratoryLayoutPreview({
+  zones,
+  onSelectZone,
+  selectedZoneId,
+}) {
   if (!zones.length) {
     return (
       <div className="virtual-layout-empty">
@@ -43,8 +47,11 @@ export function LaboratoryLayoutPreview({ zones }) {
           const height =
             (Number(zone.dimensions?.depth ?? 1) / bounds.depth) * 100;
           return (
-            <div
-              className={`virtual-zone zone-${zone.zoneType}`}
+            <button
+              type="button"
+              className={`virtual-zone zone-${zone.zoneType} ${
+                String(selectedZoneId) === String(zone.id) ? "is-selected" : ""
+              }`}
               key={zone.id}
               style={{
                 left: `${left}%`,
@@ -53,10 +60,11 @@ export function LaboratoryLayoutPreview({ zones }) {
                 height: `${Math.max(height, 12)}%`,
               }}
               title={`${zone.name} — ${zoneTypeLabels[zone.zoneType] ?? zone.zoneType}`}
+              onClick={() => onSelectZone?.(zone)}
             >
               <strong>{zone.name}</strong>
               <small>{zone.code}</small>
-            </div>
+            </button>
           );
         })}
       </div>

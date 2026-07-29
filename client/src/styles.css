@@ -1971,6 +1971,14 @@ a {
   border-radius: 0.5rem;
   background: var(--grape-soft);
   color: var(--grape);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.virtual-zone.is-selected {
+  outline: 3px solid rgba(88, 66, 124, 0.2);
+  outline-offset: 2px;
 }
 
 .virtual-zone strong,
@@ -2004,6 +2012,75 @@ a {
   margin: 0.75rem 0 0;
   color: var(--muted);
   font-size: 0.7rem;
+}
+
+.virtual-zone-list {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.15rem 1rem;
+  overflow-x: auto;
+}
+
+.virtual-zone-list > button {
+  min-width: 150px;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--background);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.virtual-zone-list > button.is-selected {
+  border-color: var(--grape);
+  background: var(--grape-soft);
+}
+
+.virtual-zone-list span,
+.virtual-zone-list strong,
+.virtual-zone-list small {
+  display: block;
+}
+
+.virtual-zone-list strong {
+  font-size: 0.75rem;
+}
+
+.virtual-zone-list small {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.selected-zone-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.15rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.selected-zone-toolbar strong,
+.selected-zone-toolbar span {
+  display: block;
+}
+
+.selected-zone-toolbar strong {
+  font-size: 0.78rem;
+}
+
+.selected-zone-toolbar span {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.67rem;
+}
+
+.selected-zone-toolbar > div:last-child {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .virtual-layout-empty {
@@ -2067,6 +2144,79 @@ a {
   gap: 0.65rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--border);
+}
+
+.zone-form-modal {
+  width: min(860px, 100%);
+}
+
+.zone-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.zone-form-grid > label,
+.zone-form-grid fieldset label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.zone-form-grid label > span,
+.zone-form-grid legend {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.zone-form-grid input,
+.zone-form-grid select,
+.zone-form-grid textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  outline: none;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+}
+
+.zone-form-grid input:focus,
+.zone-form-grid select:focus,
+.zone-form-grid textarea:focus {
+  border-color: var(--grape);
+  box-shadow: 0 0 0 3px var(--grape-soft);
+}
+
+.zone-form-grid fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+}
+
+.zone-form-grid fieldset > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.zone-form-grid fieldset .zone-threshold-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.zone-form-grid label small {
+  color: #a33a3a;
+  font-size: 0.68rem;
+}
+
+.zone-form-wide {
+  grid-column: 1 / -1;
 }
 
 .workspace-modal > header {
@@ -2200,6 +2350,24 @@ a {
 
   .laboratory-form-wide {
     grid-column: auto;
+  }
+
+  .selected-zone-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .zone-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .zone-form-wide {
+    grid-column: auto;
+  }
+
+  .zone-form-grid fieldset > div,
+  .zone-form-grid fieldset .zone-threshold-grid {
+    grid-template-columns: 1fr;
   }
 }
 
