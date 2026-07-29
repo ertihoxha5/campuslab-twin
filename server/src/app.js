@@ -15,6 +15,7 @@ import { createPlatformSettingsRouter } from "./modules/platform-settings/router
 import { createPlatformActivityRouter } from "./modules/platform-activity/router.js";
 import { createNotificationRouter } from "./modules/notifications/router.js";
 import { createDashboardRouter } from "./modules/dashboard/router.js";
+import { createLaboratoryRouter } from "./modules/laboratories/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -29,6 +30,7 @@ export function createApp({
   tenantAuthentication,
   notificationService,
   dashboardService,
+  laboratoryService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
@@ -121,6 +123,16 @@ export function createApp({
       "/api/dashboard",
       createDashboardRouter({
         service: dashboardService,
+        authenticateTenant: tenantAuthentication,
+      }),
+    );
+  }
+
+  if (laboratoryService && tenantAuthentication) {
+    app.use(
+      "/api/laboratories",
+      createLaboratoryRouter({
+        service: laboratoryService,
         authenticateTenant: tenantAuthentication,
       }),
     );

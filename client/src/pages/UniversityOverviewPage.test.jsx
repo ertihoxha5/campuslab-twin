@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api/client.js";
@@ -109,7 +108,6 @@ describe("UniversityOverviewPage", () => {
   });
 
   it("reloads the single endpoint with laboratory and time filters", async () => {
-    const userInteraction = userEvent.setup();
     api.get.mockResolvedValue({
       data: {
         summary: {
@@ -130,14 +128,12 @@ describe("UniversityOverviewPage", () => {
     renderOverview();
 
     await screen.findByText("Numri i laboratorëve");
-    await userInteraction.selectOptions(
-      screen.getByLabelText("Laboratori"),
-      "3",
-    );
-    await userInteraction.selectOptions(
-      screen.getByLabelText("Intervali i energjisë"),
-      "168",
-    );
+    fireEvent.change(screen.getByLabelText("Laboratori"), {
+      target: { value: "3" },
+    });
+    fireEvent.change(screen.getByLabelText("Intervali i energjisë"), {
+      target: { value: "168" },
+    });
 
     await waitFor(() =>
       expect(api.get).toHaveBeenLastCalledWith(
@@ -147,7 +143,6 @@ describe("UniversityOverviewPage", () => {
   });
 
   it("refreshes the summary when an operational realtime event arrives", async () => {
-    vi.useFakeTimers();
     api.get.mockResolvedValue({
       data: {
         summary: {
@@ -160,13 +155,11 @@ describe("UniversityOverviewPage", () => {
     });
 
     renderOverview();
-    await vi.runAllTimersAsync();
+    await screen.findByText("Numri i laboratorëve");
 
     const realtimeOptions = connectDashboardRealtime.mock.calls[0][0];
     realtimeOptions.onOperationalChange();
-    await vi.advanceTimersByTimeAsync(300);
 
-    expect(api.get).toHaveBeenCalledTimes(2);
-    vi.useRealTimers();
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
   });
 });

@@ -31,6 +31,8 @@ import { createNotificationRepository } from "./modules/notifications/repository
 import { createNotificationService } from "./modules/notifications/service.js";
 import { createDashboardRepository } from "./modules/dashboard/repository.js";
 import { createDashboardService } from "./modules/dashboard/service.js";
+import { createLaboratoryRepository } from "./modules/laboratories/repository.js";
+import { createLaboratoryService } from "./modules/laboratories/service.js";
 
 loadEnvironmentFile();
 
@@ -91,6 +93,9 @@ const notificationService = createNotificationService({
 const dashboardService = createDashboardService({
   repository: createDashboardRepository(databasePool),
 });
+const laboratoryService = createLaboratoryService({
+  repository: createLaboratoryRepository(databasePool),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -100,6 +105,7 @@ const app = createApp({
   tenantAuthentication,
   notificationService,
   dashboardService,
+  laboratoryService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
