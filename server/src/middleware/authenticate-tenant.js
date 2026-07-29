@@ -21,41 +21,49 @@ export function createTenantAuthentication({ authRepository, accessSecret }) {
   return async function authenticateTenant(request, _response, next) {
     try {
       const token = request.cookies?.[ACCESS_COOKIE];
-      if (!token) throw unauthenticated();
-
-      const payload = verifyAccessToken(token, accessSecret);
-      if (
-        payload.type !== "university" ||
-        !payload.sub ||
-        !payload.universityId
-      ) {
-        throw unauthenticated();
-      }
-
-      const user = await authRepository.findActiveUserById(
-        payload.sub,
-        payload.universityId,
-      );
-
-      if (
-        !user ||
-        user.userStatus !== "active" ||
-        user.universityStatus !== "active"
-      ) {
-        throw unavailable();
-      }
-
-      const roles = Object.freeze([...user.roles]);
-      request.auth = Object.freeze({
-        accountType: "university",
-        userId: String(user.id),
-        universityId: String(user.universityId),
-        roles,
-        permissions: Object.freeze(permissionsForRoles(roles)),
+      request.auth = await resolveTenantAuthentication({
+        token,
+        authRepository,
+        accessSecret,
       });
       next();
     } catch (error) {
       next(error);
     }
   };
+}
+
+export async function resolveTenantAuthentication({
+  token,
+  authRepository,
+  accessSecret,
+}) {
+  if (!token) throw unauthenticated();
+
+  const payload = verifyAccessToken(token, accessSecret);
+  if (payload.type !== "university" || !payload.sub || !payload.universityId) {
+    throw unauthenticated();
+  }
+
+  const user = await authRepository.findActiveUserById(
+    payload.sub,
+    payload.universityId,
+  );
+
+  if (
+    !user ||
+    user.userStatus !== "active" ||
+    user.universityStatus !== "active"
+  ) {
+    throw unavailable();
+  }
+
+  const roles = Object.freeze([...user.roles]);
+  return Object.freeze({
+    accountType: "university",
+    userId: String(user.id),
+    universityId: String(user.universityId),
+    roles,
+    permissions: Object.freeze(permissionsForRoles(roles)),
+  });
 }

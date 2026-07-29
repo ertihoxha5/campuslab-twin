@@ -7,6 +7,7 @@ import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { createUniversityRegistrationRouter } from "./modules/university-registrations/router.js";
 import { createAuthRouter } from "./modules/auth/router.js";
 import { createPlatformAuthRouter } from "./modules/platform-auth/router.js";
+import { createFileRouter } from "./modules/files/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -17,6 +18,8 @@ export function createApp({
   registrationService,
   authService,
   platformAuthService,
+  fileService,
+  tenantAuthentication,
   secureCookies = process.env.NODE_ENV === "production",
 } = {}) {
   const app = express();
@@ -75,6 +78,16 @@ export function createApp({
     app.use(
       "/api/platform/auth",
       createPlatformAuthRouter({ platformAuthService, secureCookies }),
+    );
+  }
+
+  if (fileService && tenantAuthentication) {
+    app.use(
+      "/api/files",
+      createFileRouter({
+        fileService,
+        authenticateTenant: tenantAuthentication,
+      }),
     );
   }
 

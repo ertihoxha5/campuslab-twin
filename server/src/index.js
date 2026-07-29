@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import { createApp } from "./app.js";
 import { parseEnvironment } from "./config/env.js";
 import { loadEnvironmentFile } from "./config/load-environment.js";
@@ -11,6 +12,11 @@ import { createAuthService } from "./modules/auth/service.js";
 import { createPlatformAuthRepository } from "./modules/platform-auth/repository.js";
 import { createPlatformAuthService } from "./modules/platform-auth/service.js";
 import { createRegistrationLogoStorage } from "./storage/registration-logo-storage.js";
+import { createTenantAuthentication } from "./middleware/authenticate-tenant.js";
+import { createFileRepository } from "./modules/files/repository.js";
+import { createFileService } from "./modules/files/service.js";
+import { createLaboratoryAccessRepository } from "./authorization/laboratory-access-repository.js";
+import { createRealtimeServer } from "./realtime/create-realtime-server.js";
 
 loadEnvironmentFile();
 
@@ -20,8 +26,9 @@ const registrationService = createRegistrationService({
   pool: databasePool,
   logoStorage: createRegistrationLogoStorage(),
 });
+const authRepository = createAuthRepository(databasePool);
 const authService = createAuthService({
-  repository: createAuthRepository(databasePool),
+  repository: authRepository,
   accessSecret: config.JWT_ACCESS_SECRET,
   accessTokenMinutes: config.ACCESS_TOKEN_MINUTES,
   refreshTokenDays: config.REFRESH_TOKEN_DAYS,
@@ -32,19 +39,37 @@ const platformAuthService = createPlatformAuthService({
   accessTokenMinutes: config.ACCESS_TOKEN_MINUTES,
   refreshTokenDays: config.REFRESH_TOKEN_DAYS,
 });
+const tenantAuthentication = createTenantAuthentication({
+  authRepository,
+  accessSecret: config.JWT_ACCESS_SECRET,
+});
+const laboratoryAccessRepository =
+  createLaboratoryAccessRepository(databasePool);
+const fileService = createFileService({
+  repository: createFileRepository(databasePool),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
   authService,
   platformAuthService,
+  fileService,
+  tenantAuthentication,
   secureCookies: config.NODE_ENV === "production",
+});
+const httpServer = createServer(app);
+createRealtimeServer(httpServer, {
+  clientOrigin: config.CLIENT_ORIGIN,
+  authRepository,
+  accessSecret: config.JWT_ACCESS_SECRET,
+  laboratoryAccessRepository,
 });
 
 async function startServer() {
   try {
     await checkDatabaseConnection(databasePool);
 
-    app.listen(config.PORT, () => {
+    httpServer.listen(config.PORT, () => {
       console.log(`API e CampusLab Twin po punon në portën ${config.PORT}.`);
     });
   } catch (error) {
