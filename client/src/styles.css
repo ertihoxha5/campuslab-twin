@@ -1434,6 +1434,138 @@ a {
   cursor: pointer;
 }
 
+.notification-menu {
+  position: relative;
+}
+
+.notification-count {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  display: grid;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.25rem;
+  place-items: center;
+  border: 2px solid var(--background);
+  border-radius: 999px;
+  background: var(--grape);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.notification-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.7rem);
+  right: 0;
+  width: min(390px, calc(100vw - 2rem));
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--background);
+  box-shadow: 0 18px 50px rgba(20, 16, 27, 0.14);
+}
+
+.notification-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.notification-panel-heading strong,
+.notification-panel-heading small {
+  display: block;
+}
+
+.notification-panel-heading small {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.notification-panel-heading button {
+  display: grid;
+  padding: 0.35rem;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.mark-all-read {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--grape);
+  font-size: 0.75rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.notification-list {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.notification-list > p,
+.notification-message {
+  margin: 0;
+  padding: 1.25rem 1rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.notification-message {
+  color: #a33a3a;
+}
+
+.notification-list > button {
+  display: block;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification-list > button.is-unread {
+  box-shadow: inset 3px 0 var(--grape);
+  background: var(--grape-soft);
+}
+
+.notification-list > button span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.notification-list > button small {
+  color: var(--muted);
+  font-size: 0.67rem;
+}
+
+.notification-list > button p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .sidebar-trigger,
 .sidebar-close {
   display: none;

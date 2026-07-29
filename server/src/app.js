@@ -13,6 +13,7 @@ import { createPlatformUniversityRouter } from "./modules/platform-universities/
 import { createPlatformStatisticsRouter } from "./modules/platform-statistics/router.js";
 import { createPlatformSettingsRouter } from "./modules/platform-settings/router.js";
 import { createPlatformActivityRouter } from "./modules/platform-activity/router.js";
+import { createNotificationRouter } from "./modules/notifications/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -25,6 +26,7 @@ export function createApp({
   platformAuthService,
   fileService,
   tenantAuthentication,
+  notificationService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
@@ -97,6 +99,16 @@ export function createApp({
       "/api/files",
       createFileRouter({
         fileService,
+        authenticateTenant: tenantAuthentication,
+      }),
+    );
+  }
+
+  if (notificationService && tenantAuthentication) {
+    app.use(
+      "/api/notifications",
+      createNotificationRouter({
+        service: notificationService,
         authenticateTenant: tenantAuthentication,
       }),
     );

@@ -27,6 +27,8 @@ import { createPlatformSettingsRepository } from "./modules/platform-settings/re
 import { createPlatformSettingsService } from "./modules/platform-settings/service.js";
 import { createPlatformActivityRepository } from "./modules/platform-activity/repository.js";
 import { createPlatformActivityService } from "./modules/platform-activity/service.js";
+import { createNotificationRepository } from "./modules/notifications/repository.js";
+import { createNotificationService } from "./modules/notifications/service.js";
 
 loadEnvironmentFile();
 
@@ -81,6 +83,9 @@ const laboratoryAccessRepository =
 const fileService = createFileService({
   repository: createFileRepository(databasePool),
 });
+const notificationService = createNotificationService({
+  repository: createNotificationRepository(databasePool),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -88,6 +93,7 @@ const app = createApp({
   platformAuthService,
   fileService,
   tenantAuthentication,
+  notificationService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,

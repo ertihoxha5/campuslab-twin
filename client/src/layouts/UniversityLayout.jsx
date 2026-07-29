@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import {
   Activity,
-  Bell,
   Box,
   Building2,
   ChartNoAxesCombined,
@@ -23,6 +22,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
+import { NotificationMenu } from "@/components/NotificationMenu.jsx";
 
 const roleLabels = {
   university_admin: "Administrator i universitetit",
@@ -213,13 +213,7 @@ export function UniversityLayout() {
             <strong>{current?.label}</strong>
           </div>
           <div className="university-account">
-            <button
-              type="button"
-              className="notification-button"
-              aria-label="Njoftimet"
-            >
-              <Bell size={19} />
-            </button>
+            <NotificationMenu />
             <div>
               <strong>{user?.fullName}</strong>
               <small>
