@@ -1950,6 +1950,77 @@ a {
   padding: 1.15rem;
 }
 
+.laboratory-model-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 1rem 1.15rem 0;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.laboratory-model-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: var(--grape-soft);
+  color: var(--grape);
+}
+
+.laboratory-model-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.laboratory-model-copy span,
+.laboratory-model-copy strong,
+.laboratory-model-copy small {
+  display: block;
+}
+
+.laboratory-model-copy span {
+  color: var(--grape);
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.laboratory-model-copy strong {
+  overflow: hidden;
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.laboratory-model-copy small {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.laboratory-model-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+}
+
 .virtual-layout-canvas {
   position: relative;
   min-height: 360px;
@@ -2355,6 +2426,19 @@ a {
   .selected-zone-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .laboratory-model-panel {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .laboratory-model-copy {
+    min-width: calc(100% - 60px);
+  }
+
+  .laboratory-model-actions {
+    width: 100%;
   }
 
   .zone-form-grid {

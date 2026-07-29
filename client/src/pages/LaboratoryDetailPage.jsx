@@ -16,6 +16,7 @@ import {
 import { api } from "@/api/client.js";
 import { LaboratoryForm } from "@/components/LaboratoryForm.jsx";
 import { LaboratoryLayoutPreview } from "@/components/LaboratoryLayoutPreview.jsx";
+import { LaboratoryModelPanel } from "@/components/LaboratoryModelPanel.jsx";
 import { LaboratoryZoneForm } from "@/components/LaboratoryZoneForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
@@ -41,6 +42,7 @@ export function LaboratoryDetailPage() {
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingModel, setUploadingModel] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
   const loadDetail = useCallback(
@@ -163,6 +165,56 @@ export function LaboratoryDetailPage() {
     }
   }
 
+  async function uploadModel(file) {
+    setUploadingModel(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const body = new FormData();
+      body.append("model", file);
+      const response = await api.post(
+        `/api/laboratories/${laboratoryId}/model`,
+        body,
+      );
+      const model = response.data.model;
+      setLaboratory((current) => ({
+        ...current,
+        modelFileId: model.id,
+        modelOriginalName: model.originalName,
+        modelMimeType: model.mimeType,
+        modelSizeBytes: model.sizeBytes,
+        modelCreatedAt: model.createdAt,
+      }));
+      setMessage({ type: "success", text: response.data.message });
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setUploadingModel(false);
+    }
+  }
+
+  async function removeModel() {
+    setUploadingModel(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const response = await api.delete(
+        `/api/laboratories/${laboratoryId}/model`,
+      );
+      setLaboratory((current) => ({
+        ...current,
+        modelFileId: null,
+        modelOriginalName: null,
+        modelMimeType: null,
+        modelSizeBytes: null,
+        modelCreatedAt: null,
+      }));
+      setMessage({ type: "success", text: response.data.message });
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setUploadingModel(false);
+    }
+  }
+
   if (loading && !laboratory) {
     return <p className="workspace-loading">Po ngarkohet laboratori…</p>;
   }
@@ -260,6 +312,25 @@ export function LaboratoryDetailPage() {
               <small>{zones.length} zona të konfiguruara</small>
             )}
           </header>
+          <LaboratoryModelPanel
+            laboratoryId={laboratoryId}
+            model={
+              laboratory.modelFileId
+                ? {
+                    id: laboratory.modelFileId,
+                    originalName: laboratory.modelOriginalName,
+                    mimeType: laboratory.modelMimeType,
+                    sizeBytes: laboratory.modelSizeBytes,
+                    createdAt: laboratory.modelCreatedAt,
+                  }
+                : null
+            }
+            canManage={canManage}
+            uploading={uploadingModel}
+            onUpload={uploadModel}
+            onRemove={removeModel}
+            onValidationError={(text) => setMessage({ type: "error", text })}
+          />
           <LaboratoryLayoutPreview
             zones={zones}
             selectedZoneId={selectedZone?.id}
