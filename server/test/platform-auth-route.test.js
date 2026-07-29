@@ -80,6 +80,34 @@ test("platform current administrator reads only its access cookie", async () => 
   assert.equal(body.data.administrator.accountType, "platform_admin");
 });
 
+test("platform session restore stays successful without a session", async () => {
+  const response = await fetch(`${baseUrl}/api/platform/auth/session`, {
+    method: "POST",
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data.administrator, null);
+});
+
+test("platform session restore rotates its isolated refresh cookie", async () => {
+  const response = await fetch(`${baseUrl}/api/platform/auth/session`, {
+    method: "POST",
+    headers: { Cookie: "clt_platform_refresh=platform-refresh-token" },
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data.administrator.id, "3");
+  assert.ok(
+    response.headers
+      .getSetCookie()
+      .some((cookie) =>
+        cookie.startsWith("clt_platform_access=platform-access-next"),
+      ),
+  );
+});
+
 test("platform logout clears isolated cookies", async () => {
   const response = await fetch(`${baseUrl}/api/platform/auth/logout`, {
     method: "POST",

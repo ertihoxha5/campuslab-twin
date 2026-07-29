@@ -11,6 +11,10 @@ import { LoginPage } from "@/pages/LoginPage.jsx";
 import { NotFoundPage } from "@/pages/NotFoundPage.jsx";
 import { RegisterPage } from "@/pages/RegisterPage.jsx";
 import { ResetPasswordPage } from "@/pages/ResetPasswordPage.jsx";
+import { PlatformLayout } from "@/layouts/PlatformLayout.jsx";
+import { PlatformHomePage } from "@/pages/PlatformHomePage.jsx";
+import { PlatformLoginPage } from "@/pages/PlatformLoginPage.jsx";
+import { PlatformProtectedRoute } from "@/routes/PlatformProtectedRoute.jsx";
 
 export default function App() {
   return (
@@ -27,6 +31,12 @@ export default function App() {
           <Route path="harrova-fjalekalimin" element={<ForgotPasswordPage />} />
           <Route path="rivendos-fjalekalimin" element={<ResetPasswordPage />} />
           <Route path="*" element={<NotFoundPage />} />
+        </Route>
+        <Route path="administrimi/kycu" element={<PlatformLoginPage />} />
+        <Route element={<PlatformProtectedRoute />}>
+          <Route path="administrimi" element={<PlatformLayout />}>
+            <Route index element={<PlatformHomePage />} />
+          </Route>
         </Route>
       </Routes>
     </AuthSessionBootstrap>

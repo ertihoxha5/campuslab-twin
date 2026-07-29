@@ -942,6 +942,122 @@ a {
   text-align: center;
 }
 
+.platform-login-page {
+  display: grid;
+  min-height: 100vh;
+  padding: 50px 20px;
+  place-items: center;
+  background: var(--surface);
+}
+
+.platform-login-panel {
+  width: min(100%, 500px);
+  padding: 52px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+.platform-login-panel h1,
+.platform-welcome h1 {
+  margin: 0;
+  font-size: clamp(2.1rem, 5vw, 3.5rem);
+  letter-spacing: -0.05em;
+}
+
+.platform-login-panel > p:not(.eyebrow) {
+  margin: 18px 0 34px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.platform-login-panel form {
+  display: grid;
+  gap: 20px;
+}
+
+.platform-login-panel label {
+  display: grid;
+  gap: 9px;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.platform-login-panel input {
+  padding: 12px 13px;
+  color: var(--text);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.platform-shell {
+  min-height: 100vh;
+  background: var(--surface);
+}
+
+.platform-header {
+  display: flex;
+  min-height: 78px;
+  padding: 14px clamp(20px, 5vw, 72px);
+  align-items: center;
+  justify-content: space-between;
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+}
+
+.platform-brand,
+.platform-account {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.platform-brand > span {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  color: #fff;
+  background: var(--grape);
+  border-radius: 10px;
+}
+
+.platform-brand div,
+.platform-account div {
+  display: grid;
+  gap: 3px;
+}
+
+.platform-brand small,
+.platform-account small {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.platform-account {
+  gap: 22px;
+  text-align: right;
+}
+
+.platform-content {
+  width: min(calc(100% - 48px), 1200px);
+  margin-inline: auto;
+  padding: 90px 0;
+}
+
+.platform-welcome {
+  max-width: 780px;
+}
+
+.platform-welcome > p:last-child {
+  max-width: 650px;
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
 .not-found h1 {
   margin: 0 0 28px;
   font-size: clamp(2.5rem, 7vw, 5rem);
@@ -1134,6 +1250,27 @@ a {
   .footer-bottom {
     gap: 8px;
     flex-direction: column;
+  }
+
+  .platform-login-panel {
+    padding: 34px 24px;
+  }
+
+  .platform-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .platform-account {
+    width: 100%;
+    justify-content: space-between;
+    text-align: left;
+  }
+
+  .platform-content {
+    width: min(calc(100% - 32px), 1200px);
+    padding: 64px 0;
   }
 }
 

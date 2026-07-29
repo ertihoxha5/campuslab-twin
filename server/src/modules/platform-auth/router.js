@@ -66,6 +66,28 @@ export function createPlatformAuthRouter({
     });
   });
 
+  router.post("/session", async (request, response) => {
+    const refreshToken = request.cookies[REFRESH_COOKIE];
+    if (!refreshToken) {
+      return success(response, { data: { administrator: null } });
+    }
+
+    try {
+      const session = await platformAuthService.refresh(
+        refreshToken,
+        context(request),
+      );
+      setCookies(response, session);
+      return success(response, {
+        data: { administrator: session.administrator },
+      });
+    } catch (error) {
+      if (error.status !== 401 && error.status !== 403) throw error;
+      clearCookies(response);
+      return success(response, { data: { administrator: null } });
+    }
+  });
+
   router.get("/me", async (request, response) => {
     const administrator = await platformAuthService.currentAdministrator(
       request.cookies[ACCESS_COOKIE],
