@@ -3,11 +3,16 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api/client.js";
+import { connectDashboardRealtime } from "@/api/realtime.js";
 import { useAuthStore } from "@/stores/auth-store.js";
 import { UniversityOverviewPage } from "./UniversityOverviewPage.jsx";
 
 vi.mock("@/api/client.js", () => ({
   api: { get: vi.fn() },
+}));
+
+vi.mock("@/api/realtime.js", () => ({
+  connectDashboardRealtime: vi.fn(() => vi.fn()),
 }));
 
 const user = {
@@ -25,6 +30,7 @@ function renderOverview() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  connectDashboardRealtime.mockReturnValue(vi.fn());
   useAuthStore.getState().setSession(user);
 });
 
@@ -138,5 +144,29 @@ describe("UniversityOverviewPage", () => {
         "/api/dashboard/summary?hours=168&laboratoryId=3",
       ),
     );
+  });
+
+  it("refreshes the summary when an operational realtime event arrives", async () => {
+    vi.useFakeTimers();
+    api.get.mockResolvedValue({
+      data: {
+        summary: {
+          metrics: { laboratories: 1 },
+          lastUpdatedAt: "2026-07-29T16:00:00.000Z",
+          containsSimulatedData: true,
+          laboratories: [],
+        },
+      },
+    });
+
+    renderOverview();
+    await vi.runAllTimersAsync();
+
+    const realtimeOptions = connectDashboardRealtime.mock.calls[0][0];
+    realtimeOptions.onOperationalChange();
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(api.get).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
   });
 });

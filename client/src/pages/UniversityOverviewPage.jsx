@@ -1,4 +1,11 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Activity,
   Building2,
@@ -12,6 +19,7 @@ import {
   Zap,
 } from "lucide-react";
 import { api } from "@/api/client.js";
+import { connectDashboardRealtime } from "@/api/realtime.js";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 
@@ -82,6 +90,8 @@ export function UniversityOverviewPage() {
   const [hours, setHours] = useState("24");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [realtimeStatus, setRealtimeStatus] = useState("connecting");
+  const realtimeRefreshTimer = useRef(null);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -106,6 +116,23 @@ export function UniversityOverviewPage() {
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  useEffect(() => {
+    const scheduleRefresh = () => {
+      window.clearTimeout(realtimeRefreshTimer.current);
+      realtimeRefreshTimer.current = window.setTimeout(loadSummary, 300);
+    };
+    const disconnect = connectDashboardRealtime({
+      laboratoryId,
+      onOperationalChange: scheduleRefresh,
+      onConnectionChange: setRealtimeStatus,
+    });
+
+    return () => {
+      window.clearTimeout(realtimeRefreshTimer.current);
+      disconnect();
+    };
+  }, [laboratoryId, loadSummary]);
 
   return (
     <section className="workspace-overview">
@@ -195,6 +222,14 @@ export function UniversityOverviewPage() {
         <>
           <div className="dashboard-meta">
             <span>Përditësuar më {formatDate(summary.lastUpdatedAt)}</span>
+            <span className={`realtime-status ${realtimeStatus}`} role="status">
+              <i aria-hidden="true" />
+              {realtimeStatus === "connected"
+                ? "Përditësim në kohë reale"
+                : realtimeStatus === "connecting"
+                  ? "Po lidhet në kohë reale"
+                  : "Lidhja në kohë reale është ndërprerë"}
+            </span>
             <span
               className={
                 summary.containsSimulatedData
