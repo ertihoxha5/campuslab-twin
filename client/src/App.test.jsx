@@ -51,4 +51,26 @@ describe("public frontend", () => {
       }),
     ).toBeInTheDocument();
   });
+
+  it("shows honest public explanations, process, FAQ, and contact", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Një pasqyrë digjitale e laboratorit fizik.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Përpara se të regjistroheni." }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Na kontaktoni/ })).toHaveAttribute(
+      "href",
+      "/kontakti",
+    );
+    expect(screen.queryByText(/dashboard demo/i)).not.toBeInTheDocument();
+  });
 });
