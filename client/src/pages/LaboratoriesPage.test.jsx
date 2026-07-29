@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api/client.js";
 import { useAuthStore } from "@/stores/auth-store.js";
@@ -45,7 +46,7 @@ describe("LaboratoriesPage", () => {
       meta: { pagination: { page: 1, pages: 1, total: 1 } },
     });
 
-    render(<LaboratoriesPage />);
+    renderPage();
 
     expect(
       await screen.findByText("Laboratori i Automatizimit"),
@@ -77,7 +78,7 @@ describe("LaboratoriesPage", () => {
       },
     });
 
-    render(<LaboratoriesPage />);
+    renderPage();
     fireEvent.click(
       await screen.findByRole("button", { name: "Laborator i ri" }),
     );
@@ -128,7 +129,7 @@ describe("LaboratoriesPage", () => {
       meta: { pagination: { page: 1, pages: 0, total: 0 } },
     });
 
-    render(<LaboratoriesPage />);
+    renderPage();
 
     expect(
       await screen.findByText(
@@ -140,3 +141,11 @@ describe("LaboratoriesPage", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <LaboratoriesPage />
+    </MemoryRouter>,
+  );
+}

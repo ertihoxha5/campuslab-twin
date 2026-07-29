@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Link } from "react-router-dom";
 import {
   Building2,
   MapPin,
@@ -9,9 +9,8 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { api } from "@/api/client.js";
+import { LaboratoryForm } from "@/components/LaboratoryForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 
@@ -19,38 +18,6 @@ const statusLabels = {
   active: "Aktiv",
   inactive: "Joaktiv",
   maintenance: "Në mirëmbajtje",
-};
-
-const laboratorySchema = z.object({
-  name: z.string().trim().min(2, "Shkruani emrin e laboratorit."),
-  code: z
-    .string()
-    .trim()
-    .min(2, "Shkruani kodin e laboratorit.")
-    .regex(
-      /^[A-Za-z0-9_-]+$/,
-      "Kodi mund të përmbajë vetëm shkronja, numra, - dhe _.",
-    ),
-  faculty: z.string().trim().min(2, "Shkruani fakultetin."),
-  building: z.string().trim().min(1, "Shkruani ndërtesën."),
-  floor: z.string().trim().min(1, "Shkruani katin."),
-  capacity: z.coerce
-    .number({ error: "Shkruani kapacitetin." })
-    .int("Kapaciteti duhet të jetë numër i plotë.")
-    .min(1, "Kapaciteti duhet të jetë së paku 1."),
-  status: z.enum(["active", "inactive", "maintenance"]),
-  description: z.string().trim().max(5000).optional(),
-});
-
-const defaultValues = {
-  name: "",
-  code: "",
-  faculty: "",
-  building: "",
-  floor: "",
-  capacity: 20,
-  status: "active",
-  description: "",
 };
 
 export function LaboratoriesPage() {
@@ -66,15 +33,6 @@ export function LaboratoriesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(laboratorySchema),
-    defaultValues,
-  });
 
   const loadLaboratories = useCallback(
     async ({ keepMessage = false } = {}) => {
@@ -118,7 +76,6 @@ export function LaboratoriesPage() {
       const response = await api.post("/api/laboratories", values);
       setMessage({ type: "success", text: response.data.message });
       setShowForm(false);
-      reset(defaultValues);
       setPage(1);
       await loadLaboratories({ keepMessage: true });
     } catch (error) {
@@ -243,6 +200,12 @@ export function LaboratoriesPage() {
                     <dd>{laboratory.capacity} persona</dd>
                   </div>
                 </dl>
+                <Link
+                  className="laboratory-open-link"
+                  to={`/aplikacioni/laboratoret/${laboratory.id}`}
+                >
+                  Hap laboratorin
+                </Link>
               </article>
             ))}
           </div>
@@ -299,89 +262,15 @@ export function LaboratoriesPage() {
                 <X size={20} />
               </button>
             </header>
-            <form onSubmit={handleSubmit(createLaboratory)}>
-              <div className="laboratory-form-grid">
-                <FormField
-                  label="Emri"
-                  error={errors.name?.message}
-                  input={<input {...register("name")} />}
-                />
-                <FormField
-                  label="Kodi"
-                  error={errors.code?.message}
-                  input={
-                    <input
-                      {...register("code")}
-                      placeholder="p.sh. LAB-KIMI-01"
-                    />
-                  }
-                />
-                <FormField
-                  label="Fakulteti"
-                  error={errors.faculty?.message}
-                  input={<input {...register("faculty")} />}
-                />
-                <FormField
-                  label="Ndërtesa"
-                  error={errors.building?.message}
-                  input={<input {...register("building")} />}
-                />
-                <FormField
-                  label="Kati"
-                  error={errors.floor?.message}
-                  input={<input {...register("floor")} />}
-                />
-                <FormField
-                  label="Kapaciteti"
-                  error={errors.capacity?.message}
-                  input={
-                    <input type="number" min="1" {...register("capacity")} />
-                  }
-                />
-                <FormField
-                  label="Statusi"
-                  error={errors.status?.message}
-                  input={
-                    <select {...register("status")}>
-                      <option value="active">Aktiv</option>
-                      <option value="inactive">Joaktiv</option>
-                      <option value="maintenance">Në mirëmbajtje</option>
-                    </select>
-                  }
-                />
-                <FormField
-                  className="laboratory-form-wide"
-                  label="Përshkrimi"
-                  error={errors.description?.message}
-                  input={<textarea rows="4" {...register("description")} />}
-                />
-              </div>
-              <footer>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowForm(false)}
-                >
-                  Anulo
-                </Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? "Po ruhet…" : "Krijo laboratorin"}
-                </Button>
-              </footer>
-            </form>
+            <LaboratoryForm
+              onSubmit={createLaboratory}
+              onCancel={() => setShowForm(false)}
+              saving={saving}
+              submitLabel="Krijo laboratorin"
+            />
           </section>
         </div>
       )}
     </section>
-  );
-}
-
-function FormField({ label, input, error, className = "" }) {
-  return (
-    <label className={className}>
-      <span>{label}</span>
-      {input}
-      {error && <small>{error}</small>}
-    </label>
   );
 }

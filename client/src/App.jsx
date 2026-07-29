@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import { PublicLayout } from "@/components/PublicLayout.jsx";
 import { AuthSessionBootstrap } from "@/components/AuthSessionBootstrap.jsx";
@@ -23,10 +24,26 @@ import { ProtectedRoute } from "@/routes/ProtectedRoute.jsx";
 import { PermissionRoute } from "@/routes/PermissionRoute.jsx";
 import { UniversityLayout } from "@/layouts/UniversityLayout.jsx";
 import { UniversityOverviewPage } from "@/pages/UniversityOverviewPage.jsx";
-import { LaboratoriesPage } from "@/pages/LaboratoriesPage.jsx";
 import { WorkspaceSectionPage } from "@/pages/WorkspaceSectionPage.jsx";
 import { ForbiddenPage } from "@/pages/ForbiddenPage.jsx";
 import { WorkspaceNotFoundPage } from "@/pages/WorkspaceNotFoundPage.jsx";
+
+const LaboratoriesPage = lazy(() =>
+  import("@/pages/LaboratoriesPage.jsx").then((module) => ({
+    default: module.LaboratoriesPage,
+  })),
+);
+const LaboratoryDetailPage = lazy(() =>
+  import("@/pages/LaboratoryDetailPage.jsx").then((module) => ({
+    default: module.LaboratoryDetailPage,
+  })),
+);
+
+const laboratoryPage = (Page) => (
+  <Suspense fallback={<p className="workspace-loading">Po ngarkohet faqja…</p>}>
+    <Page />
+  </Suspense>
+);
 
 export default function App() {
   return (
@@ -50,7 +67,14 @@ export default function App() {
             <Route index element={<UniversityOverviewPage />} />
             <Route path="e-ndaluar" element={<ForbiddenPage />} />
             <Route element={<PermissionRoute anyOf={["laboratories.view"]} />}>
-              <Route path="laboratoret" element={<LaboratoriesPage />} />
+              <Route
+                path="laboratoret"
+                element={laboratoryPage(LaboratoriesPage)}
+              />
+              <Route
+                path="laboratoret/:laboratoryId"
+                element={laboratoryPage(LaboratoryDetailPage)}
+              />
               <Route
                 path="digital-twin"
                 element={
