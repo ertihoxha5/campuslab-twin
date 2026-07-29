@@ -1878,6 +1878,67 @@ a {
   margin-top: 1.5rem;
 }
 
+.laboratory-detail-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 1.35rem;
+  padding-bottom: 0.1rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.laboratory-detail-tabs button {
+  padding: 0.7rem 0.85rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.laboratory-detail-tabs button:hover {
+  color: var(--grape);
+}
+
+.laboratory-detail-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--grape);
+  color: var(--grape);
+}
+
+.laboratory-detail-grid[data-active-tab="summary"] .laboratory-virtual-panel,
+.laboratory-detail-grid:not([data-active-tab="summary"])
+  .laboratory-info-panel {
+  display: none;
+}
+
+.laboratory-detail-grid[data-active-tab="zones"] .laboratory-model-panel {
+  display: none;
+}
+
+.laboratory-detail-grid[data-active-tab="virtual"] .virtual-layout-preview,
+.laboratory-detail-grid[data-active-tab="virtual"] .virtual-zone-list,
+.laboratory-detail-grid[data-active-tab="virtual"] .selected-zone-toolbar,
+.laboratory-detail-grid[data-active-tab="virtual"]
+  .laboratory-virtual-panel
+  > header
+  > button,
+.laboratory-detail-grid[data-active-tab="virtual"]
+  .laboratory-virtual-panel
+  > header
+  > small {
+  display: none;
+}
+
+.laboratory-detail-grid[data-active-tab="summary"],
+.laboratory-detail-grid[data-active-tab="zones"],
+.laboratory-detail-grid[data-active-tab="virtual"] {
+  grid-template-columns: 1fr;
+}
+
 .laboratory-detail-stats article {
   display: flex;
   min-width: 0;

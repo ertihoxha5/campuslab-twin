@@ -117,6 +117,7 @@ describe("LaboratoryDetailPage", () => {
     renderPage();
 
     await screen.findByText("Laboratori i Automatizimit");
+    fireEvent.click(screen.getByRole("tab", { name: "Zonat (1)" }));
     expect(
       screen.queryByRole("button", { name: "Ndrysho" }),
     ).not.toBeInTheDocument();
@@ -140,6 +141,7 @@ describe("LaboratoryDetailPage", () => {
     });
     renderPage();
 
+    fireEvent.click(await screen.findByRole("tab", { name: "Zonat (1)" }));
     fireEvent.click(await screen.findByRole("button", { name: "Shto zonë" }));
     fireEvent.change(screen.getByLabelText("Emri i zonës"), {
       target: { value: "Zona e Robotikës" },
@@ -181,6 +183,7 @@ describe("LaboratoryDetailPage", () => {
     });
     renderPage();
 
+    fireEvent.click(await screen.findByRole("tab", { name: "Zonat (1)" }));
     const zoneButtons = await screen.findAllByRole("button", {
       name: /Zona e Mësimit/,
     });
@@ -226,6 +229,7 @@ describe("LaboratoryDetailPage", () => {
     });
     renderPage();
 
+    fireEvent.click(await screen.findByRole("tab", { name: "Pamja virtuale" }));
     expect(
       await screen.findByText("Nuk ka pamje të ngarkuar"),
     ).toBeInTheDocument();

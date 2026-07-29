@@ -39,6 +39,7 @@ export function LaboratoryDetailPage() {
   const [editing, setEditing] = useState(false);
   const [editingZone, setEditingZone] = useState(undefined);
   const [selectedZone, setSelectedZone] = useState(null);
+  const [activeTab, setActiveTab] = useState("summary");
   const [zoneToDelete, setZoneToDelete] = useState(null);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -282,37 +283,73 @@ export function LaboratoryDetailPage() {
         </p>
       )}
 
-      <div className="laboratory-detail-stats">
-        <DetailStat
-          icon={MapPin}
-          label="Vendndodhja"
-          value={`${laboratory.building}, kati ${laboratory.floor}`}
-        />
-        <DetailStat
-          icon={Users}
-          label="Kapaciteti"
-          value={`${laboratory.capacity} persona`}
-        />
-        <DetailStat
-          icon={Boxes}
-          label="Zonat"
-          value={String(laboratory.zoneCount ?? zones.length)}
-        />
-        <DetailStat
-          icon={Cpu}
-          label="Pajisje / Sensorë"
-          value={`${laboratory.equipmentCount ?? 0} / ${laboratory.sensorCount ?? 0}`}
-        />
-      </div>
+      <nav
+        className="laboratory-detail-tabs"
+        role="tablist"
+        aria-label="Seksionet e laboratorit"
+      >
+        {[
+          ["summary", "Përmbledhja"],
+          ["zones", `Zonat (${zones.length})`],
+          ["virtual", "Pamja virtuale"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === value}
+            onClick={() => setActiveTab(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
 
-      <div className="laboratory-detail-grid">
-        <article className="laboratory-detail-panel">
+      {activeTab === "summary" && (
+        <div className="laboratory-detail-stats">
+          <DetailStat
+            icon={MapPin}
+            label="Vendndodhja"
+            value={`${laboratory.building}, kati ${laboratory.floor}`}
+          />
+          <DetailStat
+            icon={Users}
+            label="Kapaciteti"
+            value={`${laboratory.capacity} persona`}
+          />
+          <DetailStat
+            icon={Boxes}
+            label="Zonat"
+            value={String(laboratory.zoneCount ?? zones.length)}
+          />
+          <DetailStat
+            icon={Cpu}
+            label="Pajisje / Sensorë"
+            value={`${laboratory.equipmentCount ?? 0} / ${laboratory.sensorCount ?? 0}`}
+          />
+        </div>
+      )}
+
+      <div className="laboratory-detail-grid" data-active-tab={activeTab}>
+        <article
+          className="laboratory-detail-panel laboratory-virtual-panel"
+          hidden={activeTab === "summary"}
+          aria-label={
+            activeTab === "zones"
+              ? "Konfigurimi i zonave"
+              : "Pamja virtuale e laboratorit"
+          }
+        >
           <header>
             <div>
               <span>Digital Twin</span>
-              <h2>Konfigurimi virtual</h2>
+              <h2>
+                {activeTab === "zones"
+                  ? "Konfigurimi i zonave"
+                  : "Pamja e laboratorit"}
+              </h2>
             </div>
-            {canManage ? (
+            {activeTab === "zones" && canManage ? (
               <Button
                 type="button"
                 size="sm"
@@ -320,93 +357,100 @@ export function LaboratoryDetailPage() {
               >
                 <Plus size={15} /> Shto zonë
               </Button>
-            ) : (
+            ) : activeTab === "zones" ? (
               <small>{zones.length} zona të konfiguruara</small>
-            )}
+            ) : null}
           </header>
-          <LaboratoryModelPanel
-            laboratoryId={laboratoryId}
-            model={
-              laboratory.modelFileId
-                ? {
-                    id: laboratory.modelFileId,
-                    originalName: laboratory.modelOriginalName,
-                    mimeType: laboratory.modelMimeType,
-                    sizeBytes: laboratory.modelSizeBytes,
-                    createdAt: laboratory.modelCreatedAt,
-                  }
-                : null
-            }
-            canManage={canManage}
-            uploading={uploadingModel}
-            onUpload={uploadModel}
-            onRemove={removeModel}
-            onValidationError={(text) => setMessage({ type: "error", text })}
-          />
-          <LaboratoryLayoutPreview
-            zones={zones}
-            selectedZoneId={selectedZone?.id}
-            onSelectZone={setSelectedZone}
-          />
-          {zones.length > 0 && (
-            <div className="virtual-zone-list">
-              {zones.map((zone) => (
-                <button
-                  type="button"
-                  className={
-                    String(selectedZone?.id) === String(zone.id)
-                      ? "is-selected"
-                      : ""
-                  }
-                  key={zone.id}
-                  onClick={() => setSelectedZone(zone)}
-                >
-                  <span>
-                    <strong>{zone.name}</strong>
-                    <small>
-                      {zone.code} · {zone.dimensions?.width ?? 0} ×{" "}
-                      {zone.dimensions?.depth ?? 0} m
-                    </small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-          {selectedZone && (
-            <div className="selected-zone-toolbar">
-              <div>
-                <strong>{selectedZone.name}</strong>
-                <span>
-                  Pozicioni: X {selectedZone.position?.x ?? 0}, Y{" "}
-                  {selectedZone.position?.y ?? 0}, Z{" "}
-                  {selectedZone.position?.z ?? 0}
-                </span>
+          <div hidden={activeTab !== "virtual"}>
+            <LaboratoryModelPanel
+              laboratoryId={laboratoryId}
+              model={
+                laboratory.modelFileId
+                  ? {
+                      id: laboratory.modelFileId,
+                      originalName: laboratory.modelOriginalName,
+                      mimeType: laboratory.modelMimeType,
+                      sizeBytes: laboratory.modelSizeBytes,
+                      createdAt: laboratory.modelCreatedAt,
+                    }
+                  : null
+              }
+              canManage={canManage}
+              uploading={uploadingModel}
+              onUpload={uploadModel}
+              onRemove={removeModel}
+              onValidationError={(text) => setMessage({ type: "error", text })}
+            />
+          </div>
+          <div hidden={activeTab !== "zones"}>
+            <LaboratoryLayoutPreview
+              zones={zones}
+              selectedZoneId={selectedZone?.id}
+              onSelectZone={setSelectedZone}
+            />
+            {zones.length > 0 && (
+              <div className="virtual-zone-list">
+                {zones.map((zone) => (
+                  <button
+                    type="button"
+                    className={
+                      String(selectedZone?.id) === String(zone.id)
+                        ? "is-selected"
+                        : ""
+                    }
+                    key={zone.id}
+                    onClick={() => setSelectedZone(zone)}
+                  >
+                    <span>
+                      <strong>{zone.name}</strong>
+                      <small>
+                        {zone.code} · {zone.dimensions?.width ?? 0} ×{" "}
+                        {zone.dimensions?.depth ?? 0} m
+                      </small>
+                    </span>
+                  </button>
+                ))}
               </div>
-              {canManage && (
+            )}
+            {selectedZone && (
+              <div className="selected-zone-toolbar">
                 <div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingZone(selectedZone)}
-                  >
-                    <Pencil size={14} /> Ndrysho
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setZoneToDelete(selectedZone)}
-                  >
-                    <Trash2 size={14} /> Fshi
-                  </Button>
+                  <strong>{selectedZone.name}</strong>
+                  <span>
+                    Pozicioni: X {selectedZone.position?.x ?? 0}, Y{" "}
+                    {selectedZone.position?.y ?? 0}, Z{" "}
+                    {selectedZone.position?.z ?? 0}
+                  </span>
                 </div>
-              )}
-            </div>
-          )}
+                {canManage && (
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingZone(selectedZone)}
+                    >
+                      <Pencil size={14} /> Ndrysho
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setZoneToDelete(selectedZone)}
+                    >
+                      <Trash2 size={14} /> Fshi
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </article>
 
-        <aside className="laboratory-detail-panel laboratory-info-panel">
+        <aside
+          className="laboratory-detail-panel laboratory-info-panel"
+          hidden={activeTab !== "summary"}
+        >
           <header>
             <div>
               <span>Informacioni</span>
