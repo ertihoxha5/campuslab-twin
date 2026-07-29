@@ -1622,6 +1622,328 @@ a {
   color: var(--muted);
 }
 
+.laboratories-heading,
+.laboratories-heading-actions,
+.laboratory-filters,
+.laboratory-pagination {
+  display: flex;
+  align-items: center;
+}
+
+.laboratories-heading {
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.laboratories-heading-actions {
+  flex: 0 0 auto;
+  gap: 0.65rem;
+}
+
+.laboratory-filters {
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--background);
+}
+
+.laboratory-filters form {
+  display: flex;
+  min-width: 260px;
+  flex: 1;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.laboratory-filters input,
+.laboratory-filters select,
+.laboratory-form-grid input,
+.laboratory-form-grid select,
+.laboratory-form-grid textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+}
+
+.laboratory-filters input {
+  min-height: 42px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.laboratory-filters label {
+  display: grid;
+  min-width: 190px;
+  gap: 0.25rem;
+}
+
+.laboratory-filters label span,
+.laboratory-form-grid label > span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.laboratory-filters select {
+  min-height: 42px;
+  padding: 0 0.7rem;
+}
+
+.laboratory-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.laboratory-card,
+.laboratory-card-skeleton {
+  min-height: 230px;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--background);
+}
+
+.laboratory-card {
+  padding: 1.2rem;
+}
+
+.laboratory-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.laboratory-code {
+  color: var(--grape);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.laboratory-card h2 {
+  margin: 1.15rem 0 0.3rem;
+  font-size: 1.05rem;
+}
+
+.laboratory-card > p {
+  min-height: 2.6rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.laboratory-card dl {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1.15rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.laboratory-card dl div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.laboratory-card dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.laboratory-card dd {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-align: right;
+}
+
+.laboratory-card-skeleton {
+  background: var(--surface);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.laboratory-pagination {
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.workspace-modal-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  padding: 1rem;
+  place-items: center;
+  overflow-y: auto;
+  background: rgba(18, 15, 24, 0.62);
+}
+
+.workspace-modal {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--background);
+  box-shadow: 0 24px 80px rgba(10, 8, 14, 0.24);
+}
+
+.workspace-modal > header,
+.workspace-modal form > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+}
+
+.workspace-modal > header {
+  border-bottom: 1px solid var(--border);
+}
+
+.workspace-modal > header span {
+  color: var(--grape);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.workspace-modal > header h2 {
+  margin: 0.2rem 0 0;
+  font-size: 1.15rem;
+}
+
+.workspace-modal > header button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--background);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.laboratory-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.laboratory-form-grid label {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+
+.laboratory-form-grid input,
+.laboratory-form-grid select,
+.laboratory-form-grid textarea {
+  min-height: 44px;
+  padding: 0.7rem 0.75rem;
+  outline: none;
+}
+
+.laboratory-form-grid input:focus,
+.laboratory-form-grid select:focus,
+.laboratory-form-grid textarea:focus {
+  border-color: var(--grape);
+  box-shadow: 0 0 0 3px var(--grape-soft);
+}
+
+.laboratory-form-grid textarea {
+  resize: vertical;
+}
+
+.laboratory-form-grid label small {
+  color: #a33a3a;
+  font-size: 0.7rem;
+}
+
+.laboratory-form-wide {
+  grid-column: 1 / -1;
+}
+
+.workspace-modal form > footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+}
+
+.status-inactive {
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.status-maintenance {
+  background: #fff4d9;
+  color: #805d13;
+}
+
+:root[data-theme="dark"] .status-maintenance {
+  background: #3c321d;
+  color: #f1ce78;
+}
+
+@media (max-width: 980px) {
+  .laboratory-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .laboratories-heading,
+  .laboratory-filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .laboratories-heading-actions {
+    flex-wrap: wrap;
+  }
+
+  .laboratories-heading-actions > * {
+    flex: 1;
+  }
+
+  .laboratory-filters form,
+  .laboratory-filters label {
+    min-width: 0;
+  }
+
+  .laboratory-card-grid,
+  .laboratory-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .laboratory-form-wide {
+    grid-column: auto;
+  }
+}
+
 .dashboard-heading,
 .dashboard-meta,
 .dashboard-error {

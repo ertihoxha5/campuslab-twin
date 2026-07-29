@@ -23,6 +23,7 @@ import { ProtectedRoute } from "@/routes/ProtectedRoute.jsx";
 import { PermissionRoute } from "@/routes/PermissionRoute.jsx";
 import { UniversityLayout } from "@/layouts/UniversityLayout.jsx";
 import { UniversityOverviewPage } from "@/pages/UniversityOverviewPage.jsx";
+import { LaboratoriesPage } from "@/pages/LaboratoriesPage.jsx";
 import { WorkspaceSectionPage } from "@/pages/WorkspaceSectionPage.jsx";
 import { ForbiddenPage } from "@/pages/ForbiddenPage.jsx";
 import { WorkspaceNotFoundPage } from "@/pages/WorkspaceNotFoundPage.jsx";
@@ -49,15 +50,7 @@ export default function App() {
             <Route index element={<UniversityOverviewPage />} />
             <Route path="e-ndaluar" element={<ForbiddenPage />} />
             <Route element={<PermissionRoute anyOf={["laboratories.view"]} />}>
-              <Route
-                path="laboratoret"
-                element={
-                  <WorkspaceSectionPage
-                    title="Laboratorët"
-                    description="Menaxhimi i laboratorëve dhe zonave të universitetit."
-                  />
-                }
-              />
+              <Route path="laboratoret" element={<LaboratoriesPage />} />
               <Route
                 path="digital-twin"
                 element={
