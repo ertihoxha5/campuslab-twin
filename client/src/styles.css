@@ -717,6 +717,42 @@ a {
   font-weight: 700;
 }
 
+.form-support-link {
+  width: fit-content;
+  margin-top: -8px;
+  color: var(--grape);
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.form-support-link:hover,
+.form-back-link:hover {
+  color: var(--reseda);
+}
+
+.form-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 24px;
+  place-items: center;
+  color: var(--grape);
+  background: var(--grape-soft);
+  border-radius: 12px;
+}
+
+.form-back-link {
+  display: inline-flex;
+  gap: 7px;
+  margin-top: 28px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
 .not-found {
   display: grid;
   min-height: 65vh;

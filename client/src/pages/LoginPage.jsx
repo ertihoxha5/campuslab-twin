@@ -52,6 +52,9 @@ export function LoginPage() {
           <label className="check-field">
             <input name="rememberMe" type="checkbox" /> Më mbaj të kyçur
           </label>
+          <Link className="form-support-link" to="/harrova-fjalekalimin">
+            Keni harruar fjalëkalimin?
+          </Link>
           {message && (
             <p className="form-message error" role="alert">
               {message}

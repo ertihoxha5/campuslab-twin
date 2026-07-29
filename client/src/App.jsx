@@ -3,11 +3,13 @@ import { PublicLayout } from "@/components/PublicLayout.jsx";
 import { AboutPage } from "@/pages/AboutPage.jsx";
 import { ContactPage } from "@/pages/ContactPage.jsx";
 import { FeaturesPage } from "@/pages/FeaturesPage.jsx";
+import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage.jsx";
 import { HomePage } from "@/pages/HomePage.jsx";
 import { HowItWorksPage } from "@/pages/HowItWorksPage.jsx";
 import { LoginPage } from "@/pages/LoginPage.jsx";
 import { NotFoundPage } from "@/pages/NotFoundPage.jsx";
 import { RegisterPage } from "@/pages/RegisterPage.jsx";
+import { ResetPasswordPage } from "@/pages/ResetPasswordPage.jsx";
 
 export default function App() {
   return (
@@ -20,6 +22,8 @@ export default function App() {
         <Route path="kontakti" element={<ContactPage />} />
         <Route path="regjistrohu" element={<RegisterPage />} />
         <Route path="kycu" element={<LoginPage />} />
+        <Route path="harrova-fjalekalimin" element={<ForgotPasswordPage />} />
+        <Route path="rivendos-fjalekalimin" element={<ResetPasswordPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
