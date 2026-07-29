@@ -1,4 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api/client.js";
 import { useAuthStore } from "@/stores/auth-store.js";
@@ -12,6 +14,14 @@ const user = {
   fullName: "Arta Berisha",
   university: { id: "2", name: "Universiteti Testues", acronym: "UT" },
 };
+
+function renderOverview() {
+  return render(
+    <MemoryRouter>
+      <UniversityOverviewPage />
+    </MemoryRouter>,
+  );
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -40,11 +50,19 @@ describe("UniversityOverviewPage", () => {
           },
           lastUpdatedAt: "2026-07-29T16:00:00.000Z",
           containsSimulatedData: true,
+          laboratories: [
+            {
+              id: "3",
+              name: "Laboratori A",
+              code: "LAB-A",
+              capacity: 30,
+            },
+          ],
         },
       },
     });
 
-    render(<UniversityOverviewPage />);
+    renderOverview();
 
     expect(await screen.findByText("Numri i laboratorëve")).toBeInTheDocument();
     expect(screen.getByText("2,45 kW")).toBeInTheDocument();
@@ -52,7 +70,7 @@ describe("UniversityOverviewPage", () => {
     expect(
       screen.getByText("Përmban të dhëna të simuluara"),
     ).toBeInTheDocument();
-    expect(api.get).toHaveBeenCalledWith("/api/dashboard/summary");
+    expect(api.get).toHaveBeenCalledWith("/api/dashboard/summary?hours=24");
   });
 
   it("shows onboarding when the university has no laboratories", async () => {
@@ -65,7 +83,7 @@ describe("UniversityOverviewPage", () => {
         },
       },
     });
-    render(<UniversityOverviewPage />);
+    renderOverview();
     expect(
       await screen.findByText("Nuk ka ende laboratorë aktivë"),
     ).toBeInTheDocument();
@@ -75,12 +93,50 @@ describe("UniversityOverviewPage", () => {
     api.get.mockRejectedValue({
       message: "Përmbledhja nuk mund të merret nga serveri.",
     });
-    render(<UniversityOverviewPage />);
+    renderOverview();
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Përmbledhja nuk mund të merret nga serveri.",
     );
     expect(
       screen.getByRole("button", { name: "Provo përsëri" }),
     ).toBeInTheDocument();
+  });
+
+  it("reloads the single endpoint with laboratory and time filters", async () => {
+    const userInteraction = userEvent.setup();
+    api.get.mockResolvedValue({
+      data: {
+        summary: {
+          metrics: { laboratories: 1 },
+          lastUpdatedAt: "2026-07-29T16:00:00.000Z",
+          containsSimulatedData: false,
+          laboratories: [
+            {
+              id: "3",
+              name: "Laboratori A",
+              code: "LAB-A",
+              capacity: 30,
+            },
+          ],
+        },
+      },
+    });
+    renderOverview();
+
+    await screen.findByText("Numri i laboratorëve");
+    await userInteraction.selectOptions(
+      screen.getByLabelText("Laboratori"),
+      "3",
+    );
+    await userInteraction.selectOptions(
+      screen.getByLabelText("Intervali i energjisë"),
+      "168",
+    );
+
+    await waitFor(() =>
+      expect(api.get).toHaveBeenLastCalledWith(
+        "/api/dashboard/summary?hours=168&laboratoryId=3",
+      ),
+    );
   });
 });

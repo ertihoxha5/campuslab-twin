@@ -1637,6 +1637,41 @@ a {
   font-size: 0.78rem;
 }
 
+.dashboard-filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--background);
+}
+
+.dashboard-filters label {
+  display: grid;
+  min-width: 190px;
+  gap: 0.35rem;
+}
+
+.dashboard-filters label:first-child {
+  min-width: min(340px, 50%);
+}
+
+.dashboard-filters span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.dashboard-filters select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
 .data-source {
   padding: 0.35rem 0.6rem;
   border: 1px solid var(--border);
@@ -2791,6 +2826,15 @@ a {
 }
 
 @media (max-width: 640px) {
+  .dashboard-filters {
+    flex-direction: column;
+  }
+
+  .dashboard-filters label,
+  .dashboard-filters label:first-child {
+    min-width: 0;
+    width: 100%;
+  }
   .laboratory-health-list article {
     grid-template-columns: 1fr 1fr;
   }

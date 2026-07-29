@@ -77,6 +77,9 @@ function DashboardLoading() {
 export function UniversityOverviewPage() {
   const user = useAuthStore((state) => state.user);
   const [summary, setSummary] = useState(null);
+  const [laboratoryId, setLaboratoryId] = useState("");
+  const [laboratoryOptions, setLaboratoryOptions] = useState([]);
+  const [hours, setHours] = useState("24");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -84,14 +87,21 @@ export function UniversityOverviewPage() {
     setLoading(true);
     setMessage("");
     try {
-      const response = await api.get("/api/dashboard/summary");
+      const parameters = new URLSearchParams({ hours });
+      if (laboratoryId) parameters.set("laboratoryId", laboratoryId);
+      const response = await api.get(
+        `/api/dashboard/summary?${parameters.toString()}`,
+      );
       setSummary(response.data.summary);
+      if (!laboratoryId) {
+        setLaboratoryOptions(response.data.summary.laboratories ?? []);
+      }
     } catch (error) {
       setMessage(error.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [hours, laboratoryId]);
 
   useEffect(() => {
     loadSummary();
@@ -116,6 +126,36 @@ export function UniversityOverviewPage() {
         >
           <RefreshCw size={16} /> Rifresko
         </Button>
+      </div>
+
+      <div className="dashboard-filters" aria-label="Filtrat e dashboard-it">
+        <label>
+          <span>Laboratori</span>
+          <select
+            value={laboratoryId}
+            onChange={(event) => setLaboratoryId(event.target.value)}
+            disabled={loading && !summary}
+          >
+            <option value="">Të gjithë laboratorët</option>
+            {laboratoryOptions.map((laboratory) => (
+              <option key={laboratory.id} value={laboratory.id}>
+                {laboratory.name} ({laboratory.code})
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Intervali i energjisë</span>
+          <select
+            value={hours}
+            onChange={(event) => setHours(event.target.value)}
+            disabled={loading && !summary}
+          >
+            <option value="6">6 orët e fundit</option>
+            <option value="24">24 orët e fundit</option>
+            <option value="168">7 ditët e fundit</option>
+          </select>
+        </label>
       </div>
 
       {message && (

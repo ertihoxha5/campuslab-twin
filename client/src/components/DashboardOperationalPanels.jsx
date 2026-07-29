@@ -97,7 +97,11 @@ export function DashboardOperationalPanels({ summary }) {
   return (
     <div className="dashboard-operational-grid">
       <Panel
-        title="Konsumi i energjisë · 24 orët e fundit"
+        title={`Konsumi i energjisë · ${
+          summary.filters?.hours === 168
+            ? "7 ditët e fundit"
+            : `${summary.filters?.hours ?? 24} orët e fundit`
+        }`}
         icon={Activity}
         className="dashboard-chart-panel"
       >

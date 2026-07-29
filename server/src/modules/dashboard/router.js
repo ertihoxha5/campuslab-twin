@@ -10,11 +10,14 @@ export function createDashboardRouter({ service, authenticateTenant }) {
     authenticateTenant,
     requirePermissions(permissions.MONITORING_VIEW),
     async (request, response) => {
-      const summary = await service.summary({
-        universityId: request.auth.universityId,
-        userId: request.auth.userId,
-        roles: request.auth.roles,
-      });
+      const summary = await service.summary(
+        {
+          universityId: request.auth.universityId,
+          userId: request.auth.userId,
+          roles: request.auth.roles,
+        },
+        request.query,
+      );
       return success(response, { data: { summary } });
     },
   );

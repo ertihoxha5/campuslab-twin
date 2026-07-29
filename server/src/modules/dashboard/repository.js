@@ -10,6 +10,7 @@ const accessibleLaboratoriesCte = `
     WHERE laboratory.university_id = ?
       AND laboratory.deleted_at IS NULL
       AND laboratory.status <> 'archived'
+      AND (? IS NULL OR laboratory.id = ?)
       AND (
         ? = TRUE OR EXISTS (
           SELECT 1
@@ -21,9 +22,11 @@ const accessibleLaboratoriesCte = `
       )
   )`;
 
-function accessParameters({ universityId, userId, roles }) {
+function accessParameters({ universityId, userId, roles, laboratoryId }) {
   return [
     universityId,
+    laboratoryId ?? null,
+    laboratoryId ?? null,
     roles.some((role) => unrestrictedRoles.has(role)),
     userId,
   ];
@@ -31,7 +34,8 @@ function accessParameters({ universityId, userId, roles }) {
 
 export function createDashboardRepository(pool) {
   return {
-    async summary({ universityId, userId, roles }) {
+    async summary(context) {
+      const { universityId, userId, roles, laboratoryId = null } = context;
       const unrestricted = roles.some((role) => unrestrictedRoles.has(role));
       const rows = await query(
         pool,
@@ -41,6 +45,7 @@ export function createDashboardRepository(pool) {
            WHERE laboratory.university_id = ?
              AND laboratory.deleted_at IS NULL
              AND laboratory.status <> 'archived'
+             AND (? IS NULL OR laboratory.id = ?)
              AND (
                ? = TRUE OR EXISTS (
                  SELECT 1
@@ -150,6 +155,8 @@ export function createDashboardRepository(pool) {
              AS plannedMaintenance`,
         [
           universityId,
+          laboratoryId,
+          laboratoryId,
           unrestricted,
           userId,
           universityId,
@@ -274,10 +281,11 @@ export function createDashboardRepository(pool) {
            INNER JOIN accessible_laboratories laboratory
              ON laboratory.id = reading.laboratory_id
            WHERE reading.university_id = ?
-             AND reading.recorded_at >= UTC_TIMESTAMP() - INTERVAL 24 HOUR
+             AND reading.recorded_at >=
+               DATE_SUB(UTC_TIMESTAMP(), INTERVAL ? HOUR)
            GROUP BY DATE_FORMAT(reading.recorded_at, '%Y-%m-%d %H:00:00')
            ORDER BY recordedAt`,
-          [...scoped(), universityId],
+          [...scoped(), universityId, context.hours],
         ),
         query(
           pool,

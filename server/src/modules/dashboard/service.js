@@ -30,10 +30,19 @@ export function calculateInfrastructureHealth({
 
 export function createDashboardService({ repository, now = () => new Date() }) {
   return {
-    async summary(context) {
+    async summary(context, input = {}) {
+      const parsed = filterSchema.safeParse(input);
+      if (!parsed.success) {
+        throw new AppError({
+          status: 422,
+          code: "VALIDATION_ERROR",
+          message: "Filtrat e dashboard-it nuk janë të vlefshëm.",
+        });
+      }
+      const queryContext = { ...context, ...parsed.data };
       const [raw, details] = await Promise.all([
-        repository.summary(context),
-        repository.details(context),
+        repository.summary(queryContext),
+        repository.details(queryContext),
       ]);
       const metrics = Object.fromEntries(
         Object.entries(raw).map(([key, value]) => [key, numeric(value)]),
@@ -60,6 +69,12 @@ export function createDashboardService({ repository, now = () => new Date() }) {
         },
         lastUpdatedAt: now().toISOString(),
         containsSimulatedData: metrics.simulatedReadingCount > 0,
+        filters: {
+          laboratoryId: parsed.data.laboratoryId
+            ? String(parsed.data.laboratoryId)
+            : null,
+          hours: parsed.data.hours,
+        },
         ...normalizeDetails(details),
       };
     },
@@ -97,3 +112,13 @@ function normalizeDetails(details) {
     ]),
   );
 }
+import { z } from "zod";
+import { AppError } from "../../utils/app-error.js";
+
+const filterSchema = z.object({
+  laboratoryId: z.coerce.number().int().positive().optional(),
+  hours: z.coerce
+    .number()
+    .pipe(z.union([z.literal(6), z.literal(24), z.literal(168)]))
+    .default(24),
+});

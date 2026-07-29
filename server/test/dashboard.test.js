@@ -26,11 +26,13 @@ test("dashboard repository scopes aggregates to tenant and assigned laboratories
   assert.match(captured.sql, /user_laboratory_assignments/);
   assert.match(captured.sql, /assignment\.user_id = \?/);
   assert.equal(captured.parameters[0], "7");
-  assert.equal(captured.parameters[1], false);
-  assert.equal(captured.parameters[2], "19");
+  assert.equal(captured.parameters[1], null);
+  assert.equal(captured.parameters[2], null);
+  assert.equal(captured.parameters[3], false);
+  assert.equal(captured.parameters[4], "19");
   assert.ok(
     captured.parameters
-      .filter((value, index) => index > 2)
+      .filter((value, index) => index > 4)
       .every((value) => value === "7"),
   );
 });
@@ -48,7 +50,7 @@ test("university administrators receive unrestricted tenant aggregates", async (
     userId: "8",
     roles: ["university_admin"],
   });
-  assert.equal(parameters[1], true);
+  assert.equal(parameters[3], true);
 });
 
 test("dashboard detail collections remain scoped to accessible laboratories", async () => {
@@ -70,8 +72,10 @@ test("dashboard detail collections remain scoped to accessible laboratories", as
     calls.every((call) => call.sql.includes("accessible_laboratories")),
   );
   assert.ok(calls.every((call) => call.parameters[0] === "6"));
-  assert.ok(calls.every((call) => call.parameters[1] === false));
-  assert.ok(calls.every((call) => call.parameters[2] === "14"));
+  assert.ok(calls.every((call) => call.parameters[1] === null));
+  assert.ok(calls.every((call) => call.parameters[2] === null));
+  assert.ok(calls.every((call) => call.parameters[3] === false));
+  assert.ok(calls.every((call) => call.parameters[4] === "14"));
   assert.deepEqual(details.recentAlerts, []);
 });
 
@@ -135,6 +139,45 @@ test("dashboard service returns numeric metrics and simulation provenance", asyn
   assert.equal(result.latestSensorReadings[0].value, 22.4);
   assert.equal(result.containsSimulatedData, true);
   assert.equal(result.lastUpdatedAt, "2026-07-29T16:00:00.000Z");
+  assert.deepEqual(result.filters, { laboratoryId: null, hours: 24 });
+});
+
+test("dashboard service validates laboratory and time filters", async () => {
+  const contexts = [];
+  const service = createDashboardService({
+    repository: {
+      async summary(context) {
+        contexts.push(context);
+        return {};
+      },
+      async details() {
+        return {
+          recentAlerts: [],
+          latestSensorReadings: [],
+          laboratoryHealth: [],
+          energyTrend: [],
+          equipmentStatus: [],
+          recentActivities: [],
+          upcomingMaintenance: [],
+          laboratories: [],
+        };
+      },
+    },
+  });
+  const result = await service.summary(
+    { universityId: "2", userId: "4", roles: ["observer"] },
+    { laboratoryId: "9", hours: "168" },
+  );
+  assert.equal(contexts[0].laboratoryId, 9);
+  assert.equal(contexts[0].hours, 168);
+  assert.deepEqual(result.filters, { laboratoryId: "9", hours: 168 });
+  await assert.rejects(
+    service.summary(
+      { universityId: "2", userId: "4", roles: ["observer"] },
+      { hours: "12" },
+    ),
+    { code: "VALIDATION_ERROR" },
+  );
 });
 
 let server;
