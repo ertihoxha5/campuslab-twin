@@ -1,8 +1,8 @@
 import { query, withTransaction } from "../../database/query.js";
 
-const listScope = `
+const listScope = (archivedOnly) => `
   laboratory.university_id = ?
-  AND laboratory.deleted_at IS NULL
+  AND laboratory.deleted_at IS ${archivedOnly ? "NOT NULL" : "NULL"}
   AND (? = 0 OR EXISTS (
     SELECT 1
     FROM user_laboratory_assignments assignment
@@ -20,10 +20,11 @@ export function createLaboratoryRepository(pool) {
       restrictToAssignments,
       search,
       status,
+      archivedOnly = false,
       limit,
       offset,
     }) {
-      const filters = [listScope];
+      const filters = [listScope(archivedOnly)];
       const parameters = [universityId, restrictToAssignments ? 1 : 0, userId];
       if (status) {
         filters.push("laboratory.status = ?");
@@ -52,6 +53,7 @@ export function createLaboratoryRepository(pool) {
                     responsible.full_name AS responsibleUserName,
                     laboratory.created_at AS createdAt,
                     laboratory.updated_at AS updatedAt,
+                    laboratory.deleted_at AS deletedAt,
                     ROW_NUMBER() OVER (
                       ORDER BY laboratory.name, laboratory.id
                     ) AS rowNumber
@@ -291,6 +293,51 @@ export function createLaboratoryRepository(pool) {
           ],
         );
         return { id: String(laboratory.id), name: laboratory.name };
+      });
+    },
+
+    async restore({ universityId, laboratoryId, userId, ipAddress }) {
+      return withTransaction(pool, async (connection) => {
+        const laboratories = await query(
+          connection,
+          `SELECT id, name, code
+           FROM laboratories
+           WHERE university_id = ?
+             AND id = ?
+             AND deleted_at IS NOT NULL
+           FOR UPDATE`,
+          [universityId, laboratoryId],
+        );
+        const laboratory = laboratories[0];
+        if (!laboratory) return null;
+
+        await query(
+          connection,
+          `UPDATE laboratories
+           SET status = 'active', deleted_at = NULL
+           WHERE university_id = ? AND id = ? AND deleted_at IS NOT NULL`,
+          [universityId, laboratoryId],
+        );
+        await query(
+          connection,
+          `INSERT INTO activity_logs (
+             university_id, user_id, action, entity_type, entity_id,
+             description, metadata_json, ip_address
+           ) VALUES (?, ?, 'laboratory.restored', 'laboratory', ?, ?, ?, ?)`,
+          [
+            universityId,
+            userId,
+            laboratoryId,
+            `U rikthye laboratori ${laboratory.name}.`,
+            JSON.stringify({ code: laboratory.code }),
+            ipAddress,
+          ],
+        );
+        return {
+          id: String(laboratory.id),
+          name: laboratory.name,
+          status: "active",
+        };
       });
     },
   };

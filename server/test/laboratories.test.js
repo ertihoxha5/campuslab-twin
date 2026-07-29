@@ -223,7 +223,7 @@ test("laboratory detail never looks up an id without its tenant", async () => {
   assert.deepEqual(calls[0].parameters, ["7", "15"]);
 });
 
-test("laboratory detail, update and archive use only server tenant context", async () => {
+test("laboratory detail, update, archive and restore use only server tenant context", async () => {
   const calls = [];
   const service = createLaboratoryService({
     repository: {
@@ -238,6 +238,10 @@ test("laboratory detail, update and archive use only server tenant context", asy
       async archive(input) {
         calls.push({ operation: "archive", input });
         return { id: "15", name: "Laboratori Test" };
+      },
+      async restore(input) {
+        calls.push({ operation: "restore", input });
+        return { id: "15", name: "Laboratori Test", status: "active" };
       },
     },
   });
@@ -261,15 +265,17 @@ test("laboratory detail, update and archive use only server tenant context", asy
   await service.detail("15", context);
   const updated = await service.update("15", updateInput, context);
   await service.archive("15", context);
+  await service.restore("15", context);
 
   assert.equal(updated.code, "LAB-15");
   assert.equal(calls[0].input.universityId, "7");
   assert.equal(calls[1].input.universityId, "7");
   assert.equal(calls[1].input.laboratory.universityId, undefined);
   assert.equal(calls[2].input.universityId, "7");
+  assert.equal(calls[3].input.universityId, "7");
 });
 
-test("laboratory update and archive write tenant audit records atomically", async () => {
+test("laboratory update, archive and restore write tenant audit records atomically", async () => {
   const events = [];
   const calls = [];
   const connection = {
@@ -320,8 +326,12 @@ test("laboratory update and archive write tenant audit records atomically", asyn
     },
   });
   await repository.archive(commonContext);
+  await repository.restore(commonContext);
 
   assert.deepEqual(events, [
+    "begin",
+    "commit",
+    "release",
     "begin",
     "commit",
     "release",
@@ -331,6 +341,7 @@ test("laboratory update and archive write tenant audit records atomically", asyn
   ]);
   assert.ok(calls.some(({ sql }) => sql.includes("'laboratory.updated'")));
   assert.ok(calls.some(({ sql }) => sql.includes("'laboratory.archived'")));
+  assert.ok(calls.some(({ sql }) => sql.includes("'laboratory.restored'")));
   for (const { sql, parameters } of calls.filter(({ sql }) =>
     /UPDATE laboratories|FROM laboratories/.test(sql),
   )) {

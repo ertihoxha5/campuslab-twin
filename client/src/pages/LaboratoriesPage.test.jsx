@@ -6,7 +6,7 @@ import { useAuthStore } from "@/stores/auth-store.js";
 import { LaboratoriesPage } from "./LaboratoriesPage.jsx";
 
 vi.mock("@/api/client.js", () => ({
-  api: { get: vi.fn(), post: vi.fn() },
+  api: { get: vi.fn(), post: vi.fn(), patch: vi.fn() },
 }));
 
 const administrator = {
@@ -139,6 +139,44 @@ describe("LaboratoriesPage", () => {
     expect(
       screen.queryByRole("button", { name: "Laborator i ri" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("lists and restores an archived laboratory", async () => {
+    api.get
+      .mockResolvedValueOnce({
+        data: { laboratories: [laboratory] },
+        meta: { pagination: { page: 1, pages: 1, total: 1 } },
+      })
+      .mockResolvedValue({
+        data: { laboratories: [{ ...laboratory, status: "archived" }] },
+        meta: { pagination: { page: 1, pages: 1, total: 1 } },
+      });
+    api.patch.mockResolvedValue({
+      data: {
+        laboratory: { ...laboratory, status: "active" },
+        message: "Laboratori u rikthye me sukses.",
+      },
+    });
+
+    renderPage();
+    await screen.findByText("Laboratori i Automatizimit");
+    fireEvent.click(screen.getByRole("button", { name: "Arkivi" }));
+
+    await waitFor(() =>
+      expect(api.get).toHaveBeenCalledWith(
+        "/api/laboratories/archived?page=1&pageSize=12",
+      ),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Rikthe laboratorin" }),
+    );
+
+    await waitFor(() =>
+      expect(api.patch).toHaveBeenCalledWith("/api/laboratories/15/restore"),
+    );
+    expect(
+      await screen.findByText("Laboratori u rikthye me sukses."),
+    ).toBeInTheDocument();
   });
 });
 

@@ -96,6 +96,32 @@ export function createLaboratoryService({ repository }) {
       };
     },
 
+    async listArchived(input = {}, context) {
+      const parsed = listSchema.omit({ status: true }).safeParse(input);
+      if (!parsed.success) {
+        throw validationError("Filtrat e arkivit nuk janë të vlefshëm.");
+      }
+      const { search, page, pageSize } = parsed.data;
+      const result = await repository.list({
+        universityId: context.universityId,
+        userId: context.userId,
+        restrictToAssignments: false,
+        search,
+        archivedOnly: true,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+      });
+      return {
+        items: result.items,
+        pagination: {
+          page,
+          pageSize,
+          total: result.total,
+          pages: Math.ceil(result.total / pageSize),
+        },
+      };
+    },
+
     async create(input, context) {
       const parsed = createSchema.safeParse(input);
       if (!parsed.success) {
@@ -165,6 +191,18 @@ export function createLaboratoryService({ repository }) {
     async archive(laboratoryId, context) {
       if (!validId(laboratoryId)) throw notFound();
       const laboratory = await repository.archive({
+        universityId: context.universityId,
+        laboratoryId,
+        userId: context.userId,
+        ipAddress: context.ipAddress,
+      });
+      if (!laboratory) throw notFound();
+      return laboratory;
+    },
+
+    async restore(laboratoryId, context) {
+      if (!validId(laboratoryId)) throw notFound();
+      const laboratory = await repository.restore({
         universityId: context.universityId,
         laboratoryId,
         userId: context.userId,

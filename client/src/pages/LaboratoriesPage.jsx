@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  Archive,
+  ArchiveRestore,
   Building2,
   MapPin,
   Plus,
@@ -29,6 +31,7 @@ export function LaboratoriesPage() {
   const [search, setSearch] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [archiveMode, setArchiveMode] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,11 +46,12 @@ export function LaboratoriesPage() {
           page: String(page),
           pageSize: "12",
         });
-        if (status) parameters.set("status", status);
+        if (status && !archiveMode) parameters.set("status", status);
         if (submittedSearch) parameters.set("search", submittedSearch);
-        const response = await api.get(
-          `/api/laboratories?${parameters.toString()}`,
-        );
+        const endpoint = archiveMode
+          ? "/api/laboratories/archived"
+          : "/api/laboratories";
+        const response = await api.get(`${endpoint}?${parameters.toString()}`);
         setLaboratories(response.data.laboratories);
         setPagination(response.meta?.pagination ?? null);
       } catch (error) {
@@ -56,7 +60,7 @@ export function LaboratoriesPage() {
         setLoading(false);
       }
     },
-    [page, status, submittedSearch],
+    [archiveMode, page, status, submittedSearch],
   );
 
   useEffect(() => {
@@ -85,6 +89,29 @@ export function LaboratoriesPage() {
     }
   }
 
+  async function restoreLaboratory(laboratoryId) {
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const response = await api.patch(
+        `/api/laboratories/${laboratoryId}/restore`,
+      );
+      setMessage({ type: "success", text: response.data.message });
+      await loadLaboratories({ keepMessage: true });
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function toggleArchive() {
+    setArchiveMode((current) => !current);
+    setStatus("");
+    setPage(1);
+    setMessage({ type: "", text: "" });
+  }
+
   return (
     <section className="laboratories-page">
       <div className="laboratories-heading">
@@ -97,6 +124,12 @@ export function LaboratoriesPage() {
           </p>
         </div>
         <div className="laboratories-heading-actions">
+          {canCreate && (
+            <Button type="button" variant="outline" onClick={toggleArchive}>
+              {archiveMode ? <Building2 size={16} /> : <Archive size={16} />}
+              {archiveMode ? "Laboratorët aktivë" : "Arkivi"}
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -105,7 +138,7 @@ export function LaboratoriesPage() {
           >
             <RefreshCw size={16} /> Rifresko
           </Button>
-          {canCreate && (
+          {canCreate && !archiveMode && (
             <Button type="button" onClick={() => setShowForm(true)}>
               <Plus size={17} /> Laborator i ri
             </Button>
@@ -123,21 +156,23 @@ export function LaboratoriesPage() {
             aria-label="Kërko laboratorët"
           />
         </form>
-        <label>
-          <span>Statusi</span>
-          <select
-            value={status}
-            onChange={(event) => {
-              setStatus(event.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="">Të gjitha</option>
-            <option value="active">Aktiv</option>
-            <option value="inactive">Joaktiv</option>
-            <option value="maintenance">Në mirëmbajtje</option>
-          </select>
-        </label>
+        {!archiveMode && (
+          <label>
+            <span>Statusi</span>
+            <select
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">Të gjitha</option>
+              <option value="active">Aktiv</option>
+              <option value="inactive">Joaktiv</option>
+              <option value="maintenance">Në mirëmbajtje</option>
+            </select>
+          </label>
+        )}
       </div>
 
       {message.text && (
@@ -165,9 +200,11 @@ export function LaboratoriesPage() {
             <p>
               {submittedSearch || status
                 ? "Ndryshoni kërkimin ose filtrin e statusit."
-                : canCreate
-                  ? "Krijoni laboratorin e parë për të filluar konfigurimin."
-                  : "Nuk keni ende laboratorë të caktuar për këtë llogari."}
+                : archiveMode
+                  ? "Nuk ka laboratorë të arkivuar."
+                  : canCreate
+                    ? "Krijoni laboratorin e parë për të filluar konfigurimin."
+                    : "Nuk keni ende laboratorë të caktuar për këtë llogari."}
             </p>
           </div>
         </div>
@@ -178,8 +215,12 @@ export function LaboratoriesPage() {
               <article className="laboratory-card" key={laboratory.id}>
                 <header>
                   <span className="laboratory-code">{laboratory.code}</span>
-                  <span className={`status-badge status-${laboratory.status}`}>
-                    {statusLabels[laboratory.status]}
+                  <span
+                    className={`status-badge status-${archiveMode ? "archived" : laboratory.status}`}
+                  >
+                    {archiveMode
+                      ? "I arkivuar"
+                      : statusLabels[laboratory.status]}
                   </span>
                 </header>
                 <h2>{laboratory.name}</h2>
@@ -200,12 +241,23 @@ export function LaboratoriesPage() {
                     <dd>{laboratory.capacity} persona</dd>
                   </div>
                 </dl>
-                <Link
-                  className="laboratory-open-link"
-                  to={`/aplikacioni/laboratoret/${laboratory.id}`}
-                >
-                  Hap laboratorin
-                </Link>
+                {archiveMode ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => restoreLaboratory(laboratory.id)}
+                    disabled={saving}
+                  >
+                    <ArchiveRestore size={15} /> Rikthe laboratorin
+                  </Button>
+                ) : (
+                  <Link
+                    className="laboratory-open-link"
+                    to={`/aplikacioni/laboratoret/${laboratory.id}`}
+                  >
+                    Hap laboratorin
+                  </Link>
+                )}
               </article>
             ))}
           </div>

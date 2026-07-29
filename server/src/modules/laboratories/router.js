@@ -77,6 +77,38 @@ export function createLaboratoryRouter({
     },
   );
 
+  router.get(
+    "/archived",
+    requirePermissions(permissions.LABORATORIES_CREATE),
+    async (request, response) => {
+      const result = await service.listArchived(
+        request.query,
+        tenantContext(request),
+      );
+      return success(response, {
+        data: { laboratories: result.items },
+        meta: { pagination: result.pagination },
+      });
+    },
+  );
+
+  router.patch(
+    "/:laboratoryId/restore",
+    requirePermissions(permissions.LABORATORIES_CREATE),
+    async (request, response) => {
+      const laboratory = await service.restore(
+        request.params.laboratoryId,
+        tenantContext(request),
+      );
+      return success(response, {
+        data: {
+          laboratory,
+          message: "Laboratori u rikthye me sukses.",
+        },
+      });
+    },
+  );
+
   router.post(
     "/:laboratoryId/model",
     requirePermissions(permissions.LABORATORIES_MANAGE),
