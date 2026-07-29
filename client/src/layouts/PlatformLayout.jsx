@@ -1,5 +1,5 @@
-import { LogOut, ShieldCheck } from "lucide-react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Building2, ClipboardList, LogOut, ShieldCheck } from "lucide-react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
 import { usePlatformAuthStore } from "@/stores/platform-auth-store.js";
@@ -40,6 +40,14 @@ export function PlatformLayout() {
           </Button>
         </div>
       </header>
+      <nav className="platform-nav" aria-label="Navigimi i administrimit">
+        <NavLink to="/administrimi" end>
+          <ClipboardList size={17} /> Kërkesat
+        </NavLink>
+        <NavLink to="/administrimi/universitetet">
+          <Building2 size={17} /> Universitetet
+        </NavLink>
+      </nav>
       <main className="platform-content">
         <Outlet />
       </main>
