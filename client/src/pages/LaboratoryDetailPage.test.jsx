@@ -213,29 +213,32 @@ describe("LaboratoryDetailPage", () => {
       data: {
         model: {
           id: "41",
-          originalName: "laboratori.glb",
-          mimeType: "model/gltf-binary",
+          originalName: "laboratori.png",
+          mimeType: "image/png",
           sizeBytes: 12,
           createdAt: "2026-07-29T10:00:00.000Z",
         },
-        message: "Modeli 3D u ngarkua me sukses.",
+        message: "Pamja virtuale u ngarkua me sukses.",
       },
     });
     api.delete.mockResolvedValue({
-      data: { message: "Modeli 3D u hoq nga laboratori." },
+      data: { message: "Pamja virtuale u hoq nga laboratori." },
     });
     renderPage();
 
     expect(
-      await screen.findByText("Nuk ka model të ngarkuar"),
+      await screen.findByText("Nuk ka pamje të ngarkuar"),
     ).toBeInTheDocument();
 
-    const file = new File(["glTF-model"], "laboratori.glb", {
-      type: "model/gltf-binary",
+    const file = new File(["png-image"], "laboratori.png", {
+      type: "image/png",
     });
-    fireEvent.change(screen.getByLabelText("Zgjidh modelin 3D"), {
-      target: { files: [file] },
-    });
+    fireEvent.change(
+      screen.getByLabelText("Zgjidh fotografinë ose modelin 3D"),
+      {
+        target: { files: [file] },
+      },
+    );
 
     await waitFor(() =>
       expect(api.post).toHaveBeenCalledWith(
@@ -245,9 +248,14 @@ describe("LaboratoryDetailPage", () => {
     );
     expect(api.post.mock.calls.at(-1)[1].get("model")).toBe(file);
     expect(
-      await screen.findByText("Modeli 3D u ngarkua me sukses."),
+      await screen.findByText("Pamja virtuale u ngarkua me sukses."),
     ).toBeInTheDocument();
-    expect(screen.getByText("laboratori.glb")).toBeInTheDocument();
+    expect(screen.getByText("laboratori.png")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", {
+        name: "Pamja e laboratorit: laboratori.png",
+      }),
+    ).toHaveAttribute("src", "/api/laboratories/15/model");
 
     fireEvent.click(screen.getByRole("button", { name: "Hiq" }));
 
@@ -255,7 +263,7 @@ describe("LaboratoryDetailPage", () => {
       expect(api.delete).toHaveBeenCalledWith("/api/laboratories/15/model"),
     );
     expect(
-      await screen.findByText("Modeli 3D u hoq nga laboratori."),
+      await screen.findByText("Pamja virtuale u hoq nga laboratori."),
     ).toBeInTheDocument();
   });
 

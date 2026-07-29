@@ -1972,6 +1972,14 @@ a {
   color: var(--grape);
 }
 
+.laboratory-model-thumbnail {
+  width: 96px;
+  height: 64px;
+  flex: 0 0 auto;
+  border-radius: 0.65rem;
+  object-fit: cover;
+}
+
 .laboratory-model-copy {
   min-width: 0;
   flex: 1;

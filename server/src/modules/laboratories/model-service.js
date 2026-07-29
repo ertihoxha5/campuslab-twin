@@ -13,7 +13,7 @@ const notFound = () =>
   new AppError({
     status: 404,
     code: "NOT_FOUND",
-    message: "Modeli 3D i laboratorit nuk u gjet.",
+    message: "Pamja virtuale e laboratorit nuk u gjet.",
   });
 
 export function createLaboratoryModelService({ repository, storage }) {
@@ -78,8 +78,44 @@ export function createLaboratoryModelService({ repository, storage }) {
 }
 
 function validateModel(file) {
-  if (!file) throw invalidModel("Zgjidhni një model GLB ose GLTF.");
+  if (!file) {
+    throw invalidModel("Zgjidhni një fotografi ose model GLB/GLTF.");
+  }
   const extension = path.extname(file.originalname).toLowerCase();
+
+  if (extension === ".jpg" || extension === ".jpeg") {
+    const isJpeg =
+      file.buffer.length >= 3 &&
+      file.buffer[0] === 0xff &&
+      file.buffer[1] === 0xd8 &&
+      file.buffer[2] === 0xff;
+    if (!isJpeg) {
+      throw invalidModel("Përmbajtja e fotografisë JPG nuk është e vlefshme.");
+    }
+    return { extension, mimeType: "image/jpeg" };
+  }
+
+  if (extension === ".png") {
+    const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+    if (
+      file.buffer.length < signature.length ||
+      !file.buffer.subarray(0, signature.length).equals(signature)
+    ) {
+      throw invalidModel("Përmbajtja e fotografisë PNG nuk është e vlefshme.");
+    }
+    return { extension, mimeType: "image/png" };
+  }
+
+  if (extension === ".webp") {
+    const isWebp =
+      file.buffer.length >= 12 &&
+      file.buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+      file.buffer.subarray(8, 12).toString("ascii") === "WEBP";
+    if (!isWebp) {
+      throw invalidModel("Përmbajtja e fotografisë WebP nuk është e vlefshme.");
+    }
+    return { extension, mimeType: "image/webp" };
+  }
 
   if (extension === ".glb") {
     const isGlb =
@@ -119,5 +155,5 @@ function validateModel(file) {
     return { extension, mimeType: "model/gltf+json" };
   }
 
-  throw invalidModel("Modeli duhet të jetë skedar GLB ose GLTF.");
+  throw invalidModel("Skedari duhet të jetë JPG, PNG, WebP, GLB ose GLTF.");
 }

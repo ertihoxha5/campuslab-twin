@@ -18,7 +18,7 @@ const receiveModel = (request, response, next) => {
         new AppError({
           status: 422,
           code: "MODEL_TOO_LARGE",
-          message: "Modeli 3D nuk mund të jetë më i madh se 25 MB.",
+          message: "Skedari nuk mund të jetë më i madh se 25 MB.",
         }),
       );
       return;
@@ -89,7 +89,7 @@ export function createLaboratoryRouter({
       });
       return success(response, {
         status: 201,
-        data: { model, message: "Modeli 3D u ngarkua me sukses." },
+        data: { model, message: "Pamja virtuale u ngarkua me sukses." },
       });
     },
   );
@@ -127,7 +127,7 @@ export function createLaboratoryRouter({
         laboratoryId: request.params.laboratoryId,
       });
       return success(response, {
-        data: { model, message: "Modeli 3D u hoq nga laboratori." },
+        data: { model, message: "Pamja virtuale u hoq nga laboratori." },
       });
     },
   );

@@ -17,13 +17,13 @@ export function LaboratoryModelPanel({
     const file = event.target.files?.[0];
     if (!file) return;
     const extension = file.name.split(".").at(-1)?.toLowerCase();
-    if (!["glb", "gltf"].includes(extension)) {
-      onValidationError("Modeli duhet të jetë skedar GLB ose GLTF.");
+    if (!["jpg", "jpeg", "png", "webp", "glb", "gltf"].includes(extension)) {
+      onValidationError("Skedari duhet të jetë JPG, PNG, WebP, GLB ose GLTF.");
       event.target.value = "";
       return;
     }
     if (file.size > 25 * 1024 * 1024) {
-      onValidationError("Modeli 3D nuk mund të jetë më i madh se 25 MB.");
+      onValidationError("Skedari nuk mund të jetë më i madh se 25 MB.");
       event.target.value = "";
       return;
     }
@@ -33,24 +33,33 @@ export function LaboratoryModelPanel({
 
   return (
     <section className="laboratory-model-panel">
-      <div className="laboratory-model-icon">
-        <Box size={22} />
-      </div>
+      {model?.mimeType?.startsWith("image/") ? (
+        <img
+          className="laboratory-model-thumbnail"
+          src={`/api/laboratories/${laboratoryId}/model`}
+          alt={`Pamja e laboratorit: ${model.originalName}`}
+        />
+      ) : (
+        <div className="laboratory-model-icon">
+          <Box size={22} />
+        </div>
+      )}
       <div className="laboratory-model-copy">
-        <span>Modeli bazë 3D</span>
+        <span>Foto ose model 3D</span>
         {model ? (
           <>
             <strong>{model.originalName}</strong>
             <small>
-              {formatFileSize(model.sizeBytes)} · GLB/GLTF tenant-safe
+              {formatFileSize(model.sizeBytes)} ·{" "}
+              {model.mimeType?.startsWith("image/")
+                ? "Foto e laboratorit"
+                : "Model GLB/GLTF"}
             </small>
           </>
         ) : (
           <>
-            <strong>Nuk ka model të ngarkuar</strong>
-            <small>
-              Preview-i përdor zonat derisa të ngarkohet një model 3D.
-            </small>
+            <strong>Nuk ka pamje të ngarkuar</strong>
+            <small>Ngarko JPG, PNG, WebP ose një model 3D GLB/GLTF.</small>
           </>
         )}
       </div>
@@ -68,9 +77,9 @@ export function LaboratoryModelPanel({
               ref={fileInput}
               className="visually-hidden"
               type="file"
-              accept=".glb,.gltf,model/gltf-binary,model/gltf+json"
+              accept=".jpg,.jpeg,.png,.webp,.glb,.gltf,image/jpeg,image/png,image/webp,model/gltf-binary,model/gltf+json"
               onChange={selectFile}
-              aria-label="Zgjidh modelin 3D"
+              aria-label="Zgjidh fotografinë ose modelin 3D"
             />
             <Button
               type="button"
@@ -83,7 +92,7 @@ export function LaboratoryModelPanel({
                 ? "Po ngarkohet…"
                 : model
                   ? "Zëvendëso"
-                  : "Ngarko model"}
+                  : "Ngarko pamje"}
             </Button>
             {model && (
               <Button

@@ -66,18 +66,59 @@ test("valid GLB upload is stored under its university and attached", async () =>
   assert.equal(calls[0].laboratoryId, "15");
   assert.match(calls[0].file.relativePath, /universities\/7\/models\/.+\.glb$/);
   assert.equal(
-    await fs.readFile(
-      path.join(
-        uploadsDirectory,
-        "universities",
-        "7",
-        "models",
-        calls[0].file.storedName,
-      ),
-      "ascii",
-    ).then((content) => content.slice(0, 4)),
+    await fs
+      .readFile(
+        path.join(
+          uploadsDirectory,
+          "universities",
+          "7",
+          "models",
+          calls[0].file.storedName,
+        ),
+        "ascii",
+      )
+      .then((content) => content.slice(0, 4)),
     "glTF",
   );
+});
+
+test("valid laboratory photo is accepted as a virtual preview", async () => {
+  const calls = [];
+  const storage = createLaboratoryModelStorage({ uploadsDirectory });
+  const service = createLaboratoryModelService({
+    storage,
+    repository: {
+      async attach(input) {
+        calls.push(input);
+        return {
+          id: "42",
+          originalName: input.file.originalName,
+          mimeType: input.file.mimeType,
+          sizeBytes: input.file.sizeBytes,
+        };
+      },
+    },
+  });
+  const buffer = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  const model = await service.upload(
+    {
+      originalname: "laboratori.png",
+      mimetype: "image/png",
+      size: buffer.length,
+      buffer,
+    },
+    {
+      universityId: "7",
+      laboratoryId: "15",
+      userId: "9",
+      ipAddress: "127.0.0.1",
+    },
+  );
+
+  assert.equal(model.mimeType, "image/png");
+  assert.equal(calls[0].file.mimeType, "image/png");
+  assert.match(calls[0].file.relativePath, /universities\/7\/models\/.+\.png$/);
 });
 
 test("invalid and externally linked GLTF models are rejected safely", async () => {
@@ -118,8 +159,7 @@ test("invalid and externally linked GLTF models are rejected safely", async () =
       { universityId: "7" },
     ),
     (error) =>
-      error.status === 422 &&
-      error.message.includes("vetë-përmbajtshëm"),
+      error.status === 422 && error.message.includes("vetë-përmbajtshëm"),
   );
 });
 
@@ -173,9 +213,7 @@ test("model attachment and audit are atomic and tenant-scoped", async () => {
 
   assert.equal(result.id, "41");
   assert.deepEqual(events, ["begin", "commit", "release"]);
-  assert.ok(
-    calls.some(({ sql }) => sql.includes("INSERT INTO activity_logs")),
-  );
+  assert.ok(calls.some(({ sql }) => sql.includes("INSERT INTO activity_logs")));
   for (const { sql, parameters } of calls.filter(({ sql }) =>
     /FROM laboratories|UPDATE laboratories/.test(sql),
   )) {
@@ -238,7 +276,5 @@ test("failed database attachment removes the newly stored model", async () => {
     ),
     /database failed/,
   );
-  assert.deepEqual(removed, [
-    "uploads/universities/7/models/uuid.glb",
-  ]);
+  assert.deepEqual(removed, ["uploads/universities/7/models/uuid.glb"]);
 });
