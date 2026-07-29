@@ -8,6 +8,7 @@ import { createUniversityRegistrationRouter } from "./modules/university-registr
 import { createAuthRouter } from "./modules/auth/router.js";
 import { createPlatformAuthRouter } from "./modules/platform-auth/router.js";
 import { createFileRouter } from "./modules/files/router.js";
+import { createPlatformRegistrationRouter } from "./modules/platform-registrations/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -20,6 +21,8 @@ export function createApp({
   platformAuthService,
   fileService,
   tenantAuthentication,
+  platformRegistrationService,
+  platformAuthentication,
   secureCookies = process.env.NODE_ENV === "production",
 } = {}) {
   const app = express();
@@ -87,6 +90,16 @@ export function createApp({
       createFileRouter({
         fileService,
         authenticateTenant: tenantAuthentication,
+      }),
+    );
+  }
+
+  if (platformRegistrationService && platformAuthentication) {
+    app.use(
+      "/api/platform/registration-requests",
+      createPlatformRegistrationRouter({
+        service: platformRegistrationService,
+        authenticatePlatform: platformAuthentication,
       }),
     );
   }

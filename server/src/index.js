@@ -17,6 +17,9 @@ import { createFileRepository } from "./modules/files/repository.js";
 import { createFileService } from "./modules/files/service.js";
 import { createLaboratoryAccessRepository } from "./authorization/laboratory-access-repository.js";
 import { createRealtimeServer } from "./realtime/create-realtime-server.js";
+import { createPlatformAuthentication } from "./middleware/authenticate-platform.js";
+import { createPlatformRegistrationRepository } from "./modules/platform-registrations/repository.js";
+import { createPlatformRegistrationService } from "./modules/platform-registrations/service.js";
 
 loadEnvironmentFile();
 
@@ -33,11 +36,19 @@ const authService = createAuthService({
   accessTokenMinutes: config.ACCESS_TOKEN_MINUTES,
   refreshTokenDays: config.REFRESH_TOKEN_DAYS,
 });
+const platformAuthRepository = createPlatformAuthRepository(databasePool);
 const platformAuthService = createPlatformAuthService({
-  repository: createPlatformAuthRepository(databasePool),
+  repository: platformAuthRepository,
   accessSecret: config.JWT_ACCESS_SECRET,
   accessTokenMinutes: config.ACCESS_TOKEN_MINUTES,
   refreshTokenDays: config.REFRESH_TOKEN_DAYS,
+});
+const platformAuthentication = createPlatformAuthentication({
+  platformAuthRepository,
+  accessSecret: config.JWT_ACCESS_SECRET,
+});
+const platformRegistrationService = createPlatformRegistrationService({
+  repository: createPlatformRegistrationRepository(databasePool),
 });
 const tenantAuthentication = createTenantAuthentication({
   authRepository,
@@ -55,6 +66,8 @@ const app = createApp({
   platformAuthService,
   fileService,
   tenantAuthentication,
+  platformRegistrationService,
+  platformAuthentication,
   secureCookies: config.NODE_ENV === "production",
 });
 const httpServer = createServer(app);
