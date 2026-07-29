@@ -1,29 +1,69 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { prepareRegistrationData } from "@/pages/registration-form-data.js";
 
 export function RegisterPage() {
+  const formRef = useRef(null);
   const [state, setState] = useState({
     loading: false,
     message: "",
     error: false,
+    details: null,
   });
+
+  function fillTestUniversity() {
+    const form = formRef.current;
+    if (!form) return;
+    const suffix = Date.now().toString().slice(-6);
+    const values = {
+      universityName: `Universiteti Testues ${suffix}`,
+      acronym: `UT${suffix}`,
+      institutionType: "private",
+      city: "Prishtinë",
+      address: "Rruga Testuese 10",
+      officialWebsite: `https://universiteti-${suffix}.test`,
+      description: "Regjistrim testues për verifikimin e CampusLab Twin.",
+      representativeName: "Përfaqësues Testues",
+      representativeEmail: `admin@universiteti-${suffix}.test`,
+      representativePhone: "+383 44 000 000",
+      password: "TestCampusLab!2026",
+      confirmPassword: "TestCampusLab!2026",
+    };
+
+    for (const [name, value] of Object.entries(values)) {
+      const field = form.elements.namedItem(name);
+      if (field) field.value = value;
+    }
+    form.elements.namedItem("acceptsTerms").checked = true;
+    setState({ loading: false, message: "", error: false, details: null });
+  }
 
   async function submit(event) {
     event.preventDefault();
-    setState({ loading: true, message: "", error: false });
-    const data = new FormData(event.currentTarget);
-    data.set("acceptsTerms", data.get("acceptsTerms") ? "true" : "false");
+    const form = event.currentTarget;
+    setState({ loading: true, message: "", error: false, details: null });
+    const data = prepareRegistrationData(form);
 
     try {
       const result = await api.post(
         "/api/public/university-registrations",
         data,
       );
-      event.currentTarget.reset();
-      setState({ loading: false, message: result.data.message, error: false });
+      form.reset();
+      setState({
+        loading: false,
+        message: result.data.message,
+        error: false,
+        details: null,
+      });
     } catch (error) {
-      setState({ loading: false, message: error.message, error: true });
+      setState({
+        loading: false,
+        message: error.message,
+        error: true,
+        details: error.details ?? null,
+      });
     }
   }
 
@@ -32,8 +72,17 @@ export function RegisterPage() {
       <div className="form-shell">
         <p className="eyebrow">Regjistrimi institucional</p>
         <h1>Regjistro Universitetin</h1>
-        <p>Kërkesa juaj do të ruhet në pritje për shqyrtim.</p>
-        <form className="registration-form" onSubmit={submit}>
+        <p>
+          Kërkesa juaj do të ruhet në pritje për shqyrtim. Për testim mund të
+          përdorni një faqe dhe email me të njëjtin domain <code>.test</code>.
+        </p>
+        <div className="test-form-action">
+          <Button type="button" variant="outline" onClick={fillTestUniversity}>
+            Plotëso universitet testues
+          </Button>
+          <span>Nuk kërkon domain real dhe nuk dërgon logo.</span>
+        </div>
+        <form ref={formRef} className="registration-form" onSubmit={submit}>
           <label className="wide">
             Emri i universitetit
             <input name="universityName" required minLength="3" />
@@ -109,12 +158,22 @@ export function RegisterPage() {
             kushtet e përdorimit.
           </label>
           {state.message && (
-            <p
-              className={`form-message wide ${state.error ? "error" : "success"}`}
-              role="status"
-            >
-              {state.message}
-            </p>
+            <div className="wide" role="status">
+              <p
+                className={`form-message ${state.error ? "error" : "success"}`}
+              >
+                {state.message}
+              </p>
+              {state.details && (
+                <ul className="form-error-list">
+                  {Object.values(state.details)
+                    .flat()
+                    .map((detail) => (
+                      <li key={detail}>{detail}</li>
+                    ))}
+                </ul>
+              )}
+            </div>
           )}
           <div className="wide">
             <Button type="submit" size="lg" disabled={state.loading}>

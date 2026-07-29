@@ -55,6 +55,18 @@ test("accepts valid institutional subdomains", () => {
   );
 });
 
+test("accepts matching reserved domains for test universities", () => {
+  const registration = validateRegistrationInput({
+    ...validRegistration,
+    universityName: "Universiteti Testues",
+    acronym: "UTEST",
+    officialWebsite: "https://universiteti.test",
+    representativeEmail: "admin@universiteti.test",
+  });
+
+  assert.equal(registration.representativeEmail, "admin@universiteti.test");
+});
+
 test("returns Albanian field errors for invalid input", () => {
   assert.throws(
     () =>

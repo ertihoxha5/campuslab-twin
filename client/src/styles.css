@@ -610,6 +610,25 @@ a {
   color: var(--muted);
 }
 
+.form-shell code {
+  padding: 2px 5px;
+  color: var(--grape);
+  background: var(--grape-soft);
+  border-radius: 4px;
+}
+
+.test-form-action {
+  display: flex;
+  gap: 14px;
+  margin: -12px 0 30px;
+  align-items: center;
+}
+
+.test-form-action span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
 .form-shell form,
 .registration-form {
   display: grid;
@@ -677,6 +696,14 @@ a {
 .form-message.success {
   color: #475238;
   background: #edf0e7;
+}
+
+.form-error-list {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  color: #8e2f35;
+  font-size: 0.8rem;
+  line-height: 1.6;
 }
 
 .form-footnote {
@@ -854,6 +881,11 @@ a {
 
   .form-shell {
     padding: 30px 22px;
+  }
+
+  .test-form-action {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .registration-form {
