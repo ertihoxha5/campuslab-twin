@@ -18,6 +18,7 @@ export const laboratorySchema = z.object({
     .int("Kapaciteti duhet të jetë numër i plotë.")
     .min(1, "Kapaciteti duhet të jetë së paku 1."),
   status: z.enum(["active", "inactive", "maintenance"]),
+  responsibleUserId: z.string().optional(),
   description: z.string().trim().max(5000).optional(),
 });
 
@@ -29,6 +30,7 @@ export const laboratoryDefaultValues = {
   floor: "",
   capacity: 20,
   status: "active",
+  responsibleUserId: "",
   description: "",
 };
 

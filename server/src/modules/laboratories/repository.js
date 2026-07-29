@@ -14,6 +14,28 @@ const listScope = (archivedOnly) => `
 
 export function createLaboratoryRepository(pool) {
   return {
+    async listResponsibleUsers({ universityId }) {
+      return query(
+        pool,
+        `SELECT user.id, user.full_name AS fullName, user.email,
+                user.job_title AS jobTitle,
+                GROUP_CONCAT(DISTINCT role.code ORDER BY role.code) AS roleCodes
+         FROM users user
+         INNER JOIN user_roles assignment
+           ON assignment.user_id = user.id
+          AND assignment.university_id = user.university_id
+         INNER JOIN roles role
+           ON role.id = assignment.role_id
+          AND role.code IN ('university_admin', 'lab_manager')
+         WHERE user.university_id = ?
+           AND user.status = 'active'
+           AND user.deleted_at IS NULL
+         GROUP BY user.id, user.full_name, user.email, user.job_title
+         ORDER BY user.full_name, user.id`,
+        [universityId],
+      );
+    },
+
     async list({
       universityId,
       userId,
@@ -129,15 +151,10 @@ export function createLaboratoryRepository(pool) {
     async create({ universityId, userId, ipAddress, laboratory }) {
       return withTransaction(pool, async (connection) => {
         if (laboratory.responsibleUserId) {
-          const responsibleUsers = await query(
+          const responsibleUsers = await findEligibleResponsibleUser(
             connection,
-            `SELECT id
-             FROM users
-             WHERE university_id = ?
-               AND id = ?
-               AND status = 'active'
-               AND deleted_at IS NULL`,
-            [universityId, laboratory.responsibleUserId],
+            universityId,
+            laboratory.responsibleUserId,
           );
           if (!responsibleUsers[0]) return { invalidResponsibleUser: true };
         }
@@ -178,6 +195,16 @@ export function createLaboratoryRepository(pool) {
             ipAddress,
           ],
         );
+        if (laboratory.responsibleUserId) {
+          await writeResponsibleAssignmentAudit(connection, {
+            universityId,
+            userId,
+            laboratoryId,
+            laboratoryName: laboratory.name,
+            responsibleUserId: laboratory.responsibleUserId,
+            ipAddress,
+          });
+        }
 
         return {
           id: String(laboratoryId),
@@ -195,15 +222,10 @@ export function createLaboratoryRepository(pool) {
     }) {
       return withTransaction(pool, async (connection) => {
         if (laboratory.responsibleUserId) {
-          const responsibleUsers = await query(
+          const responsibleUsers = await findEligibleResponsibleUser(
             connection,
-            `SELECT id
-             FROM users
-             WHERE university_id = ?
-               AND id = ?
-               AND status = 'active'
-               AND deleted_at IS NULL`,
-            [universityId, laboratory.responsibleUserId],
+            universityId,
+            laboratory.responsibleUserId,
           );
           if (!responsibleUsers[0]) return { invalidResponsibleUser: true };
         }
@@ -251,6 +273,16 @@ export function createLaboratoryRepository(pool) {
             ipAddress,
           ],
         );
+        if (laboratory.responsibleUserId) {
+          await writeResponsibleAssignmentAudit(connection, {
+            universityId,
+            userId,
+            laboratoryId,
+            laboratoryName: laboratory.name,
+            responsibleUserId: laboratory.responsibleUserId,
+            ipAddress,
+          });
+        }
         return { id: String(laboratoryId), ...laboratory };
       });
     },
@@ -341,4 +373,52 @@ export function createLaboratoryRepository(pool) {
       });
     },
   };
+}
+
+function findEligibleResponsibleUser(connection, universityId, userId) {
+  return query(
+    connection,
+    `SELECT user.id
+     FROM users user
+     INNER JOIN user_roles assignment
+       ON assignment.user_id = user.id
+      AND assignment.university_id = user.university_id
+     INNER JOIN roles role
+       ON role.id = assignment.role_id
+      AND role.code IN ('university_admin', 'lab_manager')
+     WHERE user.university_id = ?
+       AND user.id = ?
+       AND user.status = 'active'
+       AND user.deleted_at IS NULL
+     LIMIT 1`,
+    [universityId, userId],
+  );
+}
+
+function writeResponsibleAssignmentAudit(
+  connection,
+  {
+    universityId,
+    userId,
+    laboratoryId,
+    laboratoryName,
+    responsibleUserId,
+    ipAddress,
+  },
+) {
+  return query(
+    connection,
+    `INSERT INTO activity_logs (
+       university_id, user_id, action, entity_type, entity_id,
+       description, metadata_json, ip_address
+     ) VALUES (?, ?, 'laboratory.responsible_assigned', 'laboratory', ?, ?, ?, ?)`,
+    [
+      universityId,
+      userId,
+      laboratoryId,
+      `U caktua përgjegjësi i laboratorit ${laboratoryName}.`,
+      JSON.stringify({ responsibleUserId }),
+      ipAddress,
+    ],
+  );
 }

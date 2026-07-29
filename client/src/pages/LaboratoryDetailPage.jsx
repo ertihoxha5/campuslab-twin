@@ -34,6 +34,7 @@ export function LaboratoryDetailPage() {
   const canManage = user?.permissions?.includes("laboratories.manage");
   const canArchive = user?.permissions?.includes("laboratories.create");
   const [laboratory, setLaboratory] = useState(null);
+  const [responsibleUsers, setResponsibleUsers] = useState([]);
   const [zones, setZones] = useState([]);
   const [editing, setEditing] = useState(false);
   const [editingZone, setEditingZone] = useState(undefined);
@@ -41,6 +42,7 @@ export function LaboratoryDetailPage() {
   const [zoneToDelete, setZoneToDelete] = useState(null);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingResponsibleUsers, setLoadingResponsibleUsers] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingModel, setUploadingModel] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -68,6 +70,16 @@ export function LaboratoryDetailPage() {
   useEffect(() => {
     loadDetail();
   }, [loadDetail]);
+
+  useEffect(() => {
+    if (!canManage) return;
+    setLoadingResponsibleUsers(true);
+    api
+      .get("/api/laboratories/responsible-users")
+      .then((response) => setResponsibleUsers(response.data.users ?? []))
+      .catch(() => setResponsibleUsers([]))
+      .finally(() => setLoadingResponsibleUsers(false));
+  }, [canManage]);
 
   async function updateLaboratory(values) {
     setSaving(true);
@@ -451,6 +463,8 @@ export function LaboratoryDetailPage() {
               onCancel={() => setEditing(false)}
               saving={saving}
               submitLabel="Ruaj ndryshimet"
+              responsibleUsers={responsibleUsers}
+              loadingResponsibleUsers={loadingResponsibleUsers}
             />
           </section>
         </div>

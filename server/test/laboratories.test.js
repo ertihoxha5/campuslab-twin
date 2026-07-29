@@ -67,6 +67,36 @@ test("university administrators list all tenant laboratories with pagination", a
   assert.equal(result.pagination.pages, 3);
 });
 
+test("responsible-user candidates are active tenant administrators or laboratory managers", async () => {
+  const calls = [];
+  const repository = createLaboratoryRepository({
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      return [
+        [
+          {
+            id: 9,
+            fullName: "Arta Berisha",
+            roleCodes: "lab_manager",
+          },
+        ],
+      ];
+    },
+  });
+  const service = createLaboratoryService({ repository });
+
+  const users = await service.listResponsibleUsers({ universityId: "7" });
+
+  assert.deepEqual(users[0].roles, ["lab_manager"]);
+  assert.equal(users[0].roleCodes, undefined);
+  assert.match(
+    calls[0].sql,
+    /role\.code IN \('university_admin', 'lab_manager'\)/,
+  );
+  assert.match(calls[0].sql, /user\.university_id = \?/);
+  assert.deepEqual(calls[0].parameters, ["7"]);
+});
+
 test("laboratory creation normalizes data and uses server tenant context", async () => {
   const calls = [];
   const service = createLaboratoryService({

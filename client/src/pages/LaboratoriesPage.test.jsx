@@ -67,10 +67,27 @@ describe("LaboratoriesPage", () => {
   });
 
   it("validates and creates a laboratory through the real endpoint", async () => {
-    api.get.mockResolvedValue({
-      data: { laboratories: [] },
-      meta: { pagination: { page: 1, pages: 0, total: 0 } },
-    });
+    api.get.mockImplementation((path) =>
+      Promise.resolve(
+        path === "/api/laboratories/responsible-users"
+          ? {
+              data: {
+                users: [
+                  {
+                    id: "9",
+                    fullName: "Arta Berisha",
+                    jobTitle: "Menaxhere laboratori",
+                    roles: ["lab_manager"],
+                  },
+                ],
+              },
+            }
+          : {
+              data: { laboratories: [] },
+              meta: { pagination: { page: 1, pages: 0, total: 0 } },
+            },
+      ),
+    );
     api.post.mockResolvedValue({
       data: {
         laboratory,
@@ -100,6 +117,9 @@ describe("LaboratoriesPage", () => {
     fireEvent.change(screen.getByLabelText("Kapaciteti"), {
       target: { value: "24" },
     });
+    fireEvent.change(screen.getByLabelText("Përgjegjësi"), {
+      target: { value: "9" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Krijo laboratorin" }));
 
     await waitFor(() =>
@@ -111,6 +131,7 @@ describe("LaboratoriesPage", () => {
         floor: "2",
         capacity: 24,
         status: "active",
+        responsibleUserId: "9",
         description: "",
       }),
     );
@@ -142,15 +163,22 @@ describe("LaboratoriesPage", () => {
   });
 
   it("lists and restores an archived laboratory", async () => {
-    api.get
-      .mockResolvedValueOnce({
-        data: { laboratories: [laboratory] },
-        meta: { pagination: { page: 1, pages: 1, total: 1 } },
-      })
-      .mockResolvedValue({
-        data: { laboratories: [{ ...laboratory, status: "archived" }] },
-        meta: { pagination: { page: 1, pages: 1, total: 1 } },
-      });
+    api.get.mockImplementation((path) =>
+      Promise.resolve(
+        path === "/api/laboratories/responsible-users"
+          ? { data: { users: [] } }
+          : {
+              data: {
+                laboratories: [
+                  archivePath(path)
+                    ? { ...laboratory, status: "archived" }
+                    : laboratory,
+                ],
+              },
+              meta: { pagination: { page: 1, pages: 1, total: 1 } },
+            },
+      ),
+    );
     api.patch.mockResolvedValue({
       data: {
         laboratory: { ...laboratory, status: "active" },
@@ -179,6 +207,10 @@ describe("LaboratoriesPage", () => {
     ).toBeInTheDocument();
   });
 });
+
+function archivePath(path) {
+  return path.startsWith("/api/laboratories/archived?");
+}
 
 function renderPage() {
   return render(

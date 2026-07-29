@@ -14,6 +14,8 @@ export function LaboratoryForm({
   onCancel,
   saving,
   submitLabel,
+  responsibleUsers = [],
+  loadingResponsibleUsers = false,
 }) {
   const {
     register,
@@ -72,6 +74,28 @@ export function LaboratoryForm({
               <option value="active">Aktiv</option>
               <option value="inactive">Joaktiv</option>
               <option value="maintenance">Në mirëmbajtje</option>
+            </select>
+          }
+        />
+        <FormField
+          label="Përgjegjësi"
+          error={errors.responsibleUserId?.message}
+          input={
+            <select
+              {...register("responsibleUserId")}
+              disabled={loadingResponsibleUsers}
+            >
+              <option value="">
+                {loadingResponsibleUsers
+                  ? "Po ngarkohen përdoruesit…"
+                  : "Pa përgjegjës të caktuar"}
+              </option>
+              {responsibleUsers.map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {candidate.fullName}
+                  {candidate.jobTitle ? ` — ${candidate.jobTitle}` : ""}
+                </option>
+              ))}
             </select>
           }
         />

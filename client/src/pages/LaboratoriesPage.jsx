@@ -26,6 +26,7 @@ export function LaboratoriesPage() {
   const user = useAuthStore((state) => state.user);
   const canCreate = user?.permissions?.includes("laboratories.create");
   const [laboratories, setLaboratories] = useState([]);
+  const [responsibleUsers, setResponsibleUsers] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
@@ -34,6 +35,7 @@ export function LaboratoriesPage() {
   const [archiveMode, setArchiveMode] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingResponsibleUsers, setLoadingResponsibleUsers] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -66,6 +68,16 @@ export function LaboratoriesPage() {
   useEffect(() => {
     loadLaboratories();
   }, [loadLaboratories]);
+
+  useEffect(() => {
+    if (!canCreate) return;
+    setLoadingResponsibleUsers(true);
+    api
+      .get("/api/laboratories/responsible-users")
+      .then((response) => setResponsibleUsers(response.data.users ?? []))
+      .catch(() => setResponsibleUsers([]))
+      .finally(() => setLoadingResponsibleUsers(false));
+  }, [canCreate]);
 
   function submitSearch(event) {
     event.preventDefault();
@@ -319,6 +331,8 @@ export function LaboratoriesPage() {
               onCancel={() => setShowForm(false)}
               saving={saving}
               submitLabel="Krijo laboratorin"
+              responsibleUsers={responsibleUsers}
+              loadingResponsibleUsers={loadingResponsibleUsers}
             />
           </section>
         </div>

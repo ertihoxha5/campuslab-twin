@@ -70,6 +70,17 @@ const validationError = (message, issues) =>
 
 export function createLaboratoryService({ repository }) {
   return {
+    async listResponsibleUsers(context) {
+      const users = await repository.listResponsibleUsers({
+        universityId: context.universityId,
+      });
+      return users.map((user) => ({
+        ...user,
+        roles: user.roleCodes ? user.roleCodes.split(",") : [],
+        roleCodes: undefined,
+      }));
+    },
+
     async list(input = {}, context) {
       const parsed = listSchema.safeParse(input);
       if (!parsed.success) {
@@ -140,7 +151,7 @@ export function createLaboratoryService({ repository }) {
         });
         if (result.invalidResponsibleUser) {
           throw validationError(
-            "Përdoruesi përgjegjës nuk i përket universitetit tuaj.",
+            "Përgjegjësi duhet të jetë administrator ose menaxher aktiv i laboratorit në universitetin tuaj.",
           );
         }
         return result;
@@ -179,7 +190,7 @@ export function createLaboratoryService({ repository }) {
         if (!result) throw notFound();
         if (result.invalidResponsibleUser) {
           throw validationError(
-            "Përdoruesi përgjegjës nuk i përket universitetit tuaj.",
+            "Përgjegjësi duhet të jetë administrator ose menaxher aktiv i laboratorit në universitetin tuaj.",
           );
         }
         return result;

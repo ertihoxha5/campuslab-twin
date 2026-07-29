@@ -92,6 +92,15 @@ export function createLaboratoryRouter({
     },
   );
 
+  router.get(
+    "/responsible-users",
+    requirePermissions(permissions.LABORATORIES_MANAGE),
+    async (request, response) => {
+      const users = await service.listResponsibleUsers(tenantContext(request));
+      return success(response, { data: { users } });
+    },
+  );
+
   router.patch(
     "/:laboratoryId/restore",
     requirePermissions(permissions.LABORATORIES_CREATE),
