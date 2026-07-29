@@ -31,6 +31,7 @@ export function createApp({
   notificationService,
   dashboardService,
   laboratoryService,
+  laboratoryAccessRepository,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
@@ -134,6 +135,7 @@ export function createApp({
       createLaboratoryRouter({
         service: laboratoryService,
         authenticateTenant: tenantAuthentication,
+        laboratoryAccessRepository,
       }),
     );
   }

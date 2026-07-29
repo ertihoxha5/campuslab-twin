@@ -106,6 +106,7 @@ const app = createApp({
   notificationService,
   dashboardService,
   laboratoryService,
+  laboratoryAccessRepository,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,

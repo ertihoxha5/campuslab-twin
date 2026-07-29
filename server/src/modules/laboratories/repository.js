@@ -76,6 +76,45 @@ export function createLaboratoryRepository(pool) {
       return { items, total: Number(totals[0]?.total ?? 0) };
     },
 
+    async findById({ universityId, laboratoryId }) {
+      const rows = await query(
+        pool,
+        `SELECT laboratory.id, laboratory.name, laboratory.code,
+                laboratory.faculty, laboratory.building, laboratory.floor,
+                laboratory.capacity, laboratory.status,
+                laboratory.description,
+                laboratory.responsible_user_id AS responsibleUserId,
+                responsible.full_name AS responsibleUserName,
+                COUNT(DISTINCT zone.id) AS zoneCount,
+                COUNT(DISTINCT equipment.id) AS equipmentCount,
+                COUNT(DISTINCT sensor.id) AS sensorCount,
+                laboratory.created_at AS createdAt,
+                laboratory.updated_at AS updatedAt
+         FROM laboratories laboratory
+         LEFT JOIN users responsible
+           ON responsible.id = laboratory.responsible_user_id
+          AND responsible.university_id = laboratory.university_id
+         LEFT JOIN laboratory_zones zone
+           ON zone.laboratory_id = laboratory.id
+          AND zone.university_id = laboratory.university_id
+         LEFT JOIN equipment
+           ON equipment.laboratory_id = laboratory.id
+          AND equipment.university_id = laboratory.university_id
+          AND equipment.deleted_at IS NULL
+         LEFT JOIN sensors sensor
+           ON sensor.laboratory_id = laboratory.id
+          AND sensor.university_id = laboratory.university_id
+          AND sensor.deleted_at IS NULL
+         WHERE laboratory.university_id = ?
+           AND laboratory.id = ?
+           AND laboratory.deleted_at IS NULL
+         GROUP BY laboratory.id
+         LIMIT 1`,
+        [universityId, laboratoryId],
+      );
+      return rows[0] ?? null;
+    },
+
     async create({ universityId, userId, ipAddress, laboratory }) {
       return withTransaction(pool, async (connection) => {
         if (laboratory.responsibleUserId) {
@@ -133,6 +172,116 @@ export function createLaboratoryRepository(pool) {
           id: String(laboratoryId),
           ...laboratory,
         };
+      });
+    },
+
+    async update({
+      universityId,
+      laboratoryId,
+      userId,
+      ipAddress,
+      laboratory,
+    }) {
+      return withTransaction(pool, async (connection) => {
+        if (laboratory.responsibleUserId) {
+          const responsibleUsers = await query(
+            connection,
+            `SELECT id
+             FROM users
+             WHERE university_id = ?
+               AND id = ?
+               AND status = 'active'
+               AND deleted_at IS NULL`,
+            [universityId, laboratory.responsibleUserId],
+          );
+          if (!responsibleUsers[0]) return { invalidResponsibleUser: true };
+        }
+
+        const result = await query(
+          connection,
+          `UPDATE laboratories
+           SET name = ?, code = ?, faculty = ?, building = ?, floor = ?,
+               capacity = ?, responsible_user_id = ?, description = ?,
+               status = ?
+           WHERE university_id = ?
+             AND id = ?
+             AND deleted_at IS NULL`,
+          [
+            laboratory.name,
+            laboratory.code,
+            laboratory.faculty,
+            laboratory.building,
+            laboratory.floor,
+            laboratory.capacity,
+            laboratory.responsibleUserId,
+            laboratory.description,
+            laboratory.status,
+            universityId,
+            laboratoryId,
+          ],
+        );
+        if (!result.affectedRows) return null;
+
+        await query(
+          connection,
+          `INSERT INTO activity_logs (
+             university_id, user_id, action, entity_type, entity_id,
+             description, metadata_json, ip_address
+           ) VALUES (?, ?, 'laboratory.updated', 'laboratory', ?, ?, ?, ?)`,
+          [
+            universityId,
+            userId,
+            laboratoryId,
+            `U përditësua laboratori ${laboratory.name}.`,
+            JSON.stringify({
+              code: laboratory.code,
+              status: laboratory.status,
+            }),
+            ipAddress,
+          ],
+        );
+        return { id: String(laboratoryId), ...laboratory };
+      });
+    },
+
+    async archive({ universityId, laboratoryId, userId, ipAddress }) {
+      return withTransaction(pool, async (connection) => {
+        const laboratories = await query(
+          connection,
+          `SELECT id, name, code
+           FROM laboratories
+           WHERE university_id = ?
+             AND id = ?
+             AND deleted_at IS NULL
+           FOR UPDATE`,
+          [universityId, laboratoryId],
+        );
+        const laboratory = laboratories[0];
+        if (!laboratory) return null;
+
+        await query(
+          connection,
+          `UPDATE laboratories
+           SET status = 'archived', deleted_at = UTC_TIMESTAMP(3)
+           WHERE university_id = ? AND id = ?`,
+          [universityId, laboratoryId],
+        );
+        await query(
+          connection,
+          `INSERT INTO activity_logs (
+             university_id, user_id, action, entity_type, entity_id,
+             description, metadata_json, ip_address
+           ) VALUES (?, ?, 'laboratory.archived', 'laboratory', ?, ?, ?, ?)`,
+          [
+            universityId,
+            userId,
+            laboratoryId,
+            `U arkivua laboratori ${laboratory.name}.`,
+            JSON.stringify({ code: laboratory.code }),
+            ipAddress,
+          ],
+        );
+        return { id: String(laboratory.id), name: laboratory.name };
       });
     },
   };

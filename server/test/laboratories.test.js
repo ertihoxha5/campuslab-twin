@@ -203,6 +203,143 @@ test("laboratory creation and tenant audit are atomic", async () => {
   assert.equal(calls[0].parameters[0], "7");
 });
 
+test("laboratory detail never looks up an id without its tenant", async () => {
+  const calls = [];
+  const repository = createLaboratoryRepository({
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      return [[{ id: 15, name: "Laboratori Test", zoneCount: 2 }]];
+    },
+  });
+
+  const laboratory = await repository.findById({
+    universityId: "7",
+    laboratoryId: "15",
+  });
+
+  assert.equal(laboratory.id, 15);
+  assert.match(calls[0].sql, /laboratory\.university_id = \?/);
+  assert.match(calls[0].sql, /laboratory\.id = \?/);
+  assert.deepEqual(calls[0].parameters, ["7", "15"]);
+});
+
+test("laboratory detail, update and archive use only server tenant context", async () => {
+  const calls = [];
+  const service = createLaboratoryService({
+    repository: {
+      async findById(input) {
+        calls.push({ operation: "detail", input });
+        return { id: "15", name: "Laboratori Test" };
+      },
+      async update(input) {
+        calls.push({ operation: "update", input });
+        return { id: "15", ...input.laboratory };
+      },
+      async archive(input) {
+        calls.push({ operation: "archive", input });
+        return { id: "15", name: "Laboratori Test" };
+      },
+    },
+  });
+  const context = {
+    universityId: "7",
+    userId: "9",
+    roles: ["university_admin"],
+    ipAddress: "127.0.0.1",
+  };
+  const updateInput = {
+    universityId: "999",
+    name: "Laboratori i Përditësuar",
+    code: "lab-15",
+    faculty: "Fakulteti Teknik",
+    building: "B",
+    floor: "3",
+    capacity: 30,
+    status: "maintenance",
+  };
+
+  await service.detail("15", context);
+  const updated = await service.update("15", updateInput, context);
+  await service.archive("15", context);
+
+  assert.equal(updated.code, "LAB-15");
+  assert.equal(calls[0].input.universityId, "7");
+  assert.equal(calls[1].input.universityId, "7");
+  assert.equal(calls[1].input.laboratory.universityId, undefined);
+  assert.equal(calls[2].input.universityId, "7");
+});
+
+test("laboratory update and archive write tenant audit records atomically", async () => {
+  const events = [];
+  const calls = [];
+  const connection = {
+    async beginTransaction() {
+      events.push("begin");
+    },
+    async commit() {
+      events.push("commit");
+    },
+    async rollback() {
+      events.push("rollback");
+    },
+    release() {
+      events.push("release");
+    },
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      if (sql.includes("SELECT id, name, code")) {
+        return [[{ id: 15, name: "Laboratori Test", code: "LAB-15" }]];
+      }
+      return [{ affectedRows: 1 }];
+    },
+  };
+  const repository = createLaboratoryRepository({
+    async getConnection() {
+      return connection;
+    },
+  });
+  const commonContext = {
+    universityId: "7",
+    laboratoryId: "15",
+    userId: "9",
+    ipAddress: "127.0.0.1",
+  };
+
+  await repository.update({
+    ...commonContext,
+    laboratory: {
+      name: "Laboratori Test",
+      code: "LAB-15",
+      faculty: "Fakulteti Teknik",
+      building: "B",
+      floor: "3",
+      capacity: 30,
+      responsibleUserId: null,
+      description: "",
+      status: "active",
+    },
+  });
+  await repository.archive(commonContext);
+
+  assert.deepEqual(events, [
+    "begin",
+    "commit",
+    "release",
+    "begin",
+    "commit",
+    "release",
+  ]);
+  assert.ok(calls.some(({ sql }) => sql.includes("'laboratory.updated'")));
+  assert.ok(calls.some(({ sql }) => sql.includes("'laboratory.archived'")));
+  for (const { sql, parameters } of calls.filter(({ sql }) =>
+    /UPDATE laboratories|FROM laboratories/.test(sql),
+  )) {
+    assert.match(sql, /university_id = \?/);
+    assert.ok(parameters.includes("7"));
+    assert.ok(parameters.includes("15"));
+  }
+});
+
 let server;
 let baseUrl;
 let capturedCreateContext;
@@ -237,6 +374,14 @@ before(async () => {
           capturedCreateContext = context;
           return { id: "5", name: input.name };
         },
+        async detail(laboratoryId, context) {
+          return { id: laboratoryId, universityId: context.universityId };
+        },
+      },
+      laboratoryAccessRepository: {
+        async findAccessibleLaboratory({ laboratoryId }) {
+          return laboratoryId === "99" ? null : { id: laboratoryId };
+        },
       },
     }),
   );
@@ -252,6 +397,14 @@ test("laboratory routes derive tenant context and enforce create permission", as
   const listPayload = await listResponse.json();
   assert.equal(listResponse.status, 200);
   assert.equal(listPayload.data.laboratories[0].universityId, "7");
+
+  const detailResponse = await fetch(`${baseUrl}/api/laboratories/4`);
+  const detailPayload = await detailResponse.json();
+  assert.equal(detailResponse.status, 200);
+  assert.equal(detailPayload.data.laboratory.universityId, "7");
+
+  const inaccessibleResponse = await fetch(`${baseUrl}/api/laboratories/99`);
+  assert.equal(inaccessibleResponse.status, 404);
 
   const createResponse = await fetch(`${baseUrl}/api/laboratories`, {
     method: "POST",

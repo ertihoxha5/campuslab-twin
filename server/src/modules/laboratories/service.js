@@ -32,6 +32,28 @@ const createSchema = z.object({
   status: z.enum(statuses).optional().default("active"),
 });
 
+const updateSchema = createSchema;
+
+const notFound = () =>
+  new AppError({
+    status: 404,
+    code: "NOT_FOUND",
+    message: "Laboratori i kërkuar nuk u gjet.",
+  });
+
+const validId = (value) => /^[1-9]\d*$/.test(String(value));
+
+const rethrowConflict = (error) => {
+  if (error?.code === "ER_DUP_ENTRY" || error?.errno === 1062) {
+    throw new AppError({
+      status: 409,
+      code: "LABORATORY_CODE_EXISTS",
+      message: "Një laborator me këtë kod ekziston tashmë.",
+    });
+  }
+  throw error;
+};
+
 const validationError = (message, issues) =>
   new AppError({
     status: 422,
@@ -97,15 +119,59 @@ export function createLaboratoryService({ repository }) {
         }
         return result;
       } catch (error) {
-        if (error?.code === "ER_DUP_ENTRY" || error?.errno === 1062) {
-          throw new AppError({
-            status: 409,
-            code: "LABORATORY_CODE_EXISTS",
-            message: "Një laborator me këtë kod ekziston tashmë.",
-          });
-        }
-        throw error;
+        rethrowConflict(error);
       }
+    },
+
+    async detail(laboratoryId, context) {
+      if (!validId(laboratoryId)) throw notFound();
+      const laboratory = await repository.findById({
+        universityId: context.universityId,
+        laboratoryId,
+      });
+      if (!laboratory) throw notFound();
+      return laboratory;
+    },
+
+    async update(laboratoryId, input, context) {
+      if (!validId(laboratoryId)) throw notFound();
+      const parsed = updateSchema.safeParse(input);
+      if (!parsed.success) {
+        throw validationError(
+          "Të dhënat e laboratorit nuk janë të vlefshme.",
+          parsed.error.issues,
+        );
+      }
+      try {
+        const result = await repository.update({
+          universityId: context.universityId,
+          laboratoryId,
+          userId: context.userId,
+          ipAddress: context.ipAddress,
+          laboratory: parsed.data,
+        });
+        if (!result) throw notFound();
+        if (result.invalidResponsibleUser) {
+          throw validationError(
+            "Përdoruesi përgjegjës nuk i përket universitetit tuaj.",
+          );
+        }
+        return result;
+      } catch (error) {
+        rethrowConflict(error);
+      }
+    },
+
+    async archive(laboratoryId, context) {
+      if (!validId(laboratoryId)) throw notFound();
+      const laboratory = await repository.archive({
+        universityId: context.universityId,
+        laboratoryId,
+        userId: context.userId,
+        ipAddress: context.ipAddress,
+      });
+      if (!laboratory) throw notFound();
+      return laboratory;
     },
   };
 }
