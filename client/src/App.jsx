@@ -25,6 +25,7 @@ import { UniversityLayout } from "@/layouts/UniversityLayout.jsx";
 import { UniversityOverviewPage } from "@/pages/UniversityOverviewPage.jsx";
 import { WorkspaceSectionPage } from "@/pages/WorkspaceSectionPage.jsx";
 import { ForbiddenPage } from "@/pages/ForbiddenPage.jsx";
+import { WorkspaceNotFoundPage } from "@/pages/WorkspaceNotFoundPage.jsx";
 
 export default function App() {
   return (
@@ -198,7 +199,7 @@ export default function App() {
                 }
               />
             </Route>
-            <Route path="*" element={<NotFoundPage />} />
+            <Route path="*" element={<WorkspaceNotFoundPage />} />
           </Route>
         </Route>
         <Route element={<PlatformProtectedRoute />}>

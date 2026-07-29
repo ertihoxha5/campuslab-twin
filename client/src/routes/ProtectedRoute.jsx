@@ -7,8 +7,21 @@ export function ProtectedRoute() {
 
   if (status === "unknown" || status === "loading") {
     return (
-      <main className="route-state" aria-live="polite" aria-busy="true">
-        <p>Po verifikohet sesioni...</p>
+      <main
+        className="workspace-session-skeleton"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <aside aria-hidden="true">
+          <span />
+          {Array.from({ length: 7 }, (_, index) => (
+            <i key={index} />
+          ))}
+        </aside>
+        <section>
+          <div aria-hidden="true" />
+          <p>Po verifikohet sesioni...</p>
+        </section>
       </main>
     );
   }

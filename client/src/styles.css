@@ -1660,6 +1660,61 @@ a {
   font-weight: 750;
 }
 
+.workspace-session-skeleton {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 264px 1fr;
+  background: var(--surface);
+}
+
+.workspace-session-skeleton aside {
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+  padding: 1.25rem;
+  border-right: 1px solid var(--border);
+  background: var(--background);
+}
+
+.workspace-session-skeleton aside span,
+.workspace-session-skeleton aside i,
+.workspace-session-skeleton section > div {
+  display: block;
+  border-radius: 0.55rem;
+  background: var(--border);
+  animation: workspace-pulse 1.4s ease-in-out infinite;
+}
+
+.workspace-session-skeleton aside span {
+  width: 75%;
+  height: 42px;
+  margin-bottom: 1rem;
+}
+
+.workspace-session-skeleton aside i {
+  height: 38px;
+}
+
+.workspace-session-skeleton section {
+  padding: 2rem;
+}
+
+.workspace-session-skeleton section > div {
+  width: min(560px, 80%);
+  height: 150px;
+}
+
+.workspace-session-skeleton section p {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+@keyframes workspace-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
 .platform-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2153,6 +2208,13 @@ a {
 }
 
 @media (max-width: 860px) {
+  .workspace-session-skeleton {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-session-skeleton aside {
+    display: none;
+  }
   .university-shell {
     grid-template-columns: 1fr;
   }

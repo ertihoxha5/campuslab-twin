@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   Box,
@@ -23,6 +23,7 @@ import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 import { NotificationMenu } from "@/components/NotificationMenu.jsx";
+import { WorkspaceErrorBoundary } from "@/components/WorkspaceErrorBoundary.jsx";
 
 const roleLabels = {
   university_admin: "Administrator i universitetit",
@@ -136,6 +137,15 @@ export function UniversityLayout() {
     availableNavigation.find((item) => item.to === location.pathname) ??
     availableNavigation[0];
 
+  useEffect(() => {
+    document.title = `${current?.label ?? "Aplikacioni"} · ${
+      user?.university.acronym ?? "CampusLab Twin"
+    }`;
+    return () => {
+      document.title = "CampusLab Twin";
+    };
+  }, [current?.label, user?.university.acronym]);
+
   async function logout() {
     try {
       await api.post("/api/auth/logout");
@@ -228,7 +238,9 @@ export function UniversityLayout() {
           </div>
         </header>
         <main className="university-content">
-          <Outlet />
+          <WorkspaceErrorBoundary key={location.pathname}>
+            <Outlet />
+          </WorkspaceErrorBoundary>
         </main>
       </div>
     </div>

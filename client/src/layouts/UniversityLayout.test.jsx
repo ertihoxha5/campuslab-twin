@@ -6,6 +6,7 @@ import { UniversityLayout } from "./UniversityLayout.jsx";
 
 afterEach(() => {
   useAuthStore.getState().resetSession();
+  document.title = "CampusLab Twin";
 });
 
 function renderLayout(user) {
@@ -50,6 +51,7 @@ describe("UniversityLayout", () => {
       screen.getByRole("link", { name: /Përdoruesit/ }),
     ).toBeInTheDocument();
     expect(screen.getByText("Përmbajtja private")).toBeInTheDocument();
+    expect(document.title).toBe("Përmbledhja · UT");
   });
 
   it("hides management sections without their permissions", () => {
