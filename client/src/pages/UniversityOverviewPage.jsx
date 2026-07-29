@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import {
   Activity,
   Building2,
@@ -14,6 +14,12 @@ import {
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
+
+const DashboardOperationalPanels = lazy(() =>
+  import("@/components/DashboardOperationalPanels.jsx").then((module) => ({
+    default: module.DashboardOperationalPanels,
+  })),
+);
 
 const metricDefinitions = [
   { key: "laboratories", label: "Numri i laboratorëve", icon: Building2 },
@@ -201,6 +207,15 @@ export function UniversityOverviewPage() {
               aktive.
             </p>
           </details>
+          <Suspense
+            fallback={
+              <p className="dashboard-panels-loading">
+                Po ngarkohen grafikët dhe aktivitetet…
+              </p>
+            }
+          >
+            <DashboardOperationalPanels summary={summary} />
+          </Suspense>
         </>
       ) : null}
     </section>
