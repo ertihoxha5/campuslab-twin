@@ -10,6 +10,7 @@ const userSelection = `
     u.status AS userStatus,
     un.name AS universityName,
     un.acronym AS universityAcronym,
+    un.logo_file_id AS universityLogoFileId,
     un.status AS universityStatus,
     GROUP_CONCAT(DISTINCT r.code ORDER BY r.code) AS roleCodes
   FROM users u
@@ -38,7 +39,7 @@ export function createAuthRepository(pool) {
         `${userSelection}
          WHERE u.email = ? AND u.deleted_at IS NULL
          GROUP BY u.id, u.university_id, u.full_name, u.email, u.password_hash,
-                  u.status, un.name, un.acronym, un.status`,
+                  u.status, un.name, un.acronym, un.logo_file_id, un.status`,
         [email],
       );
       return rows.map(mapUser);
@@ -50,7 +51,7 @@ export function createAuthRepository(pool) {
         `${userSelection}
          WHERE u.id = ? AND u.university_id = ? AND u.deleted_at IS NULL
          GROUP BY u.id, u.university_id, u.full_name, u.email, u.password_hash,
-                  u.status, un.name, un.acronym, un.status
+                  u.status, un.name, un.acronym, un.logo_file_id, un.status
          LIMIT 1`,
         [userId, universityId],
       );
@@ -114,7 +115,7 @@ export function createAuthRepository(pool) {
           `${userSelection}
            WHERE u.id = ? AND u.university_id = ? AND u.deleted_at IS NULL
            GROUP BY u.id, u.university_id, u.full_name, u.email, u.password_hash,
-                    u.status, un.name, un.acronym, un.status
+                    u.status, un.name, un.acronym, un.logo_file_id, un.status
            LIMIT 1`,
           [current.userId, current.universityId],
         );

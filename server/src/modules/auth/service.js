@@ -11,6 +11,7 @@ import {
   validateForgotPasswordInput,
   validateResetPasswordInput,
 } from "./validation.js";
+import { permissionsForRoles } from "../../authorization/permissions.js";
 
 const invalidCredentials = () =>
   new AppError({
@@ -36,8 +37,10 @@ function publicUser(user) {
       id: user.universityId,
       name: user.universityName,
       acronym: user.universityAcronym,
+      logoFileId: user.universityLogoFileId,
     },
     roles: user.roles,
+    permissions: permissionsForRoles(user.roles),
   };
 }
 

@@ -1278,6 +1278,256 @@ a {
   gap: 0.5rem;
 }
 
+.university-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 264px minmax(0, 1fr);
+  background: var(--surface);
+}
+
+.university-sidebar {
+  position: sticky;
+  z-index: 30;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--background);
+}
+
+.university-brand {
+  display: flex;
+  min-height: 82px;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.university-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0.7rem;
+  background: var(--grape);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.university-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.university-brand > div {
+  min-width: 0;
+}
+
+.university-brand strong,
+.university-brand small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.university-brand small {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.university-sidebar nav {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem;
+}
+
+.university-sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.68rem 0.75rem;
+  border-radius: 0.65rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.university-sidebar nav a:hover,
+.university-sidebar nav a.active {
+  background: var(--grape-soft);
+  color: var(--grape);
+}
+
+.university-workspace {
+  min-width: 0;
+}
+
+.university-header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: flex;
+  min-height: 82px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--header);
+  backdrop-filter: blur(16px);
+}
+
+.workspace-breadcrumb,
+.university-account {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.workspace-breadcrumb {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.workspace-breadcrumb strong {
+  color: var(--text);
+}
+
+.university-account > div {
+  text-align: right;
+}
+
+.university-account strong,
+.university-account small {
+  display: block;
+}
+
+.university-account strong {
+  font-size: 0.83rem;
+}
+
+.university-account small {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.notification-button,
+.sidebar-trigger,
+.sidebar-close {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--background);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.sidebar-trigger,
+.sidebar-close {
+  display: none;
+}
+
+.university-content {
+  width: min(100%, 1440px);
+  padding: 2rem;
+}
+
+.workspace-page-heading {
+  max-width: 720px;
+}
+
+.workspace-page-heading h1 {
+  margin: 0.3rem 0 0.6rem;
+  font-size: clamp(1.75rem, 3vw, 2.45rem);
+  letter-spacing: -0.045em;
+}
+
+.workspace-page-heading > p:last-child {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.workspace-onboarding,
+.workspace-empty-state {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--background);
+}
+
+.workspace-onboarding > span {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: var(--grape-soft);
+  color: var(--grape);
+}
+
+.workspace-onboarding h2 {
+  margin: 1rem 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.workspace-onboarding p,
+.workspace-empty-state p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.tenant-security-note {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--reseda);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.workspace-error-state {
+  max-width: 560px;
+  padding: 3rem 0;
+}
+
+.workspace-error-state > span {
+  color: var(--grape);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.workspace-error-state h1 {
+  margin: 0.5rem 0;
+}
+
+.workspace-error-state p {
+  color: var(--muted);
+}
+
+.workspace-error-state a {
+  display: inline-block;
+  margin-top: 0.75rem;
+  color: var(--grape);
+  font-weight: 750;
+}
+
 .platform-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1771,6 +2021,43 @@ a {
 }
 
 @media (max-width: 860px) {
+  .university-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .university-sidebar {
+    position: fixed;
+    left: 0;
+    transform: translateX(-100%);
+    width: min(86vw, 300px);
+    transition: transform 180ms ease;
+  }
+
+  .university-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-trigger,
+  .sidebar-close {
+    display: grid;
+  }
+
+  .sidebar-close {
+    margin-left: auto;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    z-index: 25;
+    inset: 0;
+    border: 0;
+    background: rgba(10, 8, 13, 0.45);
+  }
+
+  .university-content {
+    padding: 1.5rem;
+  }
+
   .platform-settings-grid {
     grid-template-columns: 1fr;
   }
@@ -1896,6 +2183,24 @@ a {
 }
 
 @media (max-width: 640px) {
+  .university-header {
+    min-height: 70px;
+    padding: 0 1rem;
+  }
+
+  .workspace-breadcrumb {
+    display: none;
+  }
+
+  .university-account > div,
+  .university-account .notification-button {
+    display: none;
+  }
+
+  .university-content {
+    padding: 1.25rem 1rem;
+  }
+
   .hero-carousel,
   .hero-content {
     min-height: 690px;

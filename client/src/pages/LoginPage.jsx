@@ -25,7 +25,7 @@ export function LoginPage() {
         rememberMe: values.get("rememberMe") === "on",
       });
       setSession(response.data.user);
-      const destination = location.state?.from?.pathname ?? "/";
+      const destination = location.state?.from?.pathname ?? "/aplikacioni";
       navigate(destination, { replace: true });
     } catch (error) {
       setMessage(error.message);

@@ -19,6 +19,12 @@ import { PlatformSummaryPage } from "@/pages/PlatformSummaryPage.jsx";
 import { PlatformSettingsPage } from "@/pages/PlatformSettingsPage.jsx";
 import { PlatformActivityPage } from "@/pages/PlatformActivityPage.jsx";
 import { PlatformProtectedRoute } from "@/routes/PlatformProtectedRoute.jsx";
+import { ProtectedRoute } from "@/routes/ProtectedRoute.jsx";
+import { PermissionRoute } from "@/routes/PermissionRoute.jsx";
+import { UniversityLayout } from "@/layouts/UniversityLayout.jsx";
+import { UniversityOverviewPage } from "@/pages/UniversityOverviewPage.jsx";
+import { WorkspaceSectionPage } from "@/pages/WorkspaceSectionPage.jsx";
+import { ForbiddenPage } from "@/pages/ForbiddenPage.jsx";
 
 export default function App() {
   return (
@@ -37,6 +43,164 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route path="administrimi/kycu" element={<PlatformLoginPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="aplikacioni" element={<UniversityLayout />}>
+            <Route index element={<UniversityOverviewPage />} />
+            <Route path="e-ndaluar" element={<ForbiddenPage />} />
+            <Route element={<PermissionRoute anyOf={["laboratories.view"]} />}>
+              <Route
+                path="laboratoret"
+                element={
+                  <WorkspaceSectionPage
+                    title="Laboratorët"
+                    description="Menaxhimi i laboratorëve dhe zonave të universitetit."
+                  />
+                }
+              />
+              <Route
+                path="digital-twin"
+                element={
+                  <WorkspaceSectionPage
+                    title="Digital Twin 3D"
+                    description="Pamja interaktive e laboratorëve të autorizuar."
+                  />
+                }
+              />
+              <Route
+                path="pajisjet"
+                element={
+                  <WorkspaceSectionPage
+                    title="Pajisjet"
+                    description="Pajisjet e laboratorëve të universitetit."
+                  />
+                }
+              />
+            </Route>
+            <Route element={<PermissionRoute anyOf={["monitoring.view"]} />}>
+              <Route
+                path="sensoret"
+                element={
+                  <WorkspaceSectionPage
+                    title="Sensorët"
+                    description="Sensorët e laboratorëve të autorizuar."
+                  />
+                }
+              />
+              <Route
+                path="monitorimi"
+                element={
+                  <WorkspaceSectionPage
+                    title="Monitorimi në kohë reale"
+                    description="Gjendja e drejtpërdrejtë e laboratorëve."
+                  />
+                }
+              />
+              <Route
+                path="energjia"
+                element={
+                  <WorkspaceSectionPage
+                    title="Konsumi i energjisë"
+                    description="Konsumi i matur dhe historiku energjetik."
+                  />
+                }
+              />
+            </Route>
+            <Route
+              element={
+                <PermissionRoute
+                  anyOf={["alerts.respond", "alerts.report", "monitoring.view"]}
+                />
+              }
+            >
+              <Route
+                path="alarmet"
+                element={
+                  <WorkspaceSectionPage
+                    title="Alarmet"
+                    description="Alarmet dhe ngjarjet e laboratorëve të autorizuar."
+                  />
+                }
+              />
+            </Route>
+            <Route
+              element={
+                <PermissionRoute
+                  anyOf={["maintenance.manage", "maintenance.assigned"]}
+                />
+              }
+            >
+              <Route
+                path="mirembajtja"
+                element={
+                  <WorkspaceSectionPage
+                    title="Mirëmbajtja"
+                    description="Detyrat dhe historiku i mirëmbajtjes."
+                  />
+                }
+              />
+            </Route>
+            <Route element={<PermissionRoute anyOf={["reports.view"]} />}>
+              <Route
+                path="analitika"
+                element={
+                  <WorkspaceSectionPage
+                    title="Analitika"
+                    description="Analiza e të dhënave të universitetit."
+                  />
+                }
+              />
+              <Route
+                path="raportet"
+                element={
+                  <WorkspaceSectionPage
+                    title="Raportet"
+                    description="Raportet e autorizuara të universitetit."
+                  />
+                }
+              />
+            </Route>
+            <Route element={<PermissionRoute anyOf={["simulations.run"]} />}>
+              <Route
+                path="simulimet"
+                element={
+                  <WorkspaceSectionPage
+                    title="Simulimet"
+                    description="Skenarët e kontrolluar të laboratorëve."
+                  />
+                }
+              />
+            </Route>
+            <Route
+              element={<PermissionRoute anyOf={["university.users.manage"]} />}
+            >
+              <Route
+                path="perdoruesit"
+                element={
+                  <WorkspaceSectionPage
+                    title="Përdoruesit"
+                    description="Përdoruesit dhe rolet e universitetit."
+                  />
+                }
+              />
+            </Route>
+            <Route
+              element={
+                <PermissionRoute anyOf={["university.profile.manage"]} />
+              }
+            >
+              <Route
+                path="cilesimet"
+                element={
+                  <WorkspaceSectionPage
+                    title="Cilësimet"
+                    description="Profili dhe preferencat e universitetit."
+                  />
+                }
+              />
+            </Route>
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Route>
         <Route element={<PlatformProtectedRoute />}>
           <Route path="administrimi" element={<PlatformLayout />}>
             <Route index element={<PlatformSummaryPage />} />
