@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { useAuthStore } from "@/stores/auth-store.js";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const setSession = useAuthStore((state) => state.setSession);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -16,12 +19,14 @@ export function LoginPage() {
     const values = new FormData(event.currentTarget);
 
     try {
-      await api.post("/api/auth/login", {
+      const response = await api.post("/api/auth/login", {
         email: values.get("email"),
         password: values.get("password"),
         rememberMe: values.get("rememberMe") === "on",
       });
-      navigate("/");
+      setSession(response.data.user);
+      const destination = location.state?.from?.pathname ?? "/";
+      navigate(destination, { replace: true });
     } catch (error) {
       setMessage(error.message);
     } finally {
