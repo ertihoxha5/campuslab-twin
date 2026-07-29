@@ -13,6 +13,7 @@ const tenantContext = (request) => ({
 
 export function createLaboratoryRouter({
   service,
+  zoneService,
   authenticateTenant,
   laboratoryAccessRepository,
 }) {
@@ -48,6 +49,69 @@ export function createLaboratoryRouter({
           laboratory,
           message: "Laboratori u krijua me sukses.",
         },
+      });
+    },
+  );
+
+  router.get(
+    "/:laboratoryId/zones",
+    requirePermissions(permissions.LABORATORIES_VIEW),
+    requireLaboratoryAccess,
+    async (request, response) => {
+      const zones = await zoneService.list(
+        request.params.laboratoryId,
+        tenantContext(request),
+      );
+      return success(response, { data: { zones } });
+    },
+  );
+
+  router.post(
+    "/:laboratoryId/zones",
+    requirePermissions(permissions.LABORATORIES_MANAGE),
+    requireLaboratoryAccess,
+    async (request, response) => {
+      const zone = await zoneService.create(
+        request.params.laboratoryId,
+        request.body,
+        tenantContext(request),
+      );
+      return success(response, {
+        status: 201,
+        data: { zone, message: "Zona u krijua me sukses." },
+      });
+    },
+  );
+
+  router.put(
+    "/:laboratoryId/zones/:zoneId",
+    requirePermissions(permissions.LABORATORIES_MANAGE),
+    requireLaboratoryAccess,
+    async (request, response) => {
+      const zone = await zoneService.update(
+        request.params.laboratoryId,
+        request.params.zoneId,
+        request.body,
+        tenantContext(request),
+      );
+      return success(response, {
+        data: { zone, message: "Zona u përditësua me sukses." },
+      });
+    },
+  );
+
+  router.delete(
+    "/:laboratoryId/zones/:zoneId",
+    requirePermissions(permissions.LABORATORIES_MANAGE),
+    requireLaboratoryAccess,
+    async (request, response) => {
+      const zone = await zoneService.remove(
+        request.params.laboratoryId,
+        request.params.zoneId,
+        tenantContext(request),
+      );
+      return success(response, {
+        data: { zone, message: "Zona u fshi me sukses." },
       });
     },
   );

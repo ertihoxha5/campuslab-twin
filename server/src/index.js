@@ -33,6 +33,8 @@ import { createDashboardRepository } from "./modules/dashboard/repository.js";
 import { createDashboardService } from "./modules/dashboard/service.js";
 import { createLaboratoryRepository } from "./modules/laboratories/repository.js";
 import { createLaboratoryService } from "./modules/laboratories/service.js";
+import { createLaboratoryZoneRepository } from "./modules/laboratories/zone-repository.js";
+import { createLaboratoryZoneService } from "./modules/laboratories/zone-service.js";
 
 loadEnvironmentFile();
 
@@ -96,6 +98,9 @@ const dashboardService = createDashboardService({
 const laboratoryService = createLaboratoryService({
   repository: createLaboratoryRepository(databasePool),
 });
+const laboratoryZoneService = createLaboratoryZoneService({
+  repository: createLaboratoryZoneRepository(databasePool),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -106,6 +111,7 @@ const app = createApp({
   notificationService,
   dashboardService,
   laboratoryService,
+  laboratoryZoneService,
   laboratoryAccessRepository,
   platformRegistrationService,
   platformAuthentication,
