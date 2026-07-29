@@ -7,6 +7,10 @@ const listColumns = `
   representative_email AS representativeEmail,
   status, review_reason AS reviewReason,
   reviewed_at AS reviewedAt, created_at AS createdAt`;
+const listAliases = `
+  id, universityName, acronym, institutionType, city,
+  representativeName, representativeEmail, status, reviewReason,
+  reviewedAt, createdAt`;
 
 export function createPlatformRegistrationRepository(pool) {
   return {
@@ -30,12 +34,18 @@ export function createPlatformRegistrationRepository(pool) {
       const [items, totals] = await Promise.all([
         query(
           pool,
-          `SELECT ${listColumns}
-           FROM university_registration_requests
-           ${where}
-           ORDER BY created_at DESC, id DESC
-           LIMIT ? OFFSET ?`,
-          [...parameters, limit, offset],
+          `SELECT ${listAliases}
+           FROM (
+             SELECT ${listColumns},
+                    ROW_NUMBER() OVER (
+                      ORDER BY created_at DESC, id DESC
+                    ) AS rowNumber
+             FROM university_registration_requests
+             ${where}
+           ) ranked
+           WHERE rowNumber > ? AND rowNumber <= ?
+           ORDER BY rowNumber`,
+          [...parameters, offset, offset + limit],
         ),
         query(
           pool,

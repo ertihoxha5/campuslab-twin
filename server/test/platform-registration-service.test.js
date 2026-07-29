@@ -75,14 +75,14 @@ test("platform registration repository uses parameterized filters and pagination
 
   assert.equal(result.total, 1);
   assert.match(calls[0].sql, /status = \?/);
-  assert.match(calls[0].sql, /LIMIT \? OFFSET \?/);
+  assert.match(calls[0].sql, /rowNumber > \? AND rowNumber <= \?/);
   assert.deepEqual(calls[0].parameters, [
     "pending",
     "%Test%",
     "%Test%",
     "%Test%",
-    20,
     0,
+    20,
   ]);
 });
 

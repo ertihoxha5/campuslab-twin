@@ -20,22 +20,31 @@ export function createPlatformUniversityRepository(pool) {
       const [items, totals] = await Promise.all([
         query(
           pool,
-          `SELECT university.id, university.name, university.acronym,
-                  university.institution_type AS institutionType,
-                  university.status, university.city,
-                  university.representative_name AS representativeName,
-                  university.representative_email AS representativeEmail,
-                  university.suspension_reason AS suspensionReason,
-                  university.approved_at AS approvedAt,
-                  COUNT(DISTINCT user.id) AS userCount
-           FROM universities university
-           LEFT JOIN users user
-             ON user.university_id = university.id AND user.deleted_at IS NULL
-           ${where}
-           GROUP BY university.id
-           ORDER BY university.created_at DESC, university.id DESC
-           LIMIT ? OFFSET ?`,
-          [...parameters, limit, offset],
+          `SELECT id, name, acronym, institutionType, status, city,
+                  representativeName, representativeEmail, suspensionReason,
+                  approvedAt, userCount
+           FROM (
+             SELECT university.id, university.name, university.acronym,
+                    university.institution_type AS institutionType,
+                    university.status, university.city,
+                    university.representative_name AS representativeName,
+                    university.representative_email AS representativeEmail,
+                    university.suspension_reason AS suspensionReason,
+                    university.approved_at AS approvedAt,
+                    COUNT(DISTINCT user.id) AS userCount,
+                    ROW_NUMBER() OVER (
+                      ORDER BY university.created_at DESC, university.id DESC
+                    ) AS rowNumber
+             FROM universities university
+             LEFT JOIN users user
+               ON user.university_id = university.id
+              AND user.deleted_at IS NULL
+             ${where}
+             GROUP BY university.id
+           ) ranked
+           WHERE rowNumber > ? AND rowNumber <= ?
+           ORDER BY rowNumber`,
+          [...parameters, offset, offset + limit],
         ),
         query(
           pool,
