@@ -1,16 +1,34 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
-import { prepareRegistrationData } from "@/pages/registration-form-data.js";
+import {
+  prepareRegistrationData,
+  validateRegistrationForm,
+} from "@/pages/registration-form-data.js";
 
 export function RegisterPage() {
   const formRef = useRef(null);
+  const [logoPreview, setLogoPreview] = useState("");
   const [state, setState] = useState({
     loading: false,
     message: "",
     error: false,
     details: null,
   });
+
+  useEffect(
+    () => () => {
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
+    },
+    [logoPreview],
+  );
+
+  function updateLogoPreview(event) {
+    const file = event.target.files?.[0];
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoPreview(file ? URL.createObjectURL(file) : "");
+    setState({ loading: false, message: "", error: false, details: null });
+  }
 
   function fillTestUniversity() {
     const form = formRef.current;
@@ -36,12 +54,26 @@ export function RegisterPage() {
       if (field) field.value = value;
     }
     form.elements.namedItem("acceptsTerms").checked = true;
+    form.elements.namedItem("logo").value = "";
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoPreview("");
     setState({ loading: false, message: "", error: false, details: null });
   }
 
   async function submit(event) {
     event.preventDefault();
     const form = event.currentTarget;
+    const clientError = validateRegistrationForm(form);
+    if (clientError) {
+      setState({
+        loading: false,
+        message: clientError,
+        error: true,
+        details: null,
+      });
+      return;
+    }
+
     setState({ loading: true, message: "", error: false, details: null });
     const data = prepareRegistrationData(form);
 
@@ -51,6 +83,8 @@ export function RegisterPage() {
         data,
       );
       form.reset();
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
+      setLogoPreview("");
       setState({
         loading: false,
         message: result.data.message,
@@ -138,17 +172,40 @@ export function RegisterPage() {
               name="logo"
               type="file"
               accept="image/png,image/jpeg,image/webp"
+              aria-describedby="logo-help"
+              onChange={updateLogoPreview}
             />
+            <span id="logo-help" className="field-help">
+              Opsionale · JPG, PNG ose WebP · maksimumi 2 MB
+            </span>
           </label>
+          {logoPreview && (
+            <div className="logo-preview" aria-live="polite">
+              <img src={logoPreview} alt="Pamja paraprake e logos" />
+              <span>Pamja paraprake</span>
+            </div>
+          )}
           <label>
             Fjalëkalimi
-            <input name="password" type="password" minLength="12" required />
+            <input
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              minLength="12"
+              aria-describedby="password-help"
+              required
+            />
+            <span id="password-help" className="field-help">
+              Të paktën 12 karaktere, me shkronjë të madhe, të vogël, numër dhe
+              simbol.
+            </span>
           </label>
           <label>
             Konfirmo fjalëkalimin
             <input
               name="confirmPassword"
               type="password"
+              autoComplete="new-password"
               minLength="12"
               required
             />

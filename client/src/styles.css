@@ -820,6 +820,33 @@ a {
   box-shadow: 0 0 0 3px rgba(88, 66, 124, 0.14);
 }
 
+.field-help {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 450;
+  line-height: 1.45;
+}
+
+.logo-preview {
+  display: flex;
+  gap: 14px;
+  min-height: 90px;
+  padding: 12px;
+  align-items: center;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.74rem;
+}
+
+.logo-preview img {
+  width: 66px;
+  height: 66px;
+  object-fit: contain;
+  background: var(--surface);
+  border-radius: 8px;
+}
+
 .registration-form .wide {
   grid-column: 1 / -1;
 }
