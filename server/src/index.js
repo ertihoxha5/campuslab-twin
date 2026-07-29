@@ -20,6 +20,8 @@ import { createRealtimeServer } from "./realtime/create-realtime-server.js";
 import { createPlatformAuthentication } from "./middleware/authenticate-platform.js";
 import { createPlatformRegistrationRepository } from "./modules/platform-registrations/repository.js";
 import { createPlatformRegistrationService } from "./modules/platform-registrations/service.js";
+import { createPlatformUniversityRepository } from "./modules/platform-universities/repository.js";
+import { createPlatformUniversityService } from "./modules/platform-universities/service.js";
 
 loadEnvironmentFile();
 
@@ -50,6 +52,9 @@ const platformAuthentication = createPlatformAuthentication({
 const platformRegistrationService = createPlatformRegistrationService({
   repository: createPlatformRegistrationRepository(databasePool),
 });
+const platformUniversityService = createPlatformUniversityService({
+  repository: createPlatformUniversityRepository(databasePool),
+});
 const tenantAuthentication = createTenantAuthentication({
   authRepository,
   accessSecret: config.JWT_ACCESS_SECRET,
@@ -68,6 +73,7 @@ const app = createApp({
   tenantAuthentication,
   platformRegistrationService,
   platformAuthentication,
+  platformUniversityService,
   secureCookies: config.NODE_ENV === "production",
 });
 const httpServer = createServer(app);
