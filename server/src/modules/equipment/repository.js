@@ -92,6 +92,50 @@ export function createEquipmentRepository(pool) {
       return { items, total: Number(totals[0]?.total ?? 0) };
     },
 
+    async findById({
+      universityId,
+      userId,
+      restrictToAssignments,
+      equipmentId,
+    }) {
+      const rows = await query(
+        pool,
+        `SELECT equipment.id, equipment.laboratory_id AS laboratoryId,
+                laboratory.name AS laboratoryName,
+                equipment.zone_id AS zoneId, zone.name AS zoneName,
+                equipment.responsible_user_id AS responsibleUserId,
+                responsible.full_name AS responsibleUserName,
+                equipment.name, equipment.code, equipment.type,
+                equipment.manufacturer, equipment.model,
+                equipment.serial_number AS serialNumber,
+                equipment.status, equipment.purchase_date AS purchaseDate,
+                equipment.warranty_expires_at AS warrantyExpiresAt,
+                equipment.energy_rating_watts AS energyRatingWatts,
+                equipment.health_score AS healthScore,
+                equipment.object_3d_reference AS object3dReference,
+                equipment.created_at AS createdAt,
+                equipment.updated_at AS updatedAt
+         FROM equipment
+         INNER JOIN laboratories laboratory
+           ON laboratory.id = equipment.laboratory_id
+          AND laboratory.university_id = equipment.university_id
+         LEFT JOIN laboratory_zones zone
+           ON zone.id = equipment.zone_id
+          AND zone.university_id = equipment.university_id
+         LEFT JOIN users responsible
+           ON responsible.id = equipment.responsible_user_id
+          AND responsible.university_id = equipment.university_id
+         WHERE equipment.university_id = ?
+           AND equipment.id = ?
+           AND equipment.deleted_at IS NULL
+           AND laboratory.deleted_at IS NULL
+           AND ${assignmentScope}
+         LIMIT 1`,
+        [universityId, equipmentId, restrictToAssignments ? 1 : 0, userId],
+      );
+      return rows[0] ?? null;
+    },
+
     async create({
       universityId,
       userId,
@@ -203,5 +247,222 @@ export function createEquipmentRepository(pool) {
         return { id: String(result.insertId), ...equipment };
       });
     },
+
+    async update({
+      universityId,
+      userId,
+      restrictToAssignments,
+      equipmentId,
+      ipAddress,
+      equipment,
+    }) {
+      return withTransaction(pool, async (connection) => {
+        const current = await findAccessibleEquipment(connection, {
+          universityId,
+          userId,
+          restrictToAssignments,
+          equipmentId,
+        });
+        if (!current) return null;
+
+        const relationError = await validateEquipmentRelations(connection, {
+          universityId,
+          userId,
+          restrictToAssignments,
+          equipment,
+        });
+        if (relationError) return relationError;
+
+        await query(
+          connection,
+          `UPDATE equipment
+           SET laboratory_id = ?, zone_id = ?, responsible_user_id = ?,
+               name = ?, code = ?, type = ?, manufacturer = ?, model = ?,
+               serial_number = ?, status = ?, purchase_date = ?,
+               warranty_expires_at = ?, energy_rating_watts = ?,
+               health_score = ?, object_3d_reference = ?
+           WHERE university_id = ?
+             AND id = ?
+             AND deleted_at IS NULL`,
+          [
+            equipment.laboratoryId,
+            equipment.zoneId,
+            equipment.responsibleUserId,
+            equipment.name,
+            equipment.code,
+            equipment.type,
+            equipment.manufacturer,
+            equipment.model,
+            equipment.serialNumber,
+            equipment.status,
+            equipment.purchaseDate,
+            equipment.warrantyExpiresAt,
+            equipment.energyRatingWatts,
+            equipment.healthScore,
+            equipment.object3dReference,
+            universityId,
+            equipmentId,
+          ],
+        );
+        await writeEquipmentAudit(connection, {
+          universityId,
+          userId,
+          equipmentId,
+          action: "equipment.updated",
+          description: `U përditësua pajisja ${equipment.name}.`,
+          metadata: {
+            code: equipment.code,
+            laboratoryId: equipment.laboratoryId,
+          },
+          ipAddress,
+        });
+        return { id: String(equipmentId), ...equipment };
+      });
+    },
+
+    async archive({
+      universityId,
+      userId,
+      restrictToAssignments,
+      equipmentId,
+      ipAddress,
+    }) {
+      return withTransaction(pool, async (connection) => {
+        const equipment = await findAccessibleEquipment(connection, {
+          universityId,
+          userId,
+          restrictToAssignments,
+          equipmentId,
+        });
+        if (!equipment) return null;
+
+        await query(
+          connection,
+          `UPDATE equipment
+           SET status = 'archived', deleted_at = UTC_TIMESTAMP(3)
+           WHERE university_id = ?
+             AND id = ?
+             AND deleted_at IS NULL`,
+          [universityId, equipmentId],
+        );
+        await writeEquipmentAudit(connection, {
+          universityId,
+          userId,
+          equipmentId,
+          action: "equipment.archived",
+          description: `U arkivua pajisja ${equipment.name}.`,
+          metadata: { code: equipment.code },
+          ipAddress,
+        });
+        return { id: String(equipmentId), name: equipment.name };
+      });
+    },
   };
+}
+
+async function findAccessibleEquipment(
+  connection,
+  { universityId, userId, restrictToAssignments, equipmentId },
+) {
+  const rows = await query(
+    connection,
+    `SELECT equipment.id, equipment.name, equipment.code
+     FROM equipment
+     WHERE equipment.university_id = ?
+       AND equipment.id = ?
+       AND equipment.deleted_at IS NULL
+       AND ${assignmentScope}
+     FOR UPDATE`,
+    [universityId, equipmentId, restrictToAssignments ? 1 : 0, userId],
+  );
+  return rows[0] ?? null;
+}
+
+async function validateEquipmentRelations(
+  connection,
+  { universityId, userId, restrictToAssignments, equipment },
+) {
+  const laboratories = await query(
+    connection,
+    `SELECT laboratory.id
+     FROM laboratories laboratory
+     WHERE laboratory.university_id = ?
+       AND laboratory.id = ?
+       AND laboratory.deleted_at IS NULL
+       AND (? = 0 OR EXISTS (
+         SELECT 1
+         FROM user_laboratory_assignments assignment
+         WHERE assignment.university_id = laboratory.university_id
+           AND assignment.laboratory_id = laboratory.id
+           AND assignment.user_id = ?
+       ))
+     LIMIT 1`,
+    [
+      universityId,
+      equipment.laboratoryId,
+      restrictToAssignments ? 1 : 0,
+      userId,
+    ],
+  );
+  if (!laboratories[0]) return { invalidLaboratory: true };
+
+  if (equipment.zoneId) {
+    const zones = await query(
+      connection,
+      `SELECT id
+       FROM laboratory_zones
+       WHERE university_id = ?
+         AND laboratory_id = ?
+         AND id = ?
+       LIMIT 1`,
+      [universityId, equipment.laboratoryId, equipment.zoneId],
+    );
+    if (!zones[0]) return { invalidZone: true };
+  }
+
+  if (equipment.responsibleUserId) {
+    const users = await query(
+      connection,
+      `SELECT id
+       FROM users
+       WHERE university_id = ?
+         AND id = ?
+         AND status = 'active'
+         AND deleted_at IS NULL
+       LIMIT 1`,
+      [universityId, equipment.responsibleUserId],
+    );
+    if (!users[0]) return { invalidResponsibleUser: true };
+  }
+  return null;
+}
+
+function writeEquipmentAudit(
+  connection,
+  {
+    universityId,
+    userId,
+    equipmentId,
+    action,
+    description,
+    metadata,
+    ipAddress,
+  },
+) {
+  return query(
+    connection,
+    `INSERT INTO activity_logs (
+       university_id, user_id, action, entity_type, entity_id,
+       description, metadata_json, ip_address
+     ) VALUES (?, ?, ?, 'equipment', ?, ?, ?, ?)`,
+    [
+      universityId,
+      userId,
+      action,
+      equipmentId,
+      description,
+      JSON.stringify(metadata),
+      ipAddress,
+    ],
+  );
 }

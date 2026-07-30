@@ -76,6 +76,43 @@ const validationError = (message, issues) =>
       : undefined,
   });
 
+const notFound = () =>
+  new AppError({
+    status: 404,
+    code: "NOT_FOUND",
+    message: "Pajisja e kërkuar nuk u gjet.",
+  });
+
+const validId = (value) => /^[1-9]\d*$/.test(String(value));
+
+function validateRelationResult(result) {
+  if (result.invalidLaboratory) {
+    throw validationError("Laboratori nuk është i qasshëm.");
+  }
+  if (result.invalidZone) {
+    throw validationError(
+      "Zona nuk i përket laboratorit dhe universitetit të zgjedhur.",
+    );
+  }
+  if (result.invalidResponsibleUser) {
+    throw validationError(
+      "Përdoruesi përgjegjës nuk është aktiv në universitetin tuaj.",
+    );
+  }
+  return result;
+}
+
+function rethrowConflict(error) {
+  if (error?.code === "ER_DUP_ENTRY" || error?.errno === 1062) {
+    throw new AppError({
+      status: 409,
+      code: "EQUIPMENT_EXISTS",
+      message: "Kodi ose numri serik i pajisjes ekziston tashmë.",
+    });
+  }
+  throw error;
+}
+
 export function createEquipmentService({ repository }) {
   return {
     async list(input = {}, context) {
@@ -103,6 +140,18 @@ export function createEquipmentService({ repository }) {
       };
     },
 
+    async detail(equipmentId, context) {
+      if (!validId(equipmentId)) throw notFound();
+      const equipment = await repository.findById({
+        universityId: context.universityId,
+        userId: context.userId,
+        restrictToAssignments: requiresLaboratoryAssignment(context),
+        equipmentId,
+      });
+      if (!equipment) throw notFound();
+      return equipment;
+    },
+
     async create(input, context) {
       const parsed = createSchema.safeParse(input);
       if (!parsed.success) {
@@ -119,30 +168,48 @@ export function createEquipmentService({ repository }) {
           ipAddress: context.ipAddress,
           equipment: parsed.data,
         });
-        if (result.invalidLaboratory) {
-          throw validationError("Laboratori nuk është i qasshëm.");
-        }
-        if (result.invalidZone) {
-          throw validationError(
-            "Zona nuk i përket laboratorit dhe universitetit të zgjedhur.",
-          );
-        }
-        if (result.invalidResponsibleUser) {
-          throw validationError(
-            "Përdoruesi përgjegjës nuk është aktiv në universitetin tuaj.",
-          );
-        }
-        return result;
+        return validateRelationResult(result);
       } catch (error) {
-        if (error?.code === "ER_DUP_ENTRY" || error?.errno === 1062) {
-          throw new AppError({
-            status: 409,
-            code: "EQUIPMENT_EXISTS",
-            message: "Kodi ose numri serik i pajisjes ekziston tashmë.",
-          });
-        }
-        throw error;
+        rethrowConflict(error);
       }
+    },
+
+    async update(equipmentId, input, context) {
+      if (!validId(equipmentId)) throw notFound();
+      const parsed = createSchema.safeParse(input);
+      if (!parsed.success) {
+        throw validationError(
+          "Të dhënat e pajisjes nuk janë të vlefshme.",
+          parsed.error.issues,
+        );
+      }
+      try {
+        const result = await repository.update({
+          universityId: context.universityId,
+          userId: context.userId,
+          restrictToAssignments: requiresLaboratoryAssignment(context),
+          equipmentId,
+          ipAddress: context.ipAddress,
+          equipment: parsed.data,
+        });
+        if (!result) throw notFound();
+        return validateRelationResult(result);
+      } catch (error) {
+        rethrowConflict(error);
+      }
+    },
+
+    async archive(equipmentId, context) {
+      if (!validId(equipmentId)) throw notFound();
+      const equipment = await repository.archive({
+        universityId: context.universityId,
+        userId: context.userId,
+        restrictToAssignments: requiresLaboratoryAssignment(context),
+        equipmentId,
+        ipAddress: context.ipAddress,
+      });
+      if (!equipment) throw notFound();
+      return equipment;
     },
   };
 }

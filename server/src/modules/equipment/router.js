@@ -44,5 +44,52 @@ export function createEquipmentRouter({ service, authenticateTenant }) {
     },
   );
 
+  router.get(
+    "/:equipmentId",
+    requirePermissions(permissions.LABORATORIES_VIEW),
+    async (request, response) => {
+      const equipment = await service.detail(
+        request.params.equipmentId,
+        tenantContext(request),
+      );
+      return success(response, { data: { equipment } });
+    },
+  );
+
+  router.put(
+    "/:equipmentId",
+    requirePermissions(permissions.ASSETS_MANAGE),
+    async (request, response) => {
+      const equipment = await service.update(
+        request.params.equipmentId,
+        request.body,
+        tenantContext(request),
+      );
+      return success(response, {
+        data: {
+          equipment,
+          message: "Pajisja u përditësua me sukses.",
+        },
+      });
+    },
+  );
+
+  router.delete(
+    "/:equipmentId",
+    requirePermissions(permissions.ASSETS_MANAGE),
+    async (request, response) => {
+      const equipment = await service.archive(
+        request.params.equipmentId,
+        tenantContext(request),
+      );
+      return success(response, {
+        data: {
+          equipment,
+          message: "Pajisja u arkivua me sukses.",
+        },
+      });
+    },
+  );
+
   return router;
 }
