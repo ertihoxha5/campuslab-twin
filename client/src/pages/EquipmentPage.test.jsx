@@ -48,10 +48,12 @@ describe("EquipmentPage", () => {
     expect(await screen.findByText("Robot industrial")).toBeInTheDocument();
     expect(screen.getByText("96%")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        (content) => content.replace(/\s/g, "") === "2500W",
-      ),
+      screen.getByText((content) => content.replace(/\s/g, "") === "2500W"),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Hap detajet" })).toHaveAttribute(
+      "href",
+      "/aplikacioni/pajisjet/21",
+    );
 
     fireEvent.change(screen.getByLabelText("Kërko pajisjet"), {
       target: { value: "Robot" },

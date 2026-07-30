@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button.jsx";
 import {
   equipmentDefaultValues,
+  equipmentFormValues,
   equipmentSchema,
 } from "@/validation/equipment.js";
 
@@ -14,21 +15,28 @@ export function EquipmentForm({
   onLaboratoryChange,
   onSubmit,
   onCancel,
+  initialValues = equipmentDefaultValues,
+  submitLabel = "Krijo pajisjen",
 }) {
   const {
     register,
     handleSubmit,
+    reset,
     watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(equipmentSchema),
-    defaultValues: equipmentDefaultValues,
+    defaultValues: equipmentFormValues(initialValues),
   });
   const laboratoryId = watch("laboratoryId");
 
   useEffect(() => {
     onLaboratoryChange(laboratoryId);
   }, [laboratoryId, onLaboratoryChange]);
+
+  useEffect(() => {
+    reset(equipmentFormValues(initialValues));
+  }, [initialValues, reset]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -154,7 +162,7 @@ export function EquipmentForm({
           Anulo
         </Button>
         <Button type="submit" disabled={saving || loadingOptions}>
-          {saving ? "Po ruhet…" : "Krijo pajisjen"}
+          {saving ? "Po ruhet…" : submitLabel}
         </Button>
       </footer>
     </form>

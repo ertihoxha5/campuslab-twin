@@ -54,3 +54,25 @@ export const equipmentDefaultValues = {
   healthScore: 100,
   object3dReference: "",
 };
+
+export function equipmentFormValues(equipment) {
+  const values = {
+    ...equipmentDefaultValues,
+    ...Object.fromEntries(
+      Object.entries(equipment ?? {}).filter(([key]) =>
+        Object.hasOwn(equipmentDefaultValues, key),
+      ),
+    ),
+  };
+  values.laboratoryId = String(values.laboratoryId ?? "");
+  values.zoneId = String(values.zoneId ?? "");
+  values.responsibleUserId = String(values.responsibleUserId ?? "");
+  values.purchaseDate = normalizeDate(values.purchaseDate);
+  values.warrantyExpiresAt = normalizeDate(values.warrantyExpiresAt);
+  values.energyRatingWatts = values.energyRatingWatts ?? "";
+  return values;
+}
+
+function normalizeDate(value) {
+  return value ? String(value).slice(0, 10) : "";
+}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Activity,
   Cpu,
@@ -237,6 +238,12 @@ export function EquipmentPage() {
                     </dd>
                   </div>
                 </dl>
+                <Link
+                  className="equipment-card-link"
+                  to={`/aplikacioni/pajisjet/${item.id}`}
+                >
+                  Hap detajet
+                </Link>
               </article>
             ))}
           </div>

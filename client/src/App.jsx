@@ -43,6 +43,11 @@ const EquipmentPage = lazy(() =>
     default: module.EquipmentPage,
   })),
 );
+const EquipmentDetailPage = lazy(() =>
+  import("@/pages/EquipmentDetailPage.jsx").then((module) => ({
+    default: module.EquipmentDetailPage,
+  })),
+);
 
 const laboratoryPage = (Page) => (
   <Suspense fallback={<p className="workspace-loading">Po ngarkohet faqja…</p>}>
@@ -90,6 +95,10 @@ export default function App() {
                 }
               />
               <Route path="pajisjet" element={laboratoryPage(EquipmentPage)} />
+              <Route
+                path="pajisjet/:equipmentId"
+                element={laboratoryPage(EquipmentDetailPage)}
+              />
             </Route>
             <Route element={<PermissionRoute anyOf={["monitoring.view"]} />}>
               <Route
