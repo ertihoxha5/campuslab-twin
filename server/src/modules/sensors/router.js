@@ -91,5 +91,36 @@ export function createSensorRouter({ service, authenticateTenant }) {
     },
   );
 
+  router.get(
+    "/:sensorId/calibrations",
+    requirePermissions(permissions.LABORATORIES_VIEW),
+    async (request, response) => {
+      const calibrations = await service.calibrations(
+        request.params.sensorId,
+        tenantContext(request),
+      );
+      return success(response, { data: { calibrations } });
+    },
+  );
+
+  router.post(
+    "/:sensorId/calibrations",
+    requirePermissions(permissions.ASSETS_MANAGE),
+    async (request, response) => {
+      const calibration = await service.recordCalibration(
+        request.params.sensorId,
+        request.body,
+        tenantContext(request),
+      );
+      return success(response, {
+        status: 201,
+        data: {
+          calibration,
+          message: "Kalibrimi u regjistrua me sukses.",
+        },
+      });
+    },
+  );
+
   return router;
 }

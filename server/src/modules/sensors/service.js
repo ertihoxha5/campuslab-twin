@@ -50,6 +50,34 @@ const listSchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+const calibrationSchema = z
+  .object({
+    result: z.enum(["passed", "adjusted", "failed"]),
+    calibratedAt: z.coerce.date(),
+    calibrationDueAt: z
+      .union([z.coerce.date(), z.literal(""), z.null()])
+      .optional()
+      .transform((value) => (value instanceof Date ? value : null)),
+    notes: z
+      .string()
+      .trim()
+      .max(2000)
+      .optional()
+      .transform((value) => value || null),
+  })
+  .superRefine((calibration, context) => {
+    if (
+      calibration.calibrationDueAt &&
+      calibration.calibrationDueAt <= calibration.calibratedAt
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["calibrationDueAt"],
+        message: "Kalibrimi i ardhshëm duhet të jetë pas kalibrimit aktual.",
+      });
+    }
+  });
+
 const sensorSchema = z
   .object({
     laboratoryId: z.coerce.number().int().positive().transform(String),
@@ -279,5 +307,48 @@ export function createSensorService({ repository }) {
       if (!sensor) throw notFound();
       return sensor;
     },
+
+    async calibrations(sensorId, context) {
+      if (!validId(sensorId)) throw notFound();
+      const result = await repository.listCalibrations({
+        universityId: context.universityId,
+        userId: context.userId,
+        restrictToAssignments: requiresLaboratoryAssignment(context),
+        sensorId,
+      });
+      if (!result) throw notFound();
+      return result;
+    },
+
+    async recordCalibration(sensorId, input, context) {
+      if (!validId(sensorId)) throw notFound();
+      const parsed = calibrationSchema.safeParse(input);
+      if (!parsed.success) {
+        throw validationError(
+          "Të dhënat e kalibrimit nuk janë të vlefshme.",
+          parsed.error.issues,
+        );
+      }
+      const calibration = await repository.createCalibration({
+        universityId: context.universityId,
+        userId: context.userId,
+        restrictToAssignments: requiresLaboratoryAssignment(context),
+        sensorId,
+        ipAddress: context.ipAddress,
+        calibration: {
+          ...parsed.data,
+          calibratedAt: toDatabaseDateTime(parsed.data.calibratedAt),
+          calibrationDueAt: parsed.data.calibrationDueAt
+            ? toDatabaseDateTime(parsed.data.calibrationDueAt)
+            : null,
+        },
+      });
+      if (!calibration) throw notFound();
+      return calibration;
+    },
   };
+}
+
+function toDatabaseDateTime(value) {
+  return value.toISOString().slice(0, 23).replace("T", " ");
 }

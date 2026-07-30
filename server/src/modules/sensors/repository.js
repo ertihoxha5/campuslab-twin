@@ -395,22 +395,125 @@ export function createSensorRepository(pool) {
         return { id: String(sensorId), name: sensor.name };
       });
     },
+
+    async listCalibrations({
+      universityId,
+      userId,
+      restrictToAssignments,
+      sensorId,
+    }) {
+      const sensor = await findAccessibleSensor(pool, {
+        universityId,
+        userId,
+        restrictToAssignments,
+        sensorId,
+        lock: false,
+      });
+      if (!sensor) return null;
+      return query(
+        pool,
+        `SELECT calibration.id, calibration.result,
+                calibration.calibrated_at AS calibratedAt,
+                calibration.calibration_due_at AS calibrationDueAt,
+                calibration.notes,
+                calibration.performed_by_user_id AS performedByUserId,
+                performer.full_name AS performedByUserName,
+                calibration.created_at AS createdAt
+         FROM sensor_calibrations calibration
+         INNER JOIN users performer
+           ON performer.id = calibration.performed_by_user_id
+          AND performer.university_id = calibration.university_id
+         WHERE calibration.university_id = ?
+           AND calibration.sensor_id = ?
+         ORDER BY calibration.calibrated_at DESC, calibration.id DESC`,
+        [universityId, sensorId],
+      );
+    },
+
+    async createCalibration({
+      universityId,
+      userId,
+      restrictToAssignments,
+      sensorId,
+      calibration,
+      ipAddress,
+    }) {
+      return withTransaction(pool, async (connection) => {
+        const sensor = await findAccessibleSensor(connection, {
+          universityId,
+          userId,
+          restrictToAssignments,
+          sensorId,
+        });
+        if (!sensor) return null;
+        const result = await query(
+          connection,
+          `INSERT INTO sensor_calibrations (
+             university_id, laboratory_id, sensor_id, performed_by_user_id,
+             result, calibrated_at, calibration_due_at, notes
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            universityId,
+            sensor.laboratoryId,
+            sensorId,
+            userId,
+            calibration.result,
+            calibration.calibratedAt,
+            calibration.calibrationDueAt,
+            calibration.notes,
+          ],
+        );
+        await query(
+          connection,
+          `UPDATE sensors
+           SET calibrated_at = ?, calibration_due_at = ?
+           WHERE university_id = ? AND id = ? AND deleted_at IS NULL`,
+          [
+            calibration.calibratedAt,
+            calibration.calibrationDueAt,
+            universityId,
+            sensorId,
+          ],
+        );
+        const calibrationId = String(result.insertId);
+        await writeSensorAudit(connection, {
+          universityId,
+          userId,
+          sensorId,
+          action: "sensor.calibrated",
+          description: `U regjistrua kalibrimi i sensorit ${sensor.name}.`,
+          metadata: {
+            calibrationId,
+            result: calibration.result,
+            calibratedAt: calibration.calibratedAt,
+          },
+          ipAddress,
+        });
+        return {
+          id: calibrationId,
+          sensorId: String(sensorId),
+          performedByUserId: String(userId),
+          ...calibration,
+        };
+      });
+    },
   };
 }
 
 async function findAccessibleSensor(
   connection,
-  { universityId, userId, restrictToAssignments, sensorId },
+  { universityId, userId, restrictToAssignments, sensorId, lock = true },
 ) {
   const rows = await query(
     connection,
-    `SELECT sensor.id, sensor.name, sensor.code
+    `SELECT sensor.id, sensor.laboratory_id AS laboratoryId,
+            sensor.name, sensor.code
      FROM sensors sensor
      WHERE sensor.university_id = ?
        AND sensor.id = ?
        AND sensor.deleted_at IS NULL
        AND ${assignmentScope}
-     FOR UPDATE`,
+     ${lock ? "FOR UPDATE" : ""}`,
     [universityId, sensorId, restrictToAssignments ? 1 : 0, userId],
   );
   return rows[0] ?? null;
