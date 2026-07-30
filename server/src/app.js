@@ -17,6 +17,7 @@ import { createNotificationRouter } from "./modules/notifications/router.js";
 import { createDashboardRouter } from "./modules/dashboard/router.js";
 import { createLaboratoryRouter } from "./modules/laboratories/router.js";
 import { createEquipmentRouter } from "./modules/equipment/router.js";
+import { createSensorRouter } from "./modules/sensors/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -36,6 +37,7 @@ export function createApp({
   laboratoryModelService,
   laboratoryAccessRepository,
   equipmentService,
+  sensorService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
@@ -151,6 +153,16 @@ export function createApp({
       "/api/equipment",
       createEquipmentRouter({
         service: equipmentService,
+        authenticateTenant: tenantAuthentication,
+      }),
+    );
+  }
+
+  if (sensorService && tenantAuthentication) {
+    app.use(
+      "/api/sensors",
+      createSensorRouter({
+        service: sensorService,
         authenticateTenant: tenantAuthentication,
       }),
     );

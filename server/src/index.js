@@ -40,6 +40,8 @@ import { createLaboratoryModelService } from "./modules/laboratories/model-servi
 import { createLaboratoryModelStorage } from "./storage/laboratory-model-storage.js";
 import { createEquipmentRepository } from "./modules/equipment/repository.js";
 import { createEquipmentService } from "./modules/equipment/service.js";
+import { createSensorRepository } from "./modules/sensors/repository.js";
+import { createSensorService } from "./modules/sensors/service.js";
 
 loadEnvironmentFile();
 
@@ -113,6 +115,9 @@ const laboratoryModelService = createLaboratoryModelService({
 const equipmentService = createEquipmentService({
   repository: createEquipmentRepository(databasePool),
 });
+const sensorService = createSensorService({
+  repository: createSensorRepository(databasePool),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -127,6 +132,7 @@ const app = createApp({
   laboratoryModelService,
   laboratoryAccessRepository,
   equipmentService,
+  sensorService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
