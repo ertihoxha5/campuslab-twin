@@ -12,6 +12,62 @@ const assignmentScope = `
 
 export function createEquipmentRepository(pool) {
   return {
+    async options({
+      universityId,
+      userId,
+      restrictToAssignments,
+      laboratoryId,
+    }) {
+      const accessParameters = [
+        universityId,
+        restrictToAssignments ? 1 : 0,
+        userId,
+      ];
+      const [laboratories, users] = await Promise.all([
+        query(
+          pool,
+          `SELECT laboratory.id, laboratory.name, laboratory.code
+           FROM laboratories laboratory
+           WHERE laboratory.university_id = ?
+             AND laboratory.deleted_at IS NULL
+             AND (? = 0 OR EXISTS (
+               SELECT 1
+               FROM user_laboratory_assignments assignment
+               WHERE assignment.university_id = laboratory.university_id
+                 AND assignment.laboratory_id = laboratory.id
+                 AND assignment.user_id = ?
+             ))
+           ORDER BY laboratory.name, laboratory.id`,
+          accessParameters,
+        ),
+        query(
+          pool,
+          `SELECT id, full_name AS fullName, job_title AS jobTitle
+           FROM users
+           WHERE university_id = ?
+             AND status = 'active'
+             AND deleted_at IS NULL
+           ORDER BY full_name, id`,
+          [universityId],
+        ),
+      ]);
+      const laboratoryIsAccessible =
+        laboratoryId &&
+        laboratories.some((item) => String(item.id) === String(laboratoryId));
+      const zones = laboratoryIsAccessible
+        ? await query(
+            pool,
+            `SELECT id, name, code
+             FROM laboratory_zones
+             WHERE university_id = ?
+               AND laboratory_id = ?
+             ORDER BY name, id`,
+            [universityId, laboratoryId],
+          )
+        : [];
+      return { laboratories, zones, users };
+    },
+
     async list({
       universityId,
       userId,

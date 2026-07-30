@@ -45,6 +45,18 @@ export function createEquipmentRouter({ service, authenticateTenant }) {
   );
 
   router.get(
+    "/options",
+    requirePermissions(permissions.ASSETS_MANAGE),
+    async (request, response) => {
+      const options = await service.options(
+        request.query,
+        tenantContext(request),
+      );
+      return success(response, { data: options });
+    },
+  );
+
+  router.get(
     "/:equipmentId",
     requirePermissions(permissions.LABORATORIES_VIEW),
     async (request, response) => {

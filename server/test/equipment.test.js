@@ -38,6 +38,37 @@ test("equipment list is tenant-scoped and restricted to assigned laboratories", 
   }
 });
 
+test("equipment form options remain tenant and assignment scoped", async () => {
+  const calls = [];
+  const repository = createEquipmentRepository({
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      if (sql.includes("FROM laboratories laboratory")) {
+        return [[{ id: 15, name: "Laboratori Test" }]];
+      }
+      if (sql.includes("FROM users")) {
+        return [[{ id: 9, fullName: "Arta Berisha" }]];
+      }
+      return [[{ id: 3, name: "Zona Test" }]];
+    },
+  });
+
+  const options = await repository.options({
+    universityId: "7",
+    userId: "9",
+    restrictToAssignments: true,
+    laboratoryId: "15",
+  });
+
+  assert.equal(options.laboratories[0].id, 15);
+  assert.equal(options.zones[0].id, 3);
+  assert.equal(options.users[0].id, 9);
+  assert.match(calls[0].sql, /laboratory\.university_id = \?/);
+  assert.match(calls[0].sql, /assignment\.user_id = \?/);
+  assert.deepEqual(calls[0].parameters, ["7", 1, "9"]);
+  assert.deepEqual(calls[2].parameters, ["7", "15"]);
+});
+
 test("equipment creation normalizes values and ignores browser tenant identity", async () => {
   const calls = [];
   const service = createEquipmentService({
@@ -349,6 +380,13 @@ before(async () => {
       rateLimitEnabled: false,
       tenantAuthentication: authenticateTenant,
       equipmentService: {
+        async options(_input, context) {
+          return {
+            laboratories: [{ id: "15", universityId: context.universityId }],
+            zones: [],
+            users: [],
+          };
+        },
         async list(_input, context) {
           return {
             items: [{ id: "21", universityId: context.universityId }],
@@ -385,6 +423,13 @@ test("equipment routes derive tenant context and enforce asset permissions", asy
   const listPayload = await listResponse.json();
   assert.equal(listResponse.status, 200);
   assert.equal(listPayload.data.equipment[0].universityId, "7");
+
+  const optionsResponse = await fetch(`${baseUrl}/api/equipment/options`, {
+    headers: { "x-test-manage": "true" },
+  });
+  const optionsPayload = await optionsResponse.json();
+  assert.equal(optionsResponse.status, 200);
+  assert.equal(optionsPayload.data.laboratories[0].universityId, "7");
 
   const forbidden = await fetch(`${baseUrl}/api/equipment`, {
     method: "POST",
