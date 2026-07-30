@@ -48,6 +48,11 @@ const EquipmentDetailPage = lazy(() =>
     default: module.EquipmentDetailPage,
   })),
 );
+const SensorsPage = lazy(() =>
+  import("@/pages/SensorsPage.jsx").then((module) => ({
+    default: module.SensorsPage,
+  })),
+);
 
 const laboratoryPage = (Page) => (
   <Suspense fallback={<p className="workspace-loading">Po ngarkohet faqja…</p>}>
@@ -99,17 +104,9 @@ export default function App() {
                 path="pajisjet/:equipmentId"
                 element={laboratoryPage(EquipmentDetailPage)}
               />
+              <Route path="sensoret" element={laboratoryPage(SensorsPage)} />
             </Route>
             <Route element={<PermissionRoute anyOf={["monitoring.view"]} />}>
-              <Route
-                path="sensoret"
-                element={
-                  <WorkspaceSectionPage
-                    title="Sensorët"
-                    description="Sensorët e laboratorëve të autorizuar."
-                  />
-                }
-              />
               <Route
                 path="monitorimi"
                 element={

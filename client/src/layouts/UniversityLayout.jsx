@@ -57,7 +57,7 @@ const navigation = [
     to: "/aplikacioni/sensoret",
     label: "Sensorët",
     icon: Activity,
-    permission: "monitoring.view",
+    permission: "laboratories.view",
   },
   {
     to: "/aplikacioni/monitorimi",

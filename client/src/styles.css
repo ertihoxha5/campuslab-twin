@@ -2142,6 +2142,54 @@ a {
   grid-column: 1 / -1;
 }
 
+.sensor-filters {
+  flex-wrap: wrap;
+}
+
+.sensor-filters label {
+  min-width: 135px;
+  flex: 1 1 135px;
+}
+
+.sensor-form-modal {
+  width: min(940px, calc(100vw - 2rem));
+}
+
+.sensor-form-sections fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.sensor-form-sections fieldset + fieldset {
+  border-top: 1px solid var(--border);
+}
+
+.sensor-form-sections legend {
+  width: 100%;
+  padding: 1rem 1.15rem 0;
+  color: var(--grape);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.sensor-form-sections .equipment-form-grid {
+  padding-top: 0.7rem;
+}
+
+.sensor-card .status-online {
+  color: var(--reseda-green);
+}
+
+.sensor-card .status-offline,
+.sensor-card .status-inactive {
+  color: var(--muted);
+}
+
+.sensor-card .status-calibration {
+  color: var(--grape);
+}
+
 .laboratory-detail-tabs button {
   padding: 0.7rem 0.85rem;
   border: 0;
