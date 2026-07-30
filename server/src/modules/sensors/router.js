@@ -50,5 +50,46 @@ export function createSensorRouter({ service, authenticateTenant }) {
     },
   );
 
+  router.get(
+    "/:sensorId",
+    requirePermissions(permissions.LABORATORIES_VIEW),
+    async (request, response) => {
+      const sensor = await service.detail(
+        request.params.sensorId,
+        tenantContext(request),
+      );
+      return success(response, { data: { sensor } });
+    },
+  );
+
+  router.put(
+    "/:sensorId",
+    requirePermissions(permissions.ASSETS_MANAGE),
+    async (request, response) => {
+      const sensor = await service.update(
+        request.params.sensorId,
+        request.body,
+        tenantContext(request),
+      );
+      return success(response, {
+        data: { sensor, message: "Sensori u përditësua me sukses." },
+      });
+    },
+  );
+
+  router.delete(
+    "/:sensorId",
+    requirePermissions(permissions.ASSETS_MANAGE),
+    async (request, response) => {
+      const sensor = await service.archive(
+        request.params.sensorId,
+        tenantContext(request),
+      );
+      return success(response, {
+        data: { sensor, message: "Sensori u arkivua me sukses." },
+      });
+    },
+  );
+
   return router;
 }

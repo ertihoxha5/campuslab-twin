@@ -189,6 +189,142 @@ test("sensor options and creation validate laboratory, zone and equipment in one
   }
 });
 
+test("sensor detail, update and archive use only authenticated tenant context", async () => {
+  const calls = [];
+  const service = createSensorService({
+    repository: {
+      async findById(input) {
+        calls.push({ operation: "detail", input });
+        return { id: "31", name: "Sensori i temperaturës" };
+      },
+      async update(input) {
+        calls.push({ operation: "update", input });
+        return { id: "31", ...input.sensor };
+      },
+      async archive(input) {
+        calls.push({ operation: "archive", input });
+        return { id: "31", name: "Sensori i temperaturës" };
+      },
+    },
+  });
+  const context = {
+    universityId: "7",
+    userId: "9",
+    roles: ["lab_manager"],
+    ipAddress: "127.0.0.1",
+  };
+
+  await service.detail("31", context);
+  await service.update("31", { ...validSensor, universityId: "999" }, context);
+  await service.archive("31", context);
+
+  assert.equal(calls[0].input.universityId, "7");
+  assert.equal(calls[0].input.restrictToAssignments, true);
+  assert.equal(calls[1].input.universityId, "7");
+  assert.equal(calls[1].input.sensor.universityId, undefined);
+  assert.equal(calls[2].input.universityId, "7");
+  assert.equal(calls[2].input.sensorId, "31");
+});
+
+test("sensor detail combines id, tenant and laboratory assignment scope", async () => {
+  const calls = [];
+  const repository = createSensorRepository({
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      return [[{ id: 31, name: "Sensori i temperaturës" }]];
+    },
+  });
+
+  await repository.findById({
+    universityId: "7",
+    userId: "9",
+    restrictToAssignments: true,
+    sensorId: "31",
+  });
+
+  assert.match(calls[0].sql, /sensor\.university_id = \?/);
+  assert.match(calls[0].sql, /sensor\.id = \?/);
+  assert.match(calls[0].sql, /assignment\.user_id = \?/);
+  assert.deepEqual(calls[0].parameters, ["7", "31", 1, "9"]);
+});
+
+test("sensor update and archive are audited tenant transactions", async () => {
+  const events = [];
+  const calls = [];
+  const connection = {
+    async beginTransaction() {
+      events.push("begin");
+    },
+    async commit() {
+      events.push("commit");
+    },
+    async rollback() {
+      events.push("rollback");
+    },
+    release() {
+      events.push("release");
+    },
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      if (sql.includes("SELECT sensor.id")) {
+        return [[{ id: 31, name: "Sensori i temperaturës", code: "TEMP-01" }]];
+      }
+      if (sql.includes("SELECT laboratory.id")) return [[{ id: 15 }]];
+      if (sql.includes("FROM laboratory_zones")) return [[{ id: 3 }]];
+      if (sql.includes("FROM equipment")) return [[{ id: 21 }]];
+      return [{ affectedRows: 1 }];
+    },
+  };
+  const repository = createSensorRepository({
+    async getConnection() {
+      return connection;
+    },
+  });
+  const context = {
+    universityId: "7",
+    userId: "9",
+    restrictToAssignments: false,
+    sensorId: "31",
+    ipAddress: "127.0.0.1",
+  };
+  const service = createSensorService({ repository });
+  const parsedSensor = await service.create(validSensor, {
+    universityId: "7",
+    userId: "9",
+    roles: ["university_admin"],
+  });
+  events.length = 0;
+  calls.length = 0;
+
+  await repository.update({
+    ...context,
+    sensor: { ...parsedSensor, id: undefined },
+  });
+  await repository.archive(context);
+
+  assert.deepEqual(events, [
+    "begin",
+    "commit",
+    "release",
+    "begin",
+    "commit",
+    "release",
+  ]);
+  assert.ok(
+    calls.some(({ parameters }) => parameters.includes("sensor.updated")),
+  );
+  assert.ok(
+    calls.some(({ parameters }) => parameters.includes("sensor.archived")),
+  );
+  for (const call of calls.filter(({ sql }) =>
+    /UPDATE sensors|FROM sensors/.test(sql),
+  )) {
+    assert.match(call.sql, /university_id = \?|sensor\.university_id = \?/);
+    assert.ok(call.parameters.includes("7"));
+    assert.ok(call.parameters.includes("31"));
+  }
+});
+
 let server;
 let baseUrl;
 let capturedContext;
@@ -229,6 +365,17 @@ before(async () => {
           capturedContext = context;
           return { id: "31", name: input.name };
         },
+        async detail(sensorId, context) {
+          return { id: sensorId, universityId: context.universityId };
+        },
+        async update(sensorId, input, context) {
+          capturedContext = context;
+          return { id: sensorId, name: input.name };
+        },
+        async archive(sensorId, context) {
+          capturedContext = context;
+          return { id: sensorId, name: "Sensori" };
+        },
       },
     }),
   );
@@ -268,4 +415,26 @@ test("sensor routes enforce read and asset management permissions", async () => 
   assert.equal(createResponse.status, 201);
   assert.equal(capturedContext.universityId, "7");
   assert.equal(capturedContext.userId, "9");
+
+  const detailResponse = await fetch(`${baseUrl}/api/sensors/31`);
+  const detailPayload = await detailResponse.json();
+  assert.equal(detailResponse.status, 200);
+  assert.equal(detailPayload.data.sensor.universityId, "7");
+
+  const updateResponse = await fetch(`${baseUrl}/api/sensors/31`, {
+    method: "PUT",
+    headers: {
+      "content-type": "application/json",
+      "x-test-manage": "true",
+    },
+    body: JSON.stringify({ universityId: "999", name: "Sensori i ri" }),
+  });
+  assert.equal(updateResponse.status, 200);
+
+  const archiveResponse = await fetch(`${baseUrl}/api/sensors/31`, {
+    method: "DELETE",
+    headers: { "x-test-manage": "true" },
+  });
+  assert.equal(archiveResponse.status, 200);
+  assert.equal(capturedContext.universityId, "7");
 });

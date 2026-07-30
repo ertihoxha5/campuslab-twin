@@ -151,6 +151,15 @@ const validationError = (message, issues) =>
       : undefined,
   });
 
+const notFound = () =>
+  new AppError({
+    status: 404,
+    code: "NOT_FOUND",
+    message: "Sensori i kërkuar nuk u gjet.",
+  });
+
+const validId = (value) => /^[1-9]\d*$/.test(String(value));
+
 function validateRelations(result) {
   if (result.invalidLaboratory) {
     throw validationError("Laboratori nuk është i qasshëm.");
@@ -165,6 +174,37 @@ function validateRelations(result) {
 }
 
 export function createSensorService({ repository }) {
+  const persist = async (operation, input, context, sensorId) => {
+    const parsed = sensorSchema.safeParse(input);
+    if (!parsed.success) {
+      throw validationError(
+        "Të dhënat e sensorit nuk janë të vlefshme.",
+        parsed.error.issues,
+      );
+    }
+    try {
+      const result = await repository[operation]({
+        universityId: context.universityId,
+        userId: context.userId,
+        restrictToAssignments: requiresLaboratoryAssignment(context),
+        ipAddress: context.ipAddress,
+        sensorId,
+        sensor: parsed.data,
+      });
+      if (!result) throw notFound();
+      return validateRelations(result);
+    } catch (error) {
+      if (error?.code === "ER_DUP_ENTRY" || error?.errno === 1062) {
+        throw new AppError({
+          status: 409,
+          code: "SENSOR_EXISTS",
+          message: "Kodi i sensorit ekziston tashmë.",
+        });
+      }
+      throw error;
+    }
+  };
+
   return {
     async options(input = {}, context) {
       const laboratoryId = input.laboratoryId
@@ -207,33 +247,37 @@ export function createSensorService({ repository }) {
     },
 
     async create(input, context) {
-      const parsed = sensorSchema.safeParse(input);
-      if (!parsed.success) {
-        throw validationError(
-          "Të dhënat e sensorit nuk janë të vlefshme.",
-          parsed.error.issues,
-        );
-      }
-      try {
-        return validateRelations(
-          await repository.create({
-            universityId: context.universityId,
-            userId: context.userId,
-            restrictToAssignments: requiresLaboratoryAssignment(context),
-            ipAddress: context.ipAddress,
-            sensor: parsed.data,
-          }),
-        );
-      } catch (error) {
-        if (error?.code === "ER_DUP_ENTRY" || error?.errno === 1062) {
-          throw new AppError({
-            status: 409,
-            code: "SENSOR_EXISTS",
-            message: "Kodi i sensorit ekziston tashmë.",
-          });
-        }
-        throw error;
-      }
+      return persist("create", input, context);
+    },
+
+    async detail(sensorId, context) {
+      if (!validId(sensorId)) throw notFound();
+      const sensor = await repository.findById({
+        universityId: context.universityId,
+        userId: context.userId,
+        restrictToAssignments: requiresLaboratoryAssignment(context),
+        sensorId,
+      });
+      if (!sensor) throw notFound();
+      return sensor;
+    },
+
+    async update(sensorId, input, context) {
+      if (!validId(sensorId)) throw notFound();
+      return persist("update", input, context, sensorId);
+    },
+
+    async archive(sensorId, context) {
+      if (!validId(sensorId)) throw notFound();
+      const sensor = await repository.archive({
+        universityId: context.universityId,
+        userId: context.userId,
+        restrictToAssignments: requiresLaboratoryAssignment(context),
+        ipAddress: context.ipAddress,
+        sensorId,
+      });
+      if (!sensor) throw notFound();
+      return sensor;
     },
   };
 }

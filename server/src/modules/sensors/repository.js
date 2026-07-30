@@ -165,6 +165,52 @@ export function createSensorRepository(pool) {
       return { items, total: Number(totals[0]?.total ?? 0) };
     },
 
+    async findById({ universityId, userId, restrictToAssignments, sensorId }) {
+      const rows = await query(
+        pool,
+        `SELECT sensor.id, sensor.laboratory_id AS laboratoryId,
+                laboratory.name AS laboratoryName,
+                sensor.zone_id AS zoneId, zone.name AS zoneName,
+                sensor.equipment_id AS equipmentId,
+                equipment.name AS equipmentName,
+                sensor.name, sensor.code,
+                sensor.sensor_type AS sensorType, sensor.unit, sensor.status,
+                sensor.sampling_interval_seconds AS samplingIntervalSeconds,
+                sensor.warning_min AS warningMin,
+                sensor.warning_max AS warningMax,
+                sensor.critical_min AS criticalMin,
+                sensor.critical_max AS criticalMax,
+                sensor.calibrated_at AS calibratedAt,
+                sensor.calibration_due_at AS calibrationDueAt,
+                sensor.position_x AS positionX,
+                sensor.position_y AS positionY,
+                sensor.position_z AS positionZ,
+                sensor.rotation_x AS rotationX,
+                sensor.rotation_y AS rotationY,
+                sensor.rotation_z AS rotationZ,
+                sensor.created_at AS createdAt,
+                sensor.updated_at AS updatedAt
+         FROM sensors sensor
+         INNER JOIN laboratories laboratory
+           ON laboratory.id = sensor.laboratory_id
+          AND laboratory.university_id = sensor.university_id
+         LEFT JOIN laboratory_zones zone
+           ON zone.id = sensor.zone_id
+          AND zone.university_id = sensor.university_id
+         LEFT JOIN equipment
+           ON equipment.id = sensor.equipment_id
+          AND equipment.university_id = sensor.university_id
+         WHERE sensor.university_id = ?
+           AND sensor.id = ?
+           AND sensor.deleted_at IS NULL
+           AND laboratory.deleted_at IS NULL
+           AND ${assignmentScope}
+         LIMIT 1`,
+        [universityId, sensorId, restrictToAssignments ? 1 : 0, userId],
+      );
+      return rows[0] ?? null;
+    },
+
     async create({
       universityId,
       userId,
@@ -238,7 +284,136 @@ export function createSensorRepository(pool) {
         return { id: sensorId, ...sensor };
       });
     },
+
+    async update({
+      universityId,
+      userId,
+      restrictToAssignments,
+      sensorId,
+      sensor,
+      ipAddress,
+    }) {
+      return withTransaction(pool, async (connection) => {
+        const existing = await findAccessibleSensor(connection, {
+          universityId,
+          userId,
+          restrictToAssignments,
+          sensorId,
+        });
+        if (!existing) return null;
+        const relationError = await validateRelations(connection, {
+          universityId,
+          userId,
+          restrictToAssignments,
+          sensor,
+        });
+        if (relationError) return relationError;
+        await query(
+          connection,
+          `UPDATE sensors
+           SET laboratory_id = ?, zone_id = ?, equipment_id = ?,
+               name = ?, code = ?, sensor_type = ?, unit = ?, status = ?,
+               sampling_interval_seconds = ?, warning_min = ?, warning_max = ?,
+               critical_min = ?, critical_max = ?, calibrated_at = ?,
+               calibration_due_at = ?, position_x = ?, position_y = ?,
+               position_z = ?, rotation_x = ?, rotation_y = ?, rotation_z = ?
+           WHERE university_id = ? AND id = ? AND deleted_at IS NULL`,
+          [
+            sensor.laboratoryId,
+            sensor.zoneId,
+            sensor.equipmentId,
+            sensor.name,
+            sensor.code,
+            sensor.sensorType,
+            sensor.unit,
+            sensor.status,
+            sensor.samplingIntervalSeconds,
+            sensor.warningMin,
+            sensor.warningMax,
+            sensor.criticalMin,
+            sensor.criticalMax,
+            sensor.calibratedAt,
+            sensor.calibrationDueAt,
+            sensor.positionX,
+            sensor.positionY,
+            sensor.positionZ,
+            sensor.rotationX,
+            sensor.rotationY,
+            sensor.rotationZ,
+            universityId,
+            sensorId,
+          ],
+        );
+        await writeSensorAudit(connection, {
+          universityId,
+          userId,
+          sensorId,
+          action: "sensor.updated",
+          description: `U përditësua sensori ${sensor.name}.`,
+          metadata: {
+            code: sensor.code,
+            laboratoryId: sensor.laboratoryId,
+            sensorType: sensor.sensorType,
+          },
+          ipAddress,
+        });
+        return { id: String(sensorId), ...sensor };
+      });
+    },
+
+    async archive({
+      universityId,
+      userId,
+      restrictToAssignments,
+      sensorId,
+      ipAddress,
+    }) {
+      return withTransaction(pool, async (connection) => {
+        const sensor = await findAccessibleSensor(connection, {
+          universityId,
+          userId,
+          restrictToAssignments,
+          sensorId,
+        });
+        if (!sensor) return null;
+        await query(
+          connection,
+          `UPDATE sensors
+           SET status = 'archived', deleted_at = UTC_TIMESTAMP(3)
+           WHERE university_id = ? AND id = ? AND deleted_at IS NULL`,
+          [universityId, sensorId],
+        );
+        await writeSensorAudit(connection, {
+          universityId,
+          userId,
+          sensorId,
+          action: "sensor.archived",
+          description: `U arkivua sensori ${sensor.name}.`,
+          metadata: { code: sensor.code },
+          ipAddress,
+        });
+        return { id: String(sensorId), name: sensor.name };
+      });
+    },
   };
+}
+
+async function findAccessibleSensor(
+  connection,
+  { universityId, userId, restrictToAssignments, sensorId },
+) {
+  const rows = await query(
+    connection,
+    `SELECT sensor.id, sensor.name, sensor.code
+     FROM sensors sensor
+     WHERE sensor.university_id = ?
+       AND sensor.id = ?
+       AND sensor.deleted_at IS NULL
+       AND ${assignmentScope}
+     FOR UPDATE`,
+    [universityId, sensorId, restrictToAssignments ? 1 : 0, userId],
+  );
+  return rows[0] ?? null;
 }
 
 async function validateRelations(
@@ -287,4 +462,26 @@ async function validateRelations(
     if (!equipment[0]) return { invalidEquipment: true };
   }
   return null;
+}
+
+function writeSensorAudit(
+  connection,
+  { universityId, userId, sensorId, action, description, metadata, ipAddress },
+) {
+  return query(
+    connection,
+    `INSERT INTO activity_logs (
+       university_id, user_id, action, entity_type, entity_id,
+       description, metadata_json, ip_address
+     ) VALUES (?, ?, ?, 'sensor', ?, ?, ?, ?)`,
+    [
+      universityId,
+      userId,
+      action,
+      sensorId,
+      description,
+      JSON.stringify(metadata),
+      ipAddress,
+    ],
+  );
 }
