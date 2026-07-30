@@ -6,7 +6,7 @@ import { useAuthStore } from "@/stores/auth-store.js";
 import { SensorDetailPage } from "./SensorDetailPage.jsx";
 
 vi.mock("@/api/client.js", () => ({
-  api: { get: vi.fn(), put: vi.fn(), delete: vi.fn() },
+  api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }));
 
 const sensor = {
@@ -45,6 +45,16 @@ const options = {
   equipment: [{ id: "21", name: "Robot industrial", code: "ROB-01" }],
 };
 
+const calibration = {
+  id: "41",
+  result: "passed",
+  calibratedAt: "2026-01-10T10:00:00.000Z",
+  calibrationDueAt: "2027-01-10T10:00:00.000Z",
+  notes: "Kontrolli përfundoi pa devijime.",
+  performedByUserId: "9",
+  performedByUserName: "Arta Berisha",
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   useAuthStore.getState().setSession({
@@ -52,13 +62,15 @@ beforeEach(() => {
     permissions: ["laboratories.view", "assets.manage"],
     university: { id: "7", name: "Universiteti Testues" },
   });
-  api.get.mockImplementation((path) =>
-    Promise.resolve(
-      path.startsWith("/api/sensors/options")
-        ? { data: options }
-        : { data: { sensor } },
-    ),
-  );
+  api.get.mockImplementation((path) => {
+    if (path.startsWith("/api/sensors/options")) {
+      return Promise.resolve({ data: options });
+    }
+    if (path.endsWith("/calibrations")) {
+      return Promise.resolve({ data: { calibrations: [calibration] } });
+    }
+    return Promise.resolve({ data: { sensor } });
+  });
 });
 
 afterEach(() => {
@@ -77,7 +89,11 @@ describe("SensorDetailPage", () => {
     expect(screen.getByText("28 °C")).toBeInTheDocument();
     expect(screen.getByText("1,5 m")).toBeInTheDocument();
     expect(screen.getByText("90°")).toBeInTheDocument();
+    expect(
+      screen.getByText("Kontrolli përfundoi pa devijime."),
+    ).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith("/api/sensors/31");
+    expect(api.get).toHaveBeenCalledWith("/api/sensors/31/calibrations");
   });
 
   it("updates the sensor through the shared validated form", async () => {
@@ -132,6 +148,58 @@ describe("SensorDetailPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("records a calibration and adds it to the real history", async () => {
+    api.post.mockResolvedValue({
+      data: {
+        calibration: {
+          id: "42",
+          sensorId: "31",
+          result: "adjusted",
+          calibratedAt: "2026-07-30T12:00",
+          calibrationDueAt: "2027-07-30T12:00",
+          notes: "U rregullua devijimi.",
+          performedByUserId: "9",
+        },
+        message: "Kalibrimi u regjistrua me sukses.",
+      },
+    });
+    renderPage();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Regjistro kalibrim" }),
+    );
+    fireEvent.change(screen.getByLabelText("Rezultati"), {
+      target: { value: "adjusted" },
+    });
+    fireEvent.change(screen.getByLabelText("Data e kalibrimit"), {
+      target: { value: "2026-07-30T12:00" },
+    });
+    fireEvent.change(screen.getByLabelText("Kalibrimi i ardhshëm"), {
+      target: { value: "2027-07-30T12:00" },
+    });
+    fireEvent.change(screen.getByLabelText("Shënime"), {
+      target: { value: "U rregullua devijimi." },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Regjistro kalibrimin" }),
+    );
+
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith("/api/sensors/31/calibrations", {
+        result: "adjusted",
+        calibratedAt: "2026-07-30T12:00",
+        calibrationDueAt: "2027-07-30T12:00",
+        notes: "U rregullua devijimi.",
+      }),
+    );
+    expect(
+      await screen.findByText("U rregullua devijimi."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Kalibrimi u regjistrua me sukses."),
+    ).toBeInTheDocument();
+  });
+
   it("hides update and archive actions from read-only users", async () => {
     useAuthStore.getState().setSession({
       fullName: "Blerim Hoxha",
@@ -147,7 +215,10 @@ describe("SensorDetailPage", () => {
     expect(
       screen.queryByRole("button", { name: "Arkivo" }),
     ).not.toBeInTheDocument();
-    expect(api.get).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByRole("button", { name: "Regjistro kalibrim" }),
+    ).not.toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledTimes(2);
   });
 });
 

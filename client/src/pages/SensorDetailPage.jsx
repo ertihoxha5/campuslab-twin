@@ -11,9 +11,11 @@ import {
   Gauge,
   Pencil,
   RadioTower,
+  Plus,
   X,
 } from "lucide-react";
 import { api } from "@/api/client.js";
+import { SensorCalibrationForm } from "@/components/SensorCalibrationForm.jsx";
 import { SensorForm } from "@/components/SensorForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
@@ -27,6 +29,11 @@ const statusLabels = {
 };
 
 const emptyOptions = { laboratories: [], zones: [], equipment: [] };
+const calibrationResultLabels = {
+  passed: "Kaluar",
+  adjusted: "Rregulluar",
+  failed: "Dështuar",
+};
 
 export function SensorDetailPage() {
   const { sensorId } = useParams();
@@ -35,7 +42,9 @@ export function SensorDetailPage() {
   const canManage = user?.permissions?.includes("assets.manage");
   const [sensor, setSensor] = useState(null);
   const [options, setOptions] = useState(emptyOptions);
+  const [calibrations, setCalibrations] = useState([]);
   const [editing, setEditing] = useState(false);
+  const [recordingCalibration, setRecordingCalibration] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingOptions, setLoadingOptions] = useState(false);
@@ -46,8 +55,12 @@ export function SensorDetailPage() {
     setLoading(true);
     setMessage({ type: "", text: "" });
     try {
-      const response = await api.get(`/api/sensors/${sensorId}`);
-      setSensor(response.data.sensor);
+      const [detailResponse, calibrationResponse] = await Promise.all([
+        api.get(`/api/sensors/${sensorId}`),
+        api.get(`/api/sensors/${sensorId}/calibrations`),
+      ]);
+      setSensor(detailResponse.data.sensor);
+      setCalibrations(calibrationResponse.data.calibrations);
     } catch (error) {
       setMessage({ type: "error", text: error.message });
     } finally {
@@ -118,6 +131,33 @@ export function SensorDetailPage() {
     } catch (error) {
       setMessage({ type: "error", text: error.message });
       setConfirmArchive(false);
+      setSaving(false);
+    }
+  }
+
+  async function recordCalibration(values) {
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const response = await api.post(
+        `/api/sensors/${sensorId}/calibrations`,
+        values,
+      );
+      const calibration = {
+        ...response.data.calibration,
+        performedByUserName: user.fullName,
+      };
+      setCalibrations((current) => [calibration, ...current]);
+      setSensor((current) => ({
+        ...current,
+        calibratedAt: calibration.calibratedAt,
+        calibrationDueAt: calibration.calibrationDueAt,
+      }));
+      setRecordingCalibration(false);
+      setMessage({ type: "success", text: response.data.message });
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
       setSaving(false);
     }
   }
@@ -243,6 +283,57 @@ export function SensorDetailPage() {
         </DetailPanel>
       </div>
 
+      <section className="sensor-calibration-history">
+        <header>
+          <div>
+            <p className="eyebrow">Gjurmueshmëria</p>
+            <h2>Historiku i kalibrimit</h2>
+          </div>
+          {canManage && (
+            <Button
+              type="button"
+              onClick={() => {
+                setRecordingCalibration(true);
+                setMessage({ type: "", text: "" });
+              }}
+            >
+              <Plus size={16} /> Regjistro kalibrim
+            </Button>
+          )}
+        </header>
+        {calibrations.length === 0 ? (
+          <p className="sensor-calibration-empty">
+            Ende nuk është regjistruar asnjë kalibrim.
+          </p>
+        ) : (
+          <div className="sensor-calibration-list">
+            {calibrations.map((calibration) => (
+              <article key={calibration.id}>
+                <div>
+                  <span
+                    className={`calibration-result result-${calibration.result}`}
+                  >
+                    {calibrationResultLabels[calibration.result]}
+                  </span>
+                  <strong>{formatDateTime(calibration.calibratedAt)}</strong>
+                </div>
+                <p>{calibration.notes || "Pa shënime shtesë."}</p>
+                <footer>
+                  <span>
+                    Nga {calibration.performedByUserName || "Përdoruesi"}
+                  </span>
+                  <span>
+                    Afati:{" "}
+                    {formatDateTime(calibration.calibrationDueAt) ||
+                      "I pacaktuar"}
+                  </span>
+                </footer>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
       {editing && (
         <div className="workspace-modal-backdrop">
           <section
@@ -305,6 +396,36 @@ export function SensorDetailPage() {
                 {saving ? "Po arkivohet…" : "Arkivo sensorin"}
               </Button>
             </footer>
+          </section>
+        </div>
+      )}
+
+      {recordingCalibration && (
+        <div className="workspace-modal-backdrop">
+          <section
+            className="workspace-modal sensor-calibration-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sensor-calibration-title"
+          >
+            <header>
+              <div>
+                <span>Sensori {sensor.code}</span>
+                <h2 id="sensor-calibration-title">Regjistro kalibrim</h2>
+              </div>
+              <button
+                type="button"
+                aria-label="Mbyll formularin"
+                onClick={() => setRecordingCalibration(false)}
+              >
+                <X size={20} />
+              </button>
+            </header>
+            <SensorCalibrationForm
+              saving={saving}
+              onSubmit={recordCalibration}
+              onCancel={() => setRecordingCalibration(false)}
+            />
           </section>
         </div>
       )}

@@ -2114,7 +2114,8 @@ a {
 }
 
 .equipment-form-grid input,
-.equipment-form-grid select {
+.equipment-form-grid select,
+.equipment-form-grid textarea {
   width: 100%;
   min-height: 40px;
   padding: 0.65rem 0.75rem;
@@ -2128,7 +2129,8 @@ a {
 }
 
 .equipment-form-grid input:focus,
-.equipment-form-grid select:focus {
+.equipment-form-grid select:focus,
+.equipment-form-grid textarea:focus {
   border-color: var(--grape);
   box-shadow: 0 0 0 3px var(--grape-soft);
 }
@@ -2188,6 +2190,94 @@ a {
 
 .sensor-card .status-calibration {
   color: var(--grape);
+}
+
+.sensor-calibration-history {
+  margin-top: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--background);
+}
+
+.sensor-calibration-history > header,
+.sensor-calibration-list article > div,
+.sensor-calibration-list article > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sensor-calibration-history h2 {
+  margin: 0.35rem 0 0;
+  font-size: 1rem;
+}
+
+.sensor-calibration-empty {
+  margin: 1rem 0 0;
+  padding: 1rem;
+  border-radius: 0.7rem;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.sensor-calibration-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.sensor-calibration-list article {
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+}
+
+.sensor-calibration-list article strong,
+.sensor-calibration-list article p,
+.sensor-calibration-list article footer {
+  font-size: 0.72rem;
+}
+
+.sensor-calibration-list article p {
+  margin: 0.75rem 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.sensor-calibration-list article footer {
+  color: var(--muted);
+}
+
+.calibration-result {
+  padding: 0.25rem 0.45rem;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.calibration-result.result-passed {
+  color: var(--reseda-green);
+}
+
+.calibration-result.result-adjusted {
+  color: var(--grape);
+}
+
+.calibration-result.result-failed {
+  color: var(--danger);
+}
+
+.sensor-calibration-modal {
+  width: min(720px, calc(100vw - 2rem));
+}
+
+.sensor-calibration-modal textarea {
+  padding: 0.7rem;
+  resize: vertical;
 }
 
 .laboratory-detail-tabs button {
@@ -2816,6 +2906,12 @@ a {
   }
 
   .selected-zone-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sensor-calibration-history > header,
+  .sensor-calibration-list article > footer {
     align-items: stretch;
     flex-direction: column;
   }
