@@ -62,7 +62,16 @@ describe("EquipmentPage", () => {
 
     await waitFor(() =>
       expect(api.get).toHaveBeenLastCalledWith(
-        "/api/equipment?page=1&pageSize=12&search=Robot",
+        "/api/equipment?page=1&pageSize=12&sort=name&direction=asc&search=Robot",
+      ),
+    );
+
+    fireEvent.change(screen.getByLabelText("Renditja"), {
+      target: { value: "healthScore:desc" },
+    });
+    await waitFor(() =>
+      expect(api.get).toHaveBeenLastCalledWith(
+        "/api/equipment?page=1&pageSize=12&sort=healthScore&direction=desc&search=Robot",
       ),
     );
   });

@@ -28,6 +28,10 @@ const listSchema = z.object({
     .transform((value) => (value ? String(value) : undefined)),
   status: z.enum(statuses).optional(),
   search: z.string().trim().max(180).optional().default(""),
+  sort: z
+    .enum(["name", "code", "type", "status", "healthScore", "updatedAt"])
+    .default("name"),
+  direction: z.enum(["asc", "desc"]).default("asc"),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });

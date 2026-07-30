@@ -10,6 +10,15 @@ const assignmentScope = `
   ))
 `;
 
+const sortableColumns = {
+  name: "equipment.name",
+  code: "equipment.code",
+  type: "equipment.type",
+  status: "equipment.status",
+  healthScore: "equipment.health_score",
+  updatedAt: "equipment.updated_at",
+};
+
 export function createEquipmentRepository(pool) {
   return {
     async options({
@@ -75,6 +84,8 @@ export function createEquipmentRepository(pool) {
       laboratoryId,
       status,
       search,
+      sort,
+      direction,
       limit,
       offset,
     }) {
@@ -101,6 +112,8 @@ export function createEquipmentRepository(pool) {
         parameters.push(pattern, pattern, pattern, pattern);
       }
       const where = `WHERE ${filters.join(" AND ")}`;
+      const orderColumn = sortableColumns[sort] ?? sortableColumns.name;
+      const orderDirection = direction === "desc" ? "DESC" : "ASC";
       const [items, totals] = await Promise.all([
         query(
           pool,
@@ -130,7 +143,8 @@ export function createEquipmentRepository(pool) {
              ON responsible.id = equipment.responsible_user_id
             AND responsible.university_id = equipment.university_id
            ${where}
-           ORDER BY equipment.name, equipment.id
+           ORDER BY ${orderColumn} ${orderDirection},
+                    equipment.id ${orderDirection}
            LIMIT ? OFFSET ?`,
           [...parameters, limit, offset],
         ),

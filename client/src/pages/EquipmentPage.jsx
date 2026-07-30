@@ -32,6 +32,8 @@ export function EquipmentPage() {
   const [search, setSearch] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [sort, setSort] = useState("name");
+  const [direction, setDirection] = useState("asc");
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [options, setOptions] = useState(emptyOptions);
@@ -48,6 +50,8 @@ export function EquipmentPage() {
         const parameters = new URLSearchParams({
           page: String(page),
           pageSize: "12",
+          sort,
+          direction,
         });
         if (status) parameters.set("status", status);
         if (submittedSearch) parameters.set("search", submittedSearch);
@@ -62,7 +66,7 @@ export function EquipmentPage() {
         setLoading(false);
       }
     },
-    [page, status, submittedSearch],
+    [direction, page, sort, status, submittedSearch],
   );
 
   useEffect(() => {
@@ -163,6 +167,27 @@ export function EquipmentPage() {
             <option value="inactive">Joaktive</option>
             <option value="fault">Me defekt</option>
             <option value="maintenance">Në mirëmbajtje</option>
+          </select>
+        </label>
+        <label>
+          <span>Renditja</span>
+          <select
+            value={`${sort}:${direction}`}
+            onChange={(event) => {
+              const [nextSort, nextDirection] = event.target.value.split(":");
+              setSort(nextSort);
+              setDirection(nextDirection);
+              setPage(1);
+            }}
+          >
+            <option value="name:asc">Emri A–Z</option>
+            <option value="name:desc">Emri Z–A</option>
+            <option value="healthScore:desc">Shëndeti më i lartë</option>
+            <option value="healthScore:asc">Shëndeti më i ulët</option>
+            <option value="updatedAt:desc">Përditësimi më i ri</option>
+            <option value="code:asc">Kodi</option>
+            <option value="type:asc">Lloji</option>
+            <option value="status:asc">Statusi</option>
           </select>
         </label>
       </div>
