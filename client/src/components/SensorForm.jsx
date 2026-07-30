@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button.jsx";
 import {
   sensorDefaultValues,
+  sensorFormValues,
   sensorSchema,
   sensorTypes,
 } from "@/validation/sensor.js";
@@ -15,16 +16,19 @@ export function SensorForm({
   onLaboratoryChange,
   onSubmit,
   onCancel,
+  initialValues = sensorDefaultValues,
+  submitLabel = "Krijo sensorin",
 }) {
   const {
     register,
     handleSubmit,
+    reset,
     setValue,
     watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(sensorSchema),
-    defaultValues: sensorDefaultValues,
+    defaultValues: sensorFormValues(initialValues),
   });
   const laboratoryId = watch("laboratoryId");
   const sensorType = watch("sensorType");
@@ -36,6 +40,10 @@ export function SensorForm({
   useEffect(() => {
     setValue("unit", sensorTypes[sensorType].unit, { shouldValidate: true });
   }, [sensorType, setValue]);
+
+  useEffect(() => {
+    reset(sensorFormValues(initialValues));
+  }, [initialValues, reset]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -202,7 +210,7 @@ export function SensorForm({
           Anulo
         </Button>
         <Button type="submit" disabled={saving || loadingOptions}>
-          {saving ? "Po ruhet…" : "Krijo sensorin"}
+          {saving ? "Po ruhet…" : submitLabel}
         </Button>
       </footer>
     </form>

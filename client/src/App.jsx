@@ -53,6 +53,11 @@ const SensorsPage = lazy(() =>
     default: module.SensorsPage,
   })),
 );
+const SensorDetailPage = lazy(() =>
+  import("@/pages/SensorDetailPage.jsx").then((module) => ({
+    default: module.SensorDetailPage,
+  })),
+);
 
 const laboratoryPage = (Page) => (
   <Suspense fallback={<p className="workspace-loading">Po ngarkohet faqja…</p>}>
@@ -105,6 +110,10 @@ export default function App() {
                 element={laboratoryPage(EquipmentDetailPage)}
               />
               <Route path="sensoret" element={laboratoryPage(SensorsPage)} />
+              <Route
+                path="sensoret/:sensorId"
+                element={laboratoryPage(SensorDetailPage)}
+              />
             </Route>
             <Route element={<PermissionRoute anyOf={["monitoring.view"]} />}>
               <Route

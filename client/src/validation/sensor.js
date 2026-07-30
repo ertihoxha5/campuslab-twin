@@ -125,6 +125,35 @@ export const sensorDefaultValues = {
   rotationZ: 0,
 };
 
+export function sensorFormValues(sensor) {
+  const values = {
+    ...sensorDefaultValues,
+    ...Object.fromEntries(
+      Object.entries(sensor ?? {}).filter(([key]) =>
+        Object.hasOwn(sensorDefaultValues, key),
+      ),
+    ),
+  };
+  values.laboratoryId = String(values.laboratoryId ?? "");
+  values.zoneId = String(values.zoneId ?? "");
+  values.equipmentId = String(values.equipmentId ?? "");
+  for (const field of [
+    "warningMin",
+    "warningMax",
+    "criticalMin",
+    "criticalMax",
+  ]) {
+    values[field] = values[field] ?? "";
+  }
+  values.calibratedAt = normalizeDateTime(values.calibratedAt);
+  values.calibrationDueAt = normalizeDateTime(values.calibrationDueAt);
+  return values;
+}
+
 function addIssue(context, path, message) {
   context.addIssue({ code: "custom", path: [path], message });
+}
+
+function normalizeDateTime(value) {
+  return value ? String(value).slice(0, 16).replace(" ", "T") : "";
 }

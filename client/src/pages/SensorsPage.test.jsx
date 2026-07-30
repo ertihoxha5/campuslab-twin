@@ -52,6 +52,10 @@ describe("SensorsPage", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Robot industrial")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Hap detajet" })).toHaveAttribute(
+      "href",
+      "/aplikacioni/sensoret/31",
+    );
 
     fireEvent.change(screen.getByLabelText("Kërko sensorët"), {
       target: { value: "TEMP" },

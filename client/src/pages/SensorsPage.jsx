@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Activity,
   Box,
@@ -252,6 +253,12 @@ export function SensorsPage() {
                     <dd>{sensor.samplingIntervalSeconds} sek.</dd>
                   </div>
                 </dl>
+                <Link
+                  className="equipment-card-link"
+                  to={`/aplikacioni/sensoret/${sensor.id}`}
+                >
+                  Hap detajet
+                </Link>
               </article>
             ))}
           </div>
