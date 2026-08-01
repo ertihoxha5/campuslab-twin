@@ -9,7 +9,7 @@ export function notFoundHandler(request, response) {
   return notFoundFailure(response, { path: request.originalUrl });
 }
 
-export function errorHandler(error, _request, response, next) {
+export function errorHandler(error, request, response, next) {
   if (response.headersSent) {
     return next(error);
   }
@@ -32,6 +32,10 @@ export function errorHandler(error, _request, response, next) {
   const status = Number.isInteger(error.status) ? error.status : 500;
 
   if (status >= 500) {
+    request.log?.error(
+      { err: error },
+      "Gabim i papritur gjatë përpunimit të kërkesës.",
+    );
     return serverFailure(response);
   }
 

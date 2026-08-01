@@ -111,6 +111,8 @@ export function createSensorRepository(pool) {
       const where = `WHERE ${filters.join(" AND ")}`;
       const orderColumn = sortableColumns[sort] ?? sortableColumns.name;
       const orderDirection = direction === "desc" ? "DESC" : "ASC";
+      const paginationLimit = Math.max(1, Math.trunc(Number(limit)) || 1);
+      const paginationOffset = Math.max(0, Math.trunc(Number(offset)) || 0);
       const [items, totals] = await Promise.all([
         query(
           pool,
@@ -148,8 +150,8 @@ export function createSensorRepository(pool) {
             AND equipment.university_id = sensor.university_id
            ${where}
            ORDER BY ${orderColumn} ${orderDirection}, sensor.id ${orderDirection}
-           LIMIT ? OFFSET ?`,
-          [...parameters, limit, offset],
+           LIMIT ${paginationLimit} OFFSET ${paginationOffset}`,
+          parameters,
         ),
         query(
           pool,

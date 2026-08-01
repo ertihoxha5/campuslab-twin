@@ -32,6 +32,8 @@ test("equipment list is tenant-scoped and restricted to assigned laboratories", 
   assert.equal(result.total, 1);
   assert.equal(result.items[0].id, 21);
   assert.match(calls[0].sql, /ORDER BY equipment\.health_score DESC/);
+  assert.match(calls[0].sql, /LIMIT 20 OFFSET 0/);
+  assert.doesNotMatch(calls[0].sql, /LIMIT \? OFFSET \?/);
   for (const call of calls) {
     assert.match(call.sql, /equipment\.university_id = \?/);
     assert.match(call.sql, /assignment\.user_id = \?/);

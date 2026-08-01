@@ -134,6 +134,8 @@ test("sensor list is tenant-scoped, assignment-scoped, filtered and safely sorte
   assert.match(calls[0].sql, /sensor\.university_id = \?/);
   assert.match(calls[0].sql, /assignment\.user_id = \?/);
   assert.match(calls[0].sql, /ORDER BY sensor\.updated_at DESC/);
+  assert.match(calls[0].sql, /LIMIT 20 OFFSET 0/);
+  assert.doesNotMatch(calls[0].sql, /LIMIT \? OFFSET \?/);
   assert.deepEqual(calls[0].parameters.slice(0, 3), ["7", 1, "9"]);
   assert.ok(calls[0].parameters.includes("15"));
   assert.ok(calls[0].parameters.includes("temperature"));
