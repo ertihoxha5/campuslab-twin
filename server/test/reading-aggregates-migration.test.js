@@ -32,3 +32,14 @@ test("reading aggregate rollback removes both aggregate tables", async () => {
   assert.match(sql, /DROP TABLE IF EXISTS energy_reading_aggregates/);
   assert.match(sql, /DROP TABLE IF EXISTS sensor_reading_aggregates/);
 });
+
+test("energy aggregate scope migration deduplicates laboratory totals", async () => {
+  const sql = await readFile(
+    new URL("../migrations/008_energy_aggregate_scope_key.up.sql", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(sql, /GENERATED ALWAYS AS \(IFNULL\(equipment_id, 0\)\) STORED/);
+  assert.match(sql, /UNIQUE KEY uq_energy_aggregates_bucket/);
+  assert.match(sql, /equipment_scope_id/);
+});

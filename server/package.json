@@ -11,6 +11,7 @@
     "db:rollback": "node scripts/rollback.js",
     "db:seed": "node scripts/seed.js",
     "db:verify": "node scripts/verify-database.js",
+    "db:maintain-readings": "node scripts/maintain-readings.js",
     "lint": "eslint .",
     "test": "node --test"
   },

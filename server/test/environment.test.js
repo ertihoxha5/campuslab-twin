@@ -25,6 +25,7 @@ test("environment values are validated and coerced", () => {
   assert.equal(environment.ACCESS_TOKEN_MINUTES, 15);
   assert.equal(environment.READING_AGGREGATION_INTERVAL_MINUTES, 60);
   assert.equal(environment.READING_RAW_RETENTION_DAYS, 30);
+  assert.equal(environment.READING_MAINTENANCE_INTERVAL_MINUTES, 60);
 });
 
 test("missing required environment values produce a clear startup error", () => {

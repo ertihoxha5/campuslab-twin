@@ -13,6 +13,7 @@
     "db:rollback": "npm run db:rollback --workspace server",
     "db:seed": "npm run db:seed --workspace server",
     "db:verify": "npm run db:verify --workspace server",
+    "db:maintain-readings": "npm run db:maintain-readings --workspace server",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "format": "prettier --write .",

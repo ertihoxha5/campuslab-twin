@@ -40,6 +40,12 @@ const environmentSchema = z.object({
     .min(1)
     .max(365)
     .default(30),
+  READING_MAINTENANCE_INTERVAL_MINUTES: z.coerce
+    .number()
+    .int()
+    .min(5)
+    .max(1440)
+    .default(60),
 });
 
 export function parseEnvironment(source) {

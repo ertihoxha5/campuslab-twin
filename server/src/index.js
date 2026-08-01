@@ -45,6 +45,8 @@ import { createSensorService } from "./modules/sensors/service.js";
 import { createSimulatorRepository } from "./modules/simulator/repository.js";
 import { createSimulatorService } from "./modules/simulator/service.js";
 import { createSimulationCoordinator } from "./modules/simulator/coordinator.js";
+import { createReadingHistoryRepository } from "./modules/simulator/history-repository.js";
+import { createReadingHistoryMaintenance } from "./modules/simulator/history-maintenance.js";
 
 loadEnvironmentFile();
 
@@ -129,6 +131,14 @@ const simulatorService = createSimulatorService({
   repository: simulatorRepository,
   coordinator: simulatorCoordinator,
 });
+const readingHistoryMaintenance = createReadingHistoryMaintenance({
+  repository: createReadingHistoryRepository(databasePool),
+  retentionDays: config.READING_RAW_RETENTION_DAYS,
+  aggregationIntervalMinutes: config.READING_AGGREGATION_INTERVAL_MINUTES,
+  maintenanceIntervalMinutes: config.READING_MAINTENANCE_INTERVAL_MINUTES,
+  onError: (error) =>
+    console.error("Mirëmbajtja e historikut të leximeve dështoi.", error.message),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -164,6 +174,7 @@ createRealtimeServer(httpServer, {
 async function startServer() {
   try {
     await checkDatabaseConnection(databasePool);
+    await readingHistoryMaintenance.start();
     const restoredSimulations = await simulatorCoordinator.restore();
     if (restoredSimulations.restored > 0) {
       console.log(
