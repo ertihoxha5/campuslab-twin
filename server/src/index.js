@@ -42,6 +42,8 @@ import { createEquipmentRepository } from "./modules/equipment/repository.js";
 import { createEquipmentService } from "./modules/equipment/service.js";
 import { createSensorRepository } from "./modules/sensors/repository.js";
 import { createSensorService } from "./modules/sensors/service.js";
+import { createSimulatorRepository } from "./modules/simulator/repository.js";
+import { createSimulatorService } from "./modules/simulator/service.js";
 
 loadEnvironmentFile();
 
@@ -118,6 +120,9 @@ const equipmentService = createEquipmentService({
 const sensorService = createSensorService({
   repository: createSensorRepository(databasePool),
 });
+const simulatorService = createSimulatorService({
+  repository: createSimulatorRepository(databasePool),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -133,6 +138,7 @@ const app = createApp({
   laboratoryAccessRepository,
   equipmentService,
   sensorService,
+  simulatorService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
