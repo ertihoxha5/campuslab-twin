@@ -28,6 +28,18 @@ const environmentSchema = z.object({
     .min(32, "JWT_ACCESS_SECRET duhet të ketë të paktën 32 karaktere."),
   ACCESS_TOKEN_MINUTES: z.coerce.number().int().min(5).max(60).default(15),
   REFRESH_TOKEN_DAYS: z.coerce.number().int().min(1).max(30).default(7),
+  READING_AGGREGATION_INTERVAL_MINUTES: z.coerce
+    .number()
+    .int()
+    .min(5)
+    .max(1440)
+    .default(60),
+  READING_RAW_RETENTION_DAYS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(365)
+    .default(30),
 });
 
 export function parseEnvironment(source) {

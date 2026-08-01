@@ -23,6 +23,8 @@ test("environment values are validated and coerced", () => {
   assert.equal(environment.PORT, 3000);
   assert.equal(environment.DB_CONNECTION_LIMIT, 5);
   assert.equal(environment.ACCESS_TOKEN_MINUTES, 15);
+  assert.equal(environment.READING_AGGREGATION_INTERVAL_MINUTES, 60);
+  assert.equal(environment.READING_RAW_RETENTION_DAYS, 30);
 });
 
 test("missing required environment values produce a clear startup error", () => {

@@ -18,6 +18,8 @@ const requiredTables = [
   "sensors",
   "sensor_readings",
   "energy_readings",
+  "sensor_reading_aggregates",
+  "energy_reading_aggregates",
   "alerts",
   "maintenance_tasks",
   "maintenance_updates",
