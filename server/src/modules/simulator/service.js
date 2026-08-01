@@ -49,7 +49,7 @@ function validateResult(result) {
   return result;
 }
 
-export function createSimulatorService({ repository }) {
+export function createSimulatorService({ repository, coordinator }) {
   return {
     async status(laboratoryId, context) {
       if (!validId(laboratoryId)) throw notFound();
@@ -76,34 +76,64 @@ export function createSimulatorService({ repository }) {
           ),
         });
       }
-      return validateResult(
+      const run = validateResult(
         await repository.start({
           ...repositoryContext(context, laboratoryId),
           ...parsed.data,
         }),
       );
+      await coordinator?.activate({
+        universityId: context.universityId,
+        laboratoryId,
+        runId: run.id,
+      });
+      return run;
     },
 
     async pause(laboratoryId, context) {
-      return transition(repository, "pause", laboratoryId, context);
+      return transition(
+        repository,
+        coordinator,
+        "pause",
+        laboratoryId,
+        context,
+      );
     },
 
     async resume(laboratoryId, context) {
-      return transition(repository, "resume", laboratoryId, context);
+      return transition(
+        repository,
+        coordinator,
+        "resume",
+        laboratoryId,
+        context,
+      );
     },
 
     async stop(laboratoryId, context) {
-      return transition(repository, "stop", laboratoryId, context);
+      return transition(repository, coordinator, "stop", laboratoryId, context);
     },
   };
 }
 
-async function transition(repository, action, laboratoryId, context) {
+async function transition(
+  repository,
+  coordinator,
+  action,
+  laboratoryId,
+  context,
+) {
   if (!validId(laboratoryId)) throw notFound();
-  return validateResult(
+  const run = validateResult(
     await repository.transition({
       ...repositoryContext(context, laboratoryId),
       action,
     }),
   );
+  await coordinator?.[action]({
+    universityId: context.universityId,
+    laboratoryId,
+    runId: run.id,
+  });
+  return run;
 }

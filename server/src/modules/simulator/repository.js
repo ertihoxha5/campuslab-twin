@@ -167,6 +167,167 @@ export function createSimulatorRepository(pool) {
         };
       });
     },
+
+    async recoverableRuns() {
+      const rows = await query(
+        pool,
+        `SELECT id, university_id AS universityId,
+                laboratory_id AS laboratoryId, status
+         FROM simulation_runs
+         WHERE status IN ('running', 'paused')
+         ORDER BY id`,
+      );
+      return rows.map((run) => ({
+        ...run,
+        id: String(run.id),
+        universityId: String(run.universityId),
+        laboratoryId: String(run.laboratoryId),
+      }));
+    },
+
+    async loadRuntime({ universityId, laboratoryId, runId }) {
+      const runRows = await query(
+        pool,
+        `SELECT id, status, seed_value AS seedValue,
+                input_json AS input, result_json AS result
+         FROM simulation_runs
+         WHERE university_id = ? AND laboratory_id = ? AND id = ?
+         LIMIT 1`,
+        [universityId, laboratoryId, runId],
+      );
+      const run = runRows[0];
+      if (!run) return null;
+      const [sensors, equipment] = await Promise.all([
+        query(
+          pool,
+          `SELECT id, sensor_type AS sensorType, unit
+           FROM sensors
+           WHERE university_id = ? AND laboratory_id = ?
+             AND status = 'online' AND deleted_at IS NULL
+           ORDER BY id`,
+          [universityId, laboratoryId],
+        ),
+        query(
+          pool,
+          `SELECT id, energy_rating_watts AS energyRatingWatts,
+                  health_score AS healthScore
+           FROM equipment
+           WHERE university_id = ? AND laboratory_id = ?
+             AND status = 'active' AND deleted_at IS NULL
+           ORDER BY id`,
+          [universityId, laboratoryId],
+        ),
+      ]);
+      return {
+        id: String(run.id),
+        universityId: String(universityId),
+        laboratoryId: String(laboratoryId),
+        status: run.status,
+        seedValue: run.seedValue,
+        input: parseJson(run.input) ?? {},
+        result: parseJson(run.result) ?? {},
+        sensors: sensors.map((sensor) => ({
+          ...sensor,
+          id: String(sensor.id),
+        })),
+        equipment: equipment.map((item) => ({
+          ...item,
+          id: String(item.id),
+        })),
+      };
+    },
+
+    async persistStep({
+      universityId,
+      laboratoryId,
+      runId,
+      readings,
+      energyReadings,
+      generatorState,
+      event,
+      recordedAt,
+    }) {
+      return withTransaction(pool, async (connection) => {
+        const runs = await query(
+          connection,
+          `SELECT id, result_json AS result
+           FROM simulation_runs
+           WHERE university_id = ? AND laboratory_id = ? AND id = ?
+             AND status = 'running'
+           LIMIT 1
+           FOR UPDATE`,
+          [universityId, laboratoryId, runId],
+        );
+        if (!runs[0]) return false;
+        for (const reading of readings) {
+          await query(
+            connection,
+            `INSERT INTO sensor_readings (
+               university_id, laboratory_id, sensor_id, value,
+               recorded_at, source, simulation_run_id
+             ) VALUES (?, ?, ?, ?, ?, 'simulated', ?)`,
+            [
+              universityId,
+              laboratoryId,
+              reading.sensorId,
+              reading.value,
+              recordedAt,
+              runId,
+            ],
+          );
+        }
+        for (const reading of energyReadings) {
+          await query(
+            connection,
+            `INSERT INTO energy_readings (
+               university_id, laboratory_id, equipment_id,
+               power_watts, energy_kwh, recorded_at, source
+             ) VALUES (?, ?, ?, ?, ?, ?, 'simulated')`,
+            [
+              universityId,
+              laboratoryId,
+              reading.equipmentId,
+              reading.powerWatts,
+              reading.energyKwh,
+              recordedAt,
+            ],
+          );
+        }
+        const previous = parseJson(runs[0].result) ?? {};
+        const result = {
+          ...previous,
+          generatorState,
+          lastRecordedAt: recordedAt,
+          readingCount: Number(previous.readingCount ?? 0) + readings.length,
+          energyReadingCount:
+            Number(previous.energyReadingCount ?? 0) + energyReadings.length,
+          lastEvent: event,
+        };
+        await query(
+          connection,
+          `UPDATE simulation_runs
+           SET result_json = ?
+           WHERE university_id = ? AND laboratory_id = ? AND id = ?`,
+          [JSON.stringify(result), universityId, laboratoryId, runId],
+        );
+        return true;
+      });
+    },
+
+    async markFailed({ universityId, laboratoryId, runId, message }) {
+      await query(
+        pool,
+        `UPDATE simulation_runs
+         SET status = 'failed', ended_at = UTC_TIMESTAMP(3),
+             result_json = JSON_SET(
+               COALESCE(result_json, JSON_OBJECT()),
+               '$.failureMessage', ?
+             )
+         WHERE university_id = ? AND laboratory_id = ? AND id = ?
+           AND status = 'running'`,
+        [String(message).slice(0, 500), universityId, laboratoryId, runId],
+      );
+    },
   };
 }
 

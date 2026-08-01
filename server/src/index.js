@@ -44,6 +44,7 @@ import { createSensorRepository } from "./modules/sensors/repository.js";
 import { createSensorService } from "./modules/sensors/service.js";
 import { createSimulatorRepository } from "./modules/simulator/repository.js";
 import { createSimulatorService } from "./modules/simulator/service.js";
+import { createSimulationCoordinator } from "./modules/simulator/coordinator.js";
 
 loadEnvironmentFile();
 
@@ -120,8 +121,13 @@ const equipmentService = createEquipmentService({
 const sensorService = createSensorService({
   repository: createSensorRepository(databasePool),
 });
+const simulatorRepository = createSimulatorRepository(databasePool);
+const simulatorCoordinator = createSimulationCoordinator({
+  repository: simulatorRepository,
+});
 const simulatorService = createSimulatorService({
-  repository: createSimulatorRepository(databasePool),
+  repository: simulatorRepository,
+  coordinator: simulatorCoordinator,
 });
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
@@ -158,6 +164,12 @@ createRealtimeServer(httpServer, {
 async function startServer() {
   try {
     await checkDatabaseConnection(databasePool);
+    const restoredSimulations = await simulatorCoordinator.restore();
+    if (restoredSimulations.restored > 0) {
+      console.log(
+        `${restoredSimulations.restored} simulime aktive u rikthyen.`,
+      );
+    }
 
     httpServer.listen(config.PORT, () => {
       console.log(`API e CampusLab Twin po punon në portën ${config.PORT}.`);
