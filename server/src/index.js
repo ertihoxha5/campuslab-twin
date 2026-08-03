@@ -48,6 +48,8 @@ import { createSimulationCoordinator } from "./modules/simulator/coordinator.js"
 import { createReadingHistoryRepository } from "./modules/simulator/history-repository.js";
 import { createReadingHistoryMaintenance } from "./modules/simulator/history-maintenance.js";
 import { createRealtimePublisher } from "./realtime/publisher.js";
+import { createAlertRepository } from "./modules/alerts/repository.js";
+import { createAlertService } from "./modules/alerts/service.js";
 
 loadEnvironmentFile();
 
@@ -142,6 +144,9 @@ const readingHistoryMaintenance = createReadingHistoryMaintenance({
   onError: (error) =>
     console.error("Mirëmbajtja e historikut të leximeve dështoi.", error.message),
 });
+const alertService = createAlertService({
+  repository: createAlertRepository(databasePool),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -158,6 +163,7 @@ const app = createApp({
   equipmentService,
   sensorService,
   simulatorService,
+  alertService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
