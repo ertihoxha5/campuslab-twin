@@ -120,7 +120,7 @@ test("dashboard service returns numeric metrics and simulation provenance", asyn
       async details() {
         return {
           recentAlerts: [],
-          latestSensorReadings: [{ id: 3, value: "22.4" }],
+          latestSensorReadings: [{ id: 3, sensorId: 9, value: "22.4" }],
           laboratoryHealth: [],
           energyTrend: [],
           equipmentStatus: [],
@@ -136,6 +136,7 @@ test("dashboard service returns numeric metrics and simulation provenance", asyn
   assert.equal(result.metrics.laboratories, 3);
   assert.equal(result.metrics.currentPowerWatts, 1450.5);
   assert.equal(result.latestSensorReadings[0].id, "3");
+  assert.equal(result.latestSensorReadings[0].sensorId, "9");
   assert.equal(result.latestSensorReadings[0].value, 22.4);
   assert.equal(result.containsSimulatedData, true);
   assert.equal(result.lastUpdatedAt, "2026-07-29T16:00:00.000Z");

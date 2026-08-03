@@ -33,6 +33,17 @@ describe("RealtimeMonitoringPage", () => {
           },
         });
       }
+      if (path.startsWith("/api/dashboard/summary")) {
+        return Promise.resolve({
+          data: {
+            summary: {
+              metrics: { currentPowerWatts: 0 },
+              containsSimulatedData: false,
+              latestSensorReadings: [],
+            },
+          },
+        });
+      }
       return Promise.resolve({
         data: {
           alerts: [
@@ -47,6 +58,60 @@ describe("RealtimeMonitoringPage", () => {
         },
       });
     });
+  });
+
+  it("restores the latest authorized snapshot after reconnecting", async () => {
+    api.get.mockImplementation((path) => {
+      if (path.startsWith("/api/laboratories")) {
+        return Promise.resolve({
+          data: {
+            laboratories: [
+              { id: "15", name: "Laboratori i Automatizimit", code: "AUT-01" },
+            ],
+          },
+        });
+      }
+      if (path.startsWith("/api/dashboard/summary")) {
+        return Promise.resolve({
+          data: {
+            summary: {
+              metrics: { currentPowerWatts: 850 },
+              containsSimulatedData: true,
+              latestSensorReadings: [
+                {
+                  id: "93",
+                  sensorId: "4",
+                  sensorType: "temperature",
+                  value: 23.1,
+                  unit: "°C",
+                  source: "simulated",
+                  recordedAt: "2026-08-03T10:00:00.000Z",
+                },
+              ],
+            },
+          },
+        });
+      }
+      return Promise.resolve({ data: { alerts: [] } });
+    });
+
+    render(<RealtimeMonitoringPage />);
+    await waitFor(() => expect(connectMonitoringRealtime).toHaveBeenCalled());
+    const { onConnectionChange } = connectMonitoringRealtime.mock.calls.at(-1)[0];
+    const callsBeforeReconnect = api.get.mock.calls.filter(([path]) =>
+      path.startsWith("/api/dashboard/summary"),
+    ).length;
+
+    act(() => onConnectionChange("connected"));
+
+    expect(await screen.findByText(/23,1 °C/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        api.get.mock.calls.filter(([path]) =>
+          path.startsWith("/api/dashboard/summary"),
+        ).length,
+      ).toBeGreaterThan(callsBeforeReconnect),
+    );
   });
 
   it("loads real laboratories and active alerts without invented readings", async () => {

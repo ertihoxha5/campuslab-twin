@@ -108,6 +108,8 @@ function normalizeDetails(details) {
           {},
         ),
         id: item.id === undefined ? undefined : String(item.id),
+        sensorId:
+          item.sensorId === undefined ? undefined : String(item.sensorId),
       })),
     ]),
   );

@@ -211,10 +211,10 @@ export function createDashboardRepository(pool) {
         query(
           pool,
           `${accessibleLaboratoriesCte}
-           SELECT id, sensorName, sensorType, unit, value, source,
+           SELECT id, sensorId, sensorName, sensorType, unit, value, source,
                   laboratoryName, recordedAt
            FROM (
-             SELECT reading.id, sensor.name AS sensorName,
+             SELECT reading.id, sensor.id AS sensorId, sensor.name AS sensorName,
                     sensor.sensor_type AS sensorType, sensor.unit,
                     reading.value, reading.source,
                     laboratory.name AS laboratoryName,

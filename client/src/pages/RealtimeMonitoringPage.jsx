@@ -58,19 +58,59 @@ export function RealtimeMonitoringPage() {
     }
   }, []);
 
-  const loadAlerts = useCallback(async () => {
+  const loadSnapshot = useCallback(async () => {
     if (!laboratoryId) {
       setAlerts([]);
+      setReadings({});
+      setEnergy(null);
       return;
     }
     try {
-      const response = await api.get(
-        `/api/alerts?laboratoryId=${laboratoryId}&page=1&pageSize=8`,
-      );
+      const [alertResponse, dashboardResponse] = await Promise.all([
+        api.get(`/api/alerts?laboratoryId=${laboratoryId}&page=1&pageSize=8`),
+        api.get(`/api/dashboard/summary?laboratoryId=${laboratoryId}&hours=24`),
+      ]);
       setAlerts(
-        (response.data.alerts ?? []).filter(
+        (alertResponse.data.alerts ?? []).filter(
           (alert) => !["resolved", "closed"].includes(alert.status),
         ),
+      );
+      const snapshot = dashboardResponse.data.summary;
+      const snapshotReadings = Object.fromEntries(
+        (snapshot.latestSensorReadings ?? []).map((reading) => [
+          reading.sensorId,
+          reading,
+        ]),
+      );
+      setReadings((current) => {
+        const restored = { ...snapshotReadings };
+        for (const [sensorId, reading] of Object.entries(current)) {
+          if (
+            !restored[sensorId] ||
+            new Date(reading.recordedAt) >= new Date(restored[sensorId].recordedAt)
+          ) {
+            restored[sensorId] = reading;
+          }
+        }
+        return restored;
+      });
+      setEnergy(
+        snapshot.metrics?.currentPowerWatts > 0
+          ? {
+              powerWatts: snapshot.metrics.currentPowerWatts,
+              source: snapshot.containsSimulatedData ? "simulated" : "recorded",
+            }
+          : null,
+      );
+      const latestRecordedAt = (snapshot.latestSensorReadings ?? [])
+        .map((reading) => reading.recordedAt)
+        .filter(Boolean)
+        .sort()
+        .at(-1);
+      setLastUpdate((current) =>
+        current && latestRecordedAt && new Date(current) > new Date(latestRecordedAt)
+          ? current
+          : (latestRecordedAt ?? current ?? null),
       );
     } catch (error) {
       setMessage(error.message);
@@ -86,12 +126,16 @@ export function RealtimeMonitoringPage() {
     setChartData([]);
     setEnergy(null);
     setLastUpdate(null);
-    loadAlerts();
+    setConnection("connecting");
+    loadSnapshot();
     if (!laboratoryId) return undefined;
 
     return connectMonitoringRealtime({
       laboratoryId,
-      onConnectionChange: setConnection,
+      onConnectionChange(status) {
+        setConnection(status);
+        if (status === "connected") loadSnapshot();
+      },
       onEvent(eventName, payload) {
         if (eventName === "sensor:reading") {
           setReadings((current) => ({
@@ -111,11 +155,11 @@ export function RealtimeMonitoringPage() {
           setEnergy(payload);
           setLastUpdate(payload.recordedAt);
         } else if (["alert:created", "alert:updated"].includes(eventName)) {
-          loadAlerts();
+          loadSnapshot();
         }
       },
     });
-  }, [laboratoryId, loadAlerts]);
+  }, [laboratoryId, loadSnapshot]);
 
   const latestReadings = useMemo(() => Object.values(readings), [readings]);
   const chartSensors = useMemo(
@@ -131,8 +175,8 @@ export function RealtimeMonitoringPage() {
           <h1>Monitorimi në kohë reale</h1>
           <p>Leximet dhe alarmet e laboratorit të zgjedhur, pa të dhëna të sajuara.</p>
         </div>
-        <Button type="button" variant="outline" onClick={loadAlerts} disabled={!laboratoryId}>
-          <RefreshCw size={16} /> Rifresko alarmet
+        <Button type="button" variant="outline" onClick={loadSnapshot} disabled={!laboratoryId}>
+          <RefreshCw size={16} /> Rifresko gjendjen
         </Button>
       </div>
 
@@ -167,7 +211,7 @@ export function RealtimeMonitoringPage() {
         <article><Activity size={20} /><span>Sensorë live</span><strong>{latestReadings.length}</strong></article>
         <article><Zap size={20} /><span>Fuqia e fundit</span><strong>{energy ? `${Number(energy.powerWatts).toLocaleString("sq-AL")} W` : "—"}</strong></article>
         <article><CircleAlert size={20} /><span>Alarme aktive</span><strong>{alerts.length}</strong></article>
-        <article><Radio size={20} /><span>Burimi</span><strong>{latestReadings.length ? "Simulim" : "—"}</strong></article>
+        <article><Radio size={20} /><span>Burimi</span><strong>{latestReadings.length ? (latestReadings.some((reading) => reading.source === "simulated") ? "Simulim" : "Regjistruar") : "—"}</strong></article>
       </div>
 
       <div className="realtime-content-grid">
@@ -213,7 +257,7 @@ export function RealtimeMonitoringPage() {
           <article key={reading.sensorId}>
             <span>{reading.sensorType}</span>
             <strong>{Number(reading.value).toLocaleString("sq-AL")} {reading.unit}</strong>
-            <small>Simuluar · {timeLabel(reading.recordedAt)}</small>
+            <small>{reading.source === "simulated" ? "Simuluar" : "Regjistruar"} · {timeLabel(reading.recordedAt)}</small>
           </article>
         ))}
       </div>
