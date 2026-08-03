@@ -1,43 +1,10 @@
 /* eslint-disable react/no-unknown-property */
 import { Component, Suspense } from "react";
-import { Bounds, Grid, OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { Bounds, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
+import { DefaultLaboratoryScene } from "./DefaultLaboratoryScene.jsx";
 import { ProtectedLaboratoryModel } from "./ProtectedLaboratoryModel.jsx";
 import { supportsWebGL } from "./webgl.js";
-
-function DefaultLaboratoryShell() {
-  return (
-    <group>
-      <mesh receiveShadow position={[0, -0.06, 0]}>
-        <boxGeometry args={[14, 0.12, 9]} />
-        <meshStandardMaterial color="#d9d8dc" roughness={0.86} />
-      </mesh>
-      <mesh receiveShadow position={[0, 1.8, -4.44]}>
-        <boxGeometry args={[14, 3.6, 0.12]} />
-        <meshStandardMaterial color="#f5f4f7" />
-      </mesh>
-      <mesh receiveShadow position={[-6.94, 1.8, 0]}>
-        <boxGeometry args={[0.12, 3.6, 9]} />
-        <meshStandardMaterial color="#f5f4f7" />
-      </mesh>
-      <mesh receiveShadow position={[6.94, 1.8, 0]}>
-        <boxGeometry args={[0.12, 3.6, 9]} />
-        <meshStandardMaterial color="#f5f4f7" />
-      </mesh>
-      <Grid
-        args={[14, 9]}
-        cellColor="#b6b2bd"
-        cellSize={0.5}
-        cellThickness={0.35}
-        sectionColor="#58427c"
-        sectionSize={2}
-        sectionThickness={0.65}
-        fadeDistance={24}
-        position={[0, 0.01, 0]}
-      />
-    </group>
-  );
-}
 
 class ModelErrorBoundary extends Component {
   constructor(props) {
@@ -54,7 +21,7 @@ class ModelErrorBoundary extends Component {
   }
 
   render() {
-    if (this.state.failed) return <DefaultLaboratoryShell />;
+    if (this.state.failed) return <DefaultLaboratoryScene />;
     return this.props.children;
   }
 }
@@ -63,7 +30,7 @@ function LaboratoryContent({ modelUrl, onModelLoaded, onModelError, children }) 
   if (!modelUrl) {
     return (
       <>
-        <DefaultLaboratoryShell />
+        <DefaultLaboratoryScene />
         {children}
       </>
     );
@@ -71,7 +38,7 @@ function LaboratoryContent({ modelUrl, onModelLoaded, onModelError, children }) 
 
   return (
     <ModelErrorBoundary onError={onModelError}>
-      <Suspense fallback={<DefaultLaboratoryShell />}>
+      <Suspense fallback={<DefaultLaboratoryScene />}>
         <ProtectedLaboratoryModel url={modelUrl} onLoaded={onModelLoaded} />
         {children}
       </Suspense>
