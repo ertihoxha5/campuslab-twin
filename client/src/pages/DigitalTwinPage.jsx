@@ -7,9 +7,12 @@ import {
   Map,
   PersonStanding,
   RotateCcw,
+  RadioTower,
 } from "lucide-react";
 import { api } from "@/api/client.js";
+import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { DigitalTwinCanvas } from "@/components/digital-twin/DigitalTwinCanvas.jsx";
+import { SensorMarkers } from "@/components/digital-twin/SensorMarkers.jsx";
 
 export function DigitalTwinPage() {
   const [laboratories, setLaboratories] = useState([]);
@@ -18,6 +21,10 @@ export function DigitalTwinPage() {
   const [modelState, setModelState] = useState("fallback");
   const [cameraMode, setCameraMode] = useState("overview");
   const [firstPersonReset, setFirstPersonReset] = useState(0);
+  const [sensors, setSensors] = useState([]);
+  const [sensorReadings, setSensorReadings] = useState({});
+  const [discoverSensors, setDiscoverSensors] = useState(false);
+  const [selectedSensor, setSelectedSensor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -59,6 +66,49 @@ export function DigitalTwinPage() {
       });
     return () => {
       active = false;
+    };
+  }, [laboratoryId]);
+
+  useEffect(() => {
+    if (!laboratoryId) return undefined;
+    let active = true;
+    setSensors([]);
+    setSensorReadings({});
+    setSelectedSensor(null);
+    Promise.all([
+      api.get(
+        `/api/sensors?laboratoryId=${laboratoryId}&page=1&pageSize=100&sort=name&direction=asc`,
+      ),
+      api.get(`/api/dashboard/summary?laboratoryId=${laboratoryId}&hours=24`),
+    ])
+      .then(([sensorResponse, dashboardResponse]) => {
+        if (!active) return;
+        setSensors(sensorResponse.data.sensors ?? []);
+        setSensorReadings(
+          Object.fromEntries(
+            (dashboardResponse.data.summary.latestSensorReadings ?? []).map(
+              (reading) => [String(reading.sensorId), reading],
+            ),
+          ),
+        );
+      })
+      .catch((error) => {
+        if (active) setMessage(error.message);
+      });
+
+    const disconnect = connectMonitoringRealtime({
+      laboratoryId,
+      onEvent(eventName, payload) {
+        if (eventName !== "sensor:reading") return;
+        setSensorReadings((current) => ({
+          ...current,
+          [String(payload.sensorId)]: payload,
+        }));
+      },
+    });
+    return () => {
+      active = false;
+      disconnect();
     };
   }, [laboratoryId]);
 
@@ -155,6 +205,15 @@ export function DigitalTwinPage() {
               </button>
             )}
           </div>
+          <button
+            type="button"
+            className={`digital-twin-discovery-toggle ${discoverSensors ? "active" : ""}`}
+            onClick={() => setDiscoverSensors((value) => !value)}
+            aria-pressed={discoverSensors}
+          >
+            <RadioTower size={16} />
+            {discoverSensors ? "Fshih sensorët" : "Zbulo sensorët"}
+          </button>
           <DigitalTwinCanvas
             key={`${laboratoryId}:${laboratoryDetail?.modelFileId ?? "default"}`}
             modelUrl={modelUrl}
@@ -162,7 +221,14 @@ export function DigitalTwinPage() {
             firstPersonReset={firstPersonReset}
             onModelLoaded={() => setModelState("loaded")}
             onModelError={() => setModelState("failed")}
-          />
+          >
+            <SensorMarkers
+              sensors={sensors}
+              readings={sensorReadings}
+              visible={discoverSensors}
+              onSelect={setSelectedSensor}
+            />
+          </DigitalTwinCanvas>
           <div className={`digital-twin-model-state ${modelState}`} role="status">
             {modelState === "loaded"
               ? `Modeli: ${laboratoryDetail.modelOriginalName}`
@@ -182,6 +248,19 @@ export function DigitalTwinPage() {
                 : "Rrotullo me zvarritje, afrohu me scroll dhe lëviz pamjen me butonin e djathtë."}
             </p>
           </div>
+          {selectedSensor && (
+            <aside className="digital-twin-sensor-detail">
+              <button type="button" onClick={() => setSelectedSensor(null)} aria-label="Mbyll sensorin">×</button>
+              <span>{selectedSensor.sensorType}</span>
+              <strong>{selectedSensor.name}</strong>
+              <p>
+                {sensorReadings[String(selectedSensor.id)]
+                  ? `${Number(sensorReadings[String(selectedSensor.id)].value).toLocaleString("sq-AL")} ${sensorReadings[String(selectedSensor.id)].unit ?? selectedSensor.unit}`
+                  : "Në pritje të leximit të parë"}
+              </p>
+              <small>Statusi: {selectedSensor.status}</small>
+            </aside>
+          )}
         </div>
       ) : !loading && !message ? (
         <div className="workspace-empty-state">

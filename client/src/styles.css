@@ -1723,6 +1723,94 @@ a {
   color: #fff;
 }
 
+.digital-twin-discovery-toggle {
+  position: absolute;
+  z-index: 2;
+  top: 66px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9px;
+  background: rgba(17, 24, 39, 0.88);
+  color: #fff;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.digital-twin-discovery-toggle:hover,
+.digital-twin-discovery-toggle.active {
+  background: #6c7653;
+  color: #fff;
+}
+
+.digital-twin-sensor-label {
+  display: grid;
+  gap: 2px;
+  min-width: 130px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  background: rgba(17, 24, 39, 0.9);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.digital-twin-sensor-label.critical {
+  background: rgba(140, 57, 57, 0.94);
+}
+
+.digital-twin-sensor-label.warning {
+  background: rgba(156, 107, 48, 0.94);
+}
+
+.digital-twin-sensor-label span {
+  font-size: 0.72rem;
+}
+
+.digital-twin-sensor-detail {
+  position: absolute;
+  z-index: 3;
+  top: 112px;
+  right: 16px;
+  display: grid;
+  min-width: 230px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  background: rgba(17, 24, 39, 0.94);
+  color: #fff;
+}
+
+.digital-twin-sensor-detail > button {
+  position: absolute;
+  top: 7px;
+  right: 9px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.digital-twin-sensor-detail > span,
+.digital-twin-sensor-detail > small {
+  color: #c9c4d3;
+  font-size: 0.72rem;
+}
+
+.digital-twin-sensor-detail p {
+  margin: 7px 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
 .digital-twin-help p {
   margin: 0;
 }
@@ -1767,6 +1855,17 @@ a {
     bottom: 76px;
     left: 12px;
     justify-content: center;
+  }
+
+  .digital-twin-discovery-toggle {
+    top: 62px;
+    right: 12px;
+  }
+
+  .digital-twin-sensor-detail {
+    top: 108px;
+    right: 12px;
+    left: 12px;
   }
 
   .digital-twin-camera-controls button {

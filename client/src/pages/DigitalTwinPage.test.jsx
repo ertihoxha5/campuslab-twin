@@ -1,45 +1,72 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api/client.js";
+import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { DigitalTwinPage } from "./DigitalTwinPage.jsx";
 
-const { canvasSpy } = vi.hoisted(() => ({ canvasSpy: vi.fn() }));
+const { canvasSpy, markerSpy } = vi.hoisted(() => ({
+  canvasSpy: vi.fn(),
+  markerSpy: vi.fn(),
+}));
 
 vi.mock("@/api/client.js", () => ({
   api: { get: vi.fn() },
 }));
+vi.mock("@/api/realtime.js", () => ({
+  connectMonitoringRealtime: vi.fn(() => vi.fn()),
+}));
+vi.mock("@/components/digital-twin/SensorMarkers.jsx", () => ({
+  SensorMarkers: (props) => {
+    markerSpy(props);
+    return null;
+  },
+}));
 vi.mock("@/components/digital-twin/DigitalTwinCanvas.jsx", () => ({
   DigitalTwinCanvas: (props) => {
     canvasSpy(props);
-    return <div data-testid="digital-twin-canvas" />;
+    return <div data-testid="digital-twin-canvas">{props.children}</div>;
   },
 }));
 
 describe("DigitalTwinPage", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("opens the first authorized active laboratory", async () => {
+  function mockLaboratoryApi({
+    name = "Laboratori Test",
+    code = "TEST-01",
+    detail = { id: "15" },
+    sensors = [],
+    readings = [],
+  } = {}) {
     api.get.mockImplementation((path) => {
       if (path === "/api/laboratories/15") {
+        return Promise.resolve({ data: { laboratory: detail } });
+      }
+      if (path.startsWith("/api/sensors?")) {
+        return Promise.resolve({ data: { sensors } });
+      }
+      if (path.startsWith("/api/dashboard/summary")) {
         return Promise.resolve({
-          data: {
-            laboratory: {
-              id: "15",
-              modelFileId: "31",
-              modelOriginalName: "automatizimi.glb",
-              modelMimeType: "model/gltf-binary",
-            },
-          },
+          data: { summary: { latestSensorReadings: readings } },
         });
       }
       return Promise.resolve({
-        data: {
-          laboratories: [
-            { id: "15", name: "Laboratori i Automatizimit", code: "AUT-01" },
-          ],
-        },
+        data: { laboratories: [{ id: "15", name, code }] },
       });
+    });
+  }
+
+  it("opens the first authorized active laboratory", async () => {
+    mockLaboratoryApi({
+      name: "Laboratori i Automatizimit",
+      code: "AUT-01",
+      detail: {
+        id: "15",
+        modelFileId: "31",
+        modelOriginalName: "automatizimi.glb",
+        modelMimeType: "model/gltf-binary",
+      },
     });
 
     render(<DigitalTwinPage />);
@@ -71,19 +98,7 @@ describe("DigitalTwinPage", () => {
 
   it("switches between deterministic camera presets", async () => {
     const user = userEvent.setup();
-    api.get.mockImplementation((path) =>
-      Promise.resolve(
-        path === "/api/laboratories/15"
-          ? { data: { laboratory: { id: "15" } } }
-          : {
-              data: {
-                laboratories: [
-                  { id: "15", name: "Laboratori Test", code: "TEST-01" },
-                ],
-              },
-            },
-      ),
-    );
+    mockLaboratoryApi();
     render(<DigitalTwinPage />);
     await screen.findByRole("option", { name: "Laboratori Test (TEST-01)" });
 
@@ -100,19 +115,7 @@ describe("DigitalTwinPage", () => {
 
   it("enters first-person mode and resets the viewer position", async () => {
     const user = userEvent.setup();
-    api.get.mockImplementation((path) =>
-      Promise.resolve(
-        path === "/api/laboratories/15"
-          ? { data: { laboratory: { id: "15" } } }
-          : {
-              data: {
-                laboratories: [
-                  { id: "15", name: "Laboratori Test", code: "TEST-01" },
-                ],
-              },
-            },
-      ),
-    );
+    mockLaboratoryApi();
     render(<DigitalTwinPage />);
     await screen.findByRole("option", { name: "Laboratori Test (TEST-01)" });
 
@@ -125,6 +128,52 @@ describe("DigitalTwinPage", () => {
     );
     expect(canvasSpy).toHaveBeenLastCalledWith(
       expect.objectContaining({ cameraMode: "firstPerson", firstPersonReset: 1 }),
+    );
+  });
+
+  it("reveals stored sensor positions and applies live readings", async () => {
+    const user = userEvent.setup();
+    mockLaboratoryApi({
+      sensors: [
+        {
+          id: "4",
+          name: "Temperatura hyrëse",
+          sensorType: "temperature",
+          unit: "°C",
+          status: "online",
+          positionX: 2,
+          positionY: 1.4,
+          positionZ: -1,
+        },
+      ],
+    });
+    render(<DigitalTwinPage />);
+    await screen.findByRole("option", { name: "Laboratori Test (TEST-01)" });
+    await user.click(screen.getByRole("button", { name: "Zbulo sensorët" }));
+    await vi.waitFor(() =>
+      expect(markerSpy).toHaveBeenLastCalledWith(
+        expect.objectContaining({ visible: true }),
+      ),
+    );
+
+    const { onEvent } = connectMonitoringRealtime.mock.calls.at(-1)[0];
+    act(() => {
+      onEvent("sensor:reading", {
+        sensorId: "4",
+        value: 31.2,
+        unit: "°C",
+        recordedAt: "2026-08-04T08:00:00.000Z",
+      });
+    });
+
+    await vi.waitFor(() =>
+      expect(markerSpy).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          readings: expect.objectContaining({
+            4: expect.objectContaining({ value: 31.2 }),
+          }),
+        }),
+      ),
     );
   });
 });
