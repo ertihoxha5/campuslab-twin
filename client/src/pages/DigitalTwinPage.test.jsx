@@ -97,4 +97,34 @@ describe("DigitalTwinPage", () => {
       "true",
     );
   });
+
+  it("enters first-person mode and resets the viewer position", async () => {
+    const user = userEvent.setup();
+    api.get.mockImplementation((path) =>
+      Promise.resolve(
+        path === "/api/laboratories/15"
+          ? { data: { laboratory: { id: "15" } } }
+          : {
+              data: {
+                laboratories: [
+                  { id: "15", name: "Laboratori Test", code: "TEST-01" },
+                ],
+              },
+            },
+      ),
+    );
+    render(<DigitalTwinPage />);
+    await screen.findByRole("option", { name: "Laboratori Test (TEST-01)" });
+
+    await user.click(screen.getByRole("button", { name: /Ecje/ }));
+    expect(canvasSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cameraMode: "firstPerson", firstPersonReset: 0 }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Rikthe pozicionin first-person" }),
+    );
+    expect(canvasSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cameraMode: "firstPerson", firstPersonReset: 1 }),
+    );
+  });
 });

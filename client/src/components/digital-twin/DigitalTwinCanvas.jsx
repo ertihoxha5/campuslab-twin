@@ -1,8 +1,18 @@
 /* eslint-disable react/no-unknown-property */
 import { Component, Suspense, useEffect, useRef } from "react";
-import { Bounds, OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import { Canvas, useThree } from "@react-three/fiber";
+import {
+  Bounds,
+  OrbitControls,
+  PerspectiveCamera,
+  PointerLockControls,
+} from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Vector3 } from "three";
 import { DefaultLaboratoryScene } from "./DefaultLaboratoryScene.jsx";
+import {
+  FIRST_PERSON_START,
+  resolveFirstPersonMove,
+} from "./first-person-movement.js";
 import { ProtectedLaboratoryModel } from "./ProtectedLaboratoryModel.jsx";
 import { supportsWebGL } from "./webgl.js";
 
@@ -52,11 +62,70 @@ const cameraPresets = {
   focus: { position: [5.2, 3.3, 5.6], target: [0, 1.15, 0] },
 };
 
-function CameraRig({ mode }) {
+function FirstPersonController({ resetNonce }) {
+  const camera = useThree((state) => state.camera);
+  const pressedKeys = useRef(new Set());
+  const forward = useRef(new Vector3());
+  const right = useRef(new Vector3());
+
+  useEffect(() => {
+    camera.position.set(
+      FIRST_PERSON_START.x,
+      FIRST_PERSON_START.y,
+      FIRST_PERSON_START.z,
+    );
+    camera.lookAt(0, FIRST_PERSON_START.y, 0);
+  }, [camera, resetNonce]);
+
+  useEffect(() => {
+    const onKeyDown = (event) => pressedKeys.current.add(event.code);
+    const onKeyUp = (event) => pressedKeys.current.delete(event.code);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
+
+  useFrame((_state, frameDelta) => {
+    const keys = pressedKeys.current;
+    if (!["KeyW", "KeyA", "KeyS", "KeyD"].some((key) => keys.has(key))) return;
+    const distance = Math.min(frameDelta, 0.05) * 3.2;
+    camera.getWorldDirection(forward.current);
+    forward.current.y = 0;
+    forward.current.normalize();
+    right.current.crossVectors(forward.current, camera.up).normalize();
+    const movement = { x: 0, z: 0 };
+    if (keys.has("KeyW")) {
+      movement.x += forward.current.x * distance;
+      movement.z += forward.current.z * distance;
+    }
+    if (keys.has("KeyS")) {
+      movement.x -= forward.current.x * distance;
+      movement.z -= forward.current.z * distance;
+    }
+    if (keys.has("KeyD")) {
+      movement.x += right.current.x * distance;
+      movement.z += right.current.z * distance;
+    }
+    if (keys.has("KeyA")) {
+      movement.x -= right.current.x * distance;
+      movement.z -= right.current.z * distance;
+    }
+    const next = resolveFirstPersonMove(camera.position, movement);
+    camera.position.set(next.x, next.y, next.z);
+  });
+
+  return <PointerLockControls makeDefault />;
+}
+
+function CameraRig({ mode, resetNonce }) {
   const controls = useRef(null);
   const camera = useThree((state) => state.camera);
 
   useEffect(() => {
+    if (mode === "firstPerson") return;
     const preset = cameraPresets[mode] ?? cameraPresets.overview;
     camera.position.set(...preset.position);
     camera.lookAt(...preset.target);
@@ -64,6 +133,10 @@ function CameraRig({ mode }) {
     controls.current?.target.set(...preset.target);
     controls.current?.update();
   }, [camera, mode]);
+
+  if (mode === "firstPerson") {
+    return <FirstPersonController resetNonce={resetNonce} />;
+  }
 
   return (
     <OrbitControls
@@ -83,6 +156,7 @@ function Scene({
   onModelLoaded,
   onModelError,
   cameraMode,
+  firstPersonReset,
   children,
 }) {
   return (
@@ -105,7 +179,7 @@ function Scene({
           {children}
         </LaboratoryContent>
       </Bounds>
-      <CameraRig mode={cameraMode} />
+      <CameraRig mode={cameraMode} resetNonce={firstPersonReset} />
     </>
   );
 }
@@ -143,6 +217,7 @@ export function DigitalTwinCanvas({
   onModelLoaded,
   onModelError,
   cameraMode = "overview",
+  firstPersonReset = 0,
   children,
 }) {
   if (!supportsWebGL()) return <WebGLFallback />;
@@ -157,6 +232,7 @@ export function DigitalTwinCanvas({
               onModelLoaded={onModelLoaded}
               onModelError={onModelError}
               cameraMode={cameraMode}
+              firstPersonReset={firstPersonReset}
             >
               {children}
             </Scene>

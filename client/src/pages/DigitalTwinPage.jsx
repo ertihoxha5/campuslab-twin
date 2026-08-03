@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Box, Focus, Info, LayoutGrid, Map } from "lucide-react";
+import {
+  Box,
+  Focus,
+  Info,
+  LayoutGrid,
+  Map,
+  PersonStanding,
+  RotateCcw,
+} from "lucide-react";
 import { api } from "@/api/client.js";
 import { DigitalTwinCanvas } from "@/components/digital-twin/DigitalTwinCanvas.jsx";
 
@@ -9,6 +17,7 @@ export function DigitalTwinPage() {
   const [laboratoryDetail, setLaboratoryDetail] = useState(null);
   const [modelState, setModelState] = useState("fallback");
   const [cameraMode, setCameraMode] = useState("overview");
+  const [firstPersonReset, setFirstPersonReset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -128,11 +137,29 @@ export function DigitalTwinPage() {
             >
               <Focus size={15} /> Fokus
             </button>
+            <button
+              type="button"
+              className={cameraMode === "firstPerson" ? "active" : ""}
+              onClick={() => setCameraMode("firstPerson")}
+              aria-pressed={cameraMode === "firstPerson"}
+            >
+              <PersonStanding size={15} /> Ecje
+            </button>
+            {cameraMode === "firstPerson" && (
+              <button
+                type="button"
+                onClick={() => setFirstPersonReset((value) => value + 1)}
+                aria-label="Rikthe pozicionin first-person"
+              >
+                <RotateCcw size={15} /> Reset
+              </button>
+            )}
           </div>
           <DigitalTwinCanvas
             key={`${laboratoryId}:${laboratoryDetail?.modelFileId ?? "default"}`}
             modelUrl={modelUrl}
             cameraMode={cameraMode}
+            firstPersonReset={firstPersonReset}
             onModelLoaded={() => setModelState("loaded")}
             onModelError={() => setModelState("failed")}
           />
@@ -149,7 +176,11 @@ export function DigitalTwinPage() {
           </div>
           <div className="digital-twin-help">
             <Info size={17} />
-            <p>Rrotullo me zvarritje, afrohu me scroll dhe lëviz pamjen me butonin e djathtë.</p>
+            <p>
+              {cameraMode === "firstPerson"
+                ? "Kliko pamjen, shiko me maus dhe lëviz me W, A, S, D. Shtyp Esc për të liruar mausin."
+                : "Rrotullo me zvarritje, afrohu me scroll dhe lëviz pamjen me butonin e djathtë."}
+            </p>
           </div>
         </div>
       ) : !loading && !message ? (
