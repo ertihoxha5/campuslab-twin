@@ -83,7 +83,7 @@ export function createRealtimePublisher() {
           severity: alert.severity,
           title: alert.title,
           description: alert.description,
-          status: "new",
+          status: alert.status ?? "new",
           source: alert.source,
           recordedAt,
         },

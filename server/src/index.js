@@ -146,6 +146,7 @@ const readingHistoryMaintenance = createReadingHistoryMaintenance({
 });
 const alertService = createAlertService({
   repository: createAlertRepository(databasePool),
+  realtimePublisher,
 });
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,

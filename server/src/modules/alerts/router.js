@@ -7,6 +7,7 @@ const context = (request) => ({
   universityId: request.auth.universityId,
   userId: request.auth.userId,
   roles: request.auth.roles,
+  ipAddress: request.ip?.slice(0, 45) ?? null,
 });
 
 export function createAlertRouter({ service, authenticateTenant }) {
@@ -29,6 +30,20 @@ export function createAlertRouter({ service, authenticateTenant }) {
     async (request, response) => {
       const alert = await service.detail(request.params.alertId, context(request));
       return success(response, { data: { alert } });
+    },
+  );
+  router.patch(
+    "/:alertId/status",
+    requirePermissions(permissions.ALERTS_RESPOND),
+    async (request, response) => {
+      const alert = await service.transition(
+        request.params.alertId,
+        request.body,
+        context(request),
+      );
+      return success(response, {
+        data: { alert, message: "Statusi i alarmit u përditësua me sukses." },
+      });
     },
   );
   return router;

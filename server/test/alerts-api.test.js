@@ -67,6 +67,9 @@ test("alert service validates filters and hides inaccessible details", async () 
       async findById() {
         return null;
       },
+      async history() {
+        return [];
+      },
     },
   });
   const context = { universityId: "7", userId: "9", roles: ["technician"] };
@@ -91,9 +94,11 @@ before(async () => {
       userId: "9",
       roles: ["technician"],
       permissions:
-        request.headers["x-test-monitoring"] === "true"
-          ? ["monitoring.view"]
-          : [],
+        request.headers["x-test-respond"] === "true"
+          ? ["alerts.respond"]
+          : request.headers["x-test-monitoring"] === "true"
+            ? ["monitoring.view"]
+            : [],
     };
     next();
   };
@@ -111,6 +116,13 @@ before(async () => {
         },
         async detail(alertId, context) {
           return { id: alertId, universityId: context.universityId };
+        },
+        async transition(alertId, input, context) {
+          return {
+            id: alertId,
+            status: input.status,
+            universityId: context.universityId,
+          };
         },
       },
     }),
@@ -132,4 +144,23 @@ test("alert endpoints require monitoring permission and server tenant context", 
   assert.equal(forbidden.status, 403);
   assert.equal(allowed.status, 200);
   assert.equal(body.data.alert.universityId, "7");
+});
+
+test("alert status endpoint requires response permission", async () => {
+  const forbidden = await fetch(`${baseUrl}/api/alerts/71/status`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ status: "acknowledged", notes: "Po kontrollohet." }),
+  });
+  const allowed = await fetch(`${baseUrl}/api/alerts/71/status`, {
+    method: "PATCH",
+    headers: {
+      "content-type": "application/json",
+      "x-test-respond": "true",
+    },
+    body: JSON.stringify({ status: "acknowledged", notes: "Po kontrollohet." }),
+  });
+
+  assert.equal(forbidden.status, 403);
+  assert.equal(allowed.status, 200);
 });

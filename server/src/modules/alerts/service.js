@@ -14,6 +14,16 @@ const listSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
+const transitionSchema = z.object({
+  status: z.enum(["acknowledged", "in_progress", "resolved", "closed"]),
+  notes: z.string().trim().max(2000).optional().default(""),
+});
+const nextStatus = {
+  new: "acknowledged",
+  acknowledged: "in_progress",
+  in_progress: "resolved",
+  resolved: "closed",
+};
 
 const validationError = () =>
   new AppError({
@@ -28,7 +38,7 @@ const notFound = () =>
     message: "Alarmi i kërkuar nuk u gjet.",
   });
 
-export function createAlertService({ repository }) {
+export function createAlertService({ repository, realtimePublisher }) {
   const access = (context) => ({
     universityId: context.universityId,
     userId: context.userId,
@@ -63,6 +73,62 @@ export function createAlertService({ repository }) {
         alertId: String(alertId),
       });
       if (!alert) throw notFound();
+      return {
+        ...alert,
+        history: await repository.history({
+          universityId: context.universityId,
+          alertId: String(alertId),
+        }),
+      };
+    },
+    async transition(alertId, input, context) {
+      if (!/^[1-9]\d*$/.test(String(alertId))) throw notFound();
+      const parsed = transitionSchema.safeParse(input);
+      if (!parsed.success) throw validationError();
+      const { status, notes } = parsed.data;
+      if (["acknowledged", "resolved"].includes(status) && !notes) {
+        throw new AppError({
+          status: 422,
+          code: "VALIDATION_ERROR",
+          message:
+            status === "acknowledged"
+              ? "Shënimi i pranimit është i detyrueshëm."
+              : "Shënimi i zgjidhjes është i detyrueshëm.",
+        });
+      }
+      const current = await repository.findById({
+        ...access(context),
+        alertId: String(alertId),
+      });
+      if (!current) throw notFound();
+      if (nextStatus[current.status] !== status) {
+        throw new AppError({
+          status: 409,
+          code: "INVALID_ALERT_TRANSITION",
+          message: "Ky ndryshim i statusit të alarmit nuk lejohet.",
+        });
+      }
+      const alert = await repository.transition({
+        ...access(context),
+        alertId: String(alertId),
+        status,
+        notes: notes || null,
+        ipAddress: context.ipAddress,
+      });
+      if (!alert) throw notFound();
+      if (alert.invalidTransition) {
+        throw new AppError({
+          status: 409,
+          code: "INVALID_ALERT_TRANSITION",
+          message: "Statusi i alarmit ndryshoi. Rifreskojeni dhe provoni përsëri.",
+        });
+      }
+      realtimePublisher?.publishAlert({
+        universityId: context.universityId,
+        laboratoryId: alert.laboratoryId,
+        alert: { ...alert, created: false },
+        recordedAt: new Date().toISOString(),
+      });
       return alert;
     },
   };
