@@ -200,7 +200,10 @@ export function createSimulatorRepository(pool) {
       const [sensors, equipment] = await Promise.all([
         query(
           pool,
-          `SELECT id, sensor_type AS sensorType, unit
+          `SELECT id, equipment_id AS equipmentId, name,
+                  sensor_type AS sensorType, unit,
+                  warning_min AS warningMin, warning_max AS warningMax,
+                  critical_min AS criticalMin, critical_max AS criticalMax
            FROM sensors
            WHERE university_id = ? AND laboratory_id = ?
              AND status = 'online' AND deleted_at IS NULL
@@ -246,6 +249,7 @@ export function createSimulatorRepository(pool) {
       generatorState,
       event,
       recordedAt,
+      alertCandidates = [],
     }) {
       return withTransaction(pool, async (connection) => {
         const runs = await query(
@@ -293,6 +297,40 @@ export function createSimulatorRepository(pool) {
             ],
           );
         }
+        const alerts = [];
+        for (const candidate of alertCandidates) {
+          const alertResult = await query(
+            connection,
+            `INSERT INTO alerts (
+               university_id, laboratory_id, sensor_id, equipment_id,
+               category, severity, title, description, status, source,
+               deduplication_key, last_triggered_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+               id = LAST_INSERT_ID(id), severity = VALUES(severity),
+               title = VALUES(title), description = VALUES(description),
+               last_triggered_at = VALUES(last_triggered_at),
+               updated_at = CURRENT_TIMESTAMP(3)`,
+            [
+              universityId,
+              laboratoryId,
+              candidate.sensorId,
+              candidate.equipmentId,
+              candidate.category,
+              candidate.severity,
+              candidate.title,
+              candidate.description,
+              candidate.source,
+              candidate.deduplicationKey,
+              recordedAt,
+            ],
+          );
+          alerts.push({
+            id: String(alertResult.insertId),
+            created: Number(alertResult.affectedRows) === 1,
+            ...candidate,
+          });
+        }
         const previous = parseJson(runs[0].result) ?? {};
         const result = {
           ...previous,
@@ -310,7 +348,7 @@ export function createSimulatorRepository(pool) {
            WHERE university_id = ? AND laboratory_id = ? AND id = ?`,
           [JSON.stringify(result), universityId, laboratoryId, runId],
         );
-        return true;
+        return { persisted: true, alerts };
       });
     },
 

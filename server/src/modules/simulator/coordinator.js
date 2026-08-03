@@ -2,6 +2,7 @@ import {
   createInitialSimulationState,
   generateSimulationStep,
 } from "./generator.js";
+import { evaluateSimulationReadings } from "../alerts/rule-engine.js";
 
 export function createSimulationCoordinator({
   repository,
@@ -59,7 +60,11 @@ export function createSimulationCoordinator({
         totalPowerWatts: generated.state.values.power,
         intervalSeconds: Number(runtime.input.samplingIntervalSeconds) || 60,
       });
-      const persisted = await repository.persistStep({
+      const alertCandidates = evaluateSimulationReadings(
+        runtime.sensors,
+        generated.readings,
+      );
+      const persistence = await repository.persistStep({
         universityId: runtime.universityId,
         laboratoryId: runtime.laboratoryId,
         runId: runtime.id,
@@ -68,7 +73,9 @@ export function createSimulationCoordinator({
         generatorState: generated.state,
         event: generated.event,
         recordedAt: toDatabaseDateTime(recordedAt),
+        alertCandidates,
       });
+      const persisted = persistence === true || persistence?.persisted === true;
       if (persisted) {
         realtimePublisher?.publishSimulationStep({
           universityId: runtime.universityId,

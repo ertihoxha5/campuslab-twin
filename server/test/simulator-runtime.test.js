@@ -171,9 +171,21 @@ test("runtime persistence is atomic and tenant-scoped", async () => {
     generatorState: { tick: 3, values: { temperature: 22.4 } },
     event: null,
     recordedAt: "2026-08-01 10:00:00.000",
+    alertCandidates: [
+      {
+        sensorId: "1",
+        equipmentId: null,
+        category: "sensor_temperature_threshold",
+        severity: "warning",
+        title: "Paralajmërim: Temperatura",
+        description: "Temperatura kaloi pragun.",
+        source: "simulated",
+        deduplicationKey: "sensor:1:threshold",
+      },
+    ],
   });
 
-  assert.equal(saved, true);
+  assert.equal(saved.persisted, true);
   assert.deepEqual(events, ["begin", "commit", "release"]);
   const sensorInsert = calls.find(({ sql }) =>
     sql.includes("INSERT INTO sensor_readings"),
@@ -191,6 +203,9 @@ test("runtime persistence is atomic and tenant-scoped", async () => {
     sql.includes("INSERT INTO energy_readings"),
   );
   assert.match(energyInsert.sql, /'simulated'/);
+  const alertInsert = calls.find(({ sql }) => sql.includes("INSERT INTO alerts"));
+  assert.match(alertInsert.sql, /ON DUPLICATE KEY UPDATE/);
+  assert.ok(alertInsert.parameters.includes("sensor:1:threshold"));
   assert.ok(calls.every(({ parameters }) => parameters.includes("7")));
   const update = calls.at(-1);
   const result = JSON.parse(update.parameters[0]);
