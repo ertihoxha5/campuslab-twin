@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { io } from "socket.io-client";
 import {
   connectDashboardRealtime,
+  connectMonitoringRealtime,
   DASHBOARD_REALTIME_EVENTS,
 } from "./realtime.js";
 
@@ -14,6 +15,37 @@ const createSocket = () => ({
   disconnect: vi.fn(),
   emit: vi.fn(),
   on: vi.fn(),
+});
+
+describe("connectMonitoringRealtime", () => {
+  it("forwards the event name and payload for the selected laboratory", () => {
+    const socket = createSocket();
+    io.mockReturnValue(socket);
+    const onEvent = vi.fn();
+
+    const disconnect = connectMonitoringRealtime({
+      laboratoryId: "15",
+      onEvent,
+      onConnectionChange: vi.fn(),
+    });
+    const connectHandler = socket.on.mock.calls.find(
+      ([eventName]) => eventName === "connect",
+    )[1];
+    const readingHandler = socket.on.mock.calls.find(
+      ([eventName]) => eventName === "sensor:reading",
+    )[1];
+    connectHandler();
+    readingHandler({ sensorId: "4", value: 22.5 });
+
+    expect(socket.emit).toHaveBeenCalledWith("laboratory:join", {
+      laboratoryId: "15",
+    });
+    expect(onEvent).toHaveBeenCalledWith("sensor:reading", {
+      sensorId: "4",
+      value: 22.5,
+    });
+    disconnect();
+  });
 });
 
 describe("connectDashboardRealtime", () => {

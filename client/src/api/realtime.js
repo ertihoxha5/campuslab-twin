@@ -52,3 +52,29 @@ export function connectDashboardRealtime({
     socket.disconnect();
   };
 }
+
+export function connectMonitoringRealtime({
+  laboratoryId,
+  onEvent,
+  onConnectionChange,
+}) {
+  const socket = io(realtimeUrl || undefined, {
+    withCredentials: true,
+    transports: ["websocket"],
+  });
+
+  socket.on("connect", () => {
+    onConnectionChange?.("connected");
+    socket.emit("laboratory:join", { laboratoryId });
+  });
+  socket.on("disconnect", () => onConnectionChange?.("disconnected"));
+  socket.on("connect_error", () => onConnectionChange?.("disconnected"));
+  for (const eventName of DASHBOARD_REALTIME_EVENTS) {
+    socket.on(eventName, (payload) => onEvent?.(eventName, payload));
+  }
+
+  return () => {
+    if (socket.connected) socket.emit("laboratory:leave", { laboratoryId });
+    socket.disconnect();
+  };
+}

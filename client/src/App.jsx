@@ -58,6 +58,11 @@ const SensorDetailPage = lazy(() =>
     default: module.SensorDetailPage,
   })),
 );
+const RealtimeMonitoringPage = lazy(() =>
+  import("@/pages/RealtimeMonitoringPage.jsx").then((module) => ({
+    default: module.RealtimeMonitoringPage,
+  })),
+);
 
 const laboratoryPage = (Page) => (
   <Suspense fallback={<p className="workspace-loading">Po ngarkohet faqja…</p>}>
@@ -118,12 +123,7 @@ export default function App() {
             <Route element={<PermissionRoute anyOf={["monitoring.view"]} />}>
               <Route
                 path="monitorimi"
-                element={
-                  <WorkspaceSectionPage
-                    title="Monitorimi në kohë reale"
-                    description="Gjendja e drejtpërdrejtë e laboratorëve."
-                  />
-                }
+                element={laboratoryPage(RealtimeMonitoringPage)}
               />
               <Route
                 path="energjia"
