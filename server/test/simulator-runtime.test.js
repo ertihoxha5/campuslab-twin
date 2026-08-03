@@ -27,6 +27,7 @@ const runtime = {
 
 test("coordinator persists simulated sensor and per-equipment energy readings", async () => {
   const persisted = [];
+  const published = [];
   const repository = {
     async loadRuntime() {
       return structuredClone(runtime);
@@ -42,6 +43,11 @@ test("coordinator persists simulated sensor and per-equipment energy readings", 
   const coordinator = createSimulationCoordinator({
     repository,
     clock: () => new Date("2026-08-01T10:00:00.000Z"),
+    realtimePublisher: {
+      publishSimulationStep(step) {
+        published.push(step);
+      },
+    },
   });
 
   const saved = await coordinator.runOnce({
@@ -66,6 +72,9 @@ test("coordinator persists simulated sensor and per-equipment energy readings", 
   );
   assert.equal(persisted[0].recordedAt, "2026-08-01 10:00:00.000");
   assert.equal(persisted[0].generatorState.tick, 1);
+  assert.equal(published.length, 1);
+  assert.equal(published[0].laboratoryId, "15");
+  assert.equal(published[0].readings.length, 2);
 });
 
 test("coordinator prevents duplicate timers and restores only running processes", async () => {

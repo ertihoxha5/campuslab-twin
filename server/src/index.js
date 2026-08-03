@@ -47,6 +47,7 @@ import { createSimulatorService } from "./modules/simulator/service.js";
 import { createSimulationCoordinator } from "./modules/simulator/coordinator.js";
 import { createReadingHistoryRepository } from "./modules/simulator/history-repository.js";
 import { createReadingHistoryMaintenance } from "./modules/simulator/history-maintenance.js";
+import { createRealtimePublisher } from "./realtime/publisher.js";
 
 loadEnvironmentFile();
 
@@ -124,8 +125,10 @@ const sensorService = createSensorService({
   repository: createSensorRepository(databasePool),
 });
 const simulatorRepository = createSimulatorRepository(databasePool);
+const realtimePublisher = createRealtimePublisher();
 const simulatorCoordinator = createSimulationCoordinator({
   repository: simulatorRepository,
+  realtimePublisher,
 });
 const simulatorService = createSimulatorService({
   repository: simulatorRepository,
@@ -164,12 +167,13 @@ const app = createApp({
   secureCookies: config.NODE_ENV === "production",
 });
 const httpServer = createServer(app);
-createRealtimeServer(httpServer, {
+const realtimeServer = createRealtimeServer(httpServer, {
   clientOrigin: config.CLIENT_ORIGIN,
   authRepository,
   accessSecret: config.JWT_ACCESS_SECRET,
   laboratoryAccessRepository,
 });
+realtimePublisher.attach(realtimeServer);
 
 async function startServer() {
   try {

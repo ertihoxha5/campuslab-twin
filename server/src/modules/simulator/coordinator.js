@@ -9,6 +9,7 @@ export function createSimulationCoordinator({
   setIntervalFunction = setInterval,
   clearIntervalFunction = clearInterval,
   millisecondsPerSecond = 1000,
+  realtimePublisher,
 } = {}) {
   const processes = new Map();
 
@@ -58,7 +59,7 @@ export function createSimulationCoordinator({
         totalPowerWatts: generated.state.values.power,
         intervalSeconds: Number(runtime.input.samplingIntervalSeconds) || 60,
       });
-      return repository.persistStep({
+      const persisted = await repository.persistStep({
         universityId: runtime.universityId,
         laboratoryId: runtime.laboratoryId,
         runId: runtime.id,
@@ -68,6 +69,18 @@ export function createSimulationCoordinator({
         event: generated.event,
         recordedAt: toDatabaseDateTime(recordedAt),
       });
+      if (persisted) {
+        realtimePublisher?.publishSimulationStep({
+          universityId: runtime.universityId,
+          laboratoryId: runtime.laboratoryId,
+          runId: runtime.id,
+          readings: generated.readings,
+          energyReadings,
+          recordedAt,
+          event: generated.event,
+        });
+      }
+      return persisted;
     } catch (error) {
       deactivate(process.reference);
       await repository.markFailed({

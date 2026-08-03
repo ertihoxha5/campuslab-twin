@@ -14,6 +14,7 @@ export const DASHBOARD_REALTIME_EVENTS = [
   "maintenance:updated",
   "energy:reading",
   "occupancy:updated",
+  "simulation:updated",
 ];
 
 export function connectDashboardRealtime({
