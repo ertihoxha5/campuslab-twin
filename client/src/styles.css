@@ -1688,6 +1688,41 @@ a {
   background: rgba(140, 57, 57, 0.94);
 }
 
+.digital-twin-camera-controls {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 11px;
+  background: rgba(17, 24, 39, 0.88);
+}
+
+.digital-twin-camera-controls button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.digital-twin-camera-controls button:hover,
+.digital-twin-camera-controls button.active {
+  background: #6c7653;
+  color: #fff;
+}
+
 .digital-twin-help p {
   margin: 0;
 }
@@ -1724,6 +1759,20 @@ a {
     right: 12px;
     bottom: 12px;
     left: 12px;
+  }
+
+  .digital-twin-camera-controls {
+    top: auto;
+    right: 12px;
+    bottom: 76px;
+    left: 12px;
+    justify-content: center;
+  }
+
+  .digital-twin-camera-controls button {
+    flex: 1;
+    justify-content: center;
+    padding: 0 6px;
   }
 }
 

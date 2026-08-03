@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Info } from "lucide-react";
+import { Box, Focus, Info, LayoutGrid, Map } from "lucide-react";
 import { api } from "@/api/client.js";
 import { DigitalTwinCanvas } from "@/components/digital-twin/DigitalTwinCanvas.jsx";
 
@@ -8,6 +8,7 @@ export function DigitalTwinPage() {
   const [laboratoryId, setLaboratoryId] = useState("");
   const [laboratoryDetail, setLaboratoryDetail] = useState(null);
   const [modelState, setModelState] = useState("fallback");
+  const [cameraMode, setCameraMode] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -29,6 +30,7 @@ export function DigitalTwinPage() {
       return;
     }
     let active = true;
+    setCameraMode("overview");
     setModelState("loading");
     api
       .get(`/api/laboratories/${laboratoryId}`)
@@ -101,9 +103,36 @@ export function DigitalTwinPage() {
 
       {laboratoryId ? (
         <div className="digital-twin-stage">
+          <div className="digital-twin-camera-controls" aria-label="Mënyra e kamerës">
+            <button
+              type="button"
+              className={cameraMode === "overview" ? "active" : ""}
+              onClick={() => setCameraMode("overview")}
+              aria-pressed={cameraMode === "overview"}
+            >
+              <LayoutGrid size={15} /> Përgjithshme
+            </button>
+            <button
+              type="button"
+              className={cameraMode === "top" ? "active" : ""}
+              onClick={() => setCameraMode("top")}
+              aria-pressed={cameraMode === "top"}
+            >
+              <Map size={15} /> Nga lart
+            </button>
+            <button
+              type="button"
+              className={cameraMode === "focus" ? "active" : ""}
+              onClick={() => setCameraMode("focus")}
+              aria-pressed={cameraMode === "focus"}
+            >
+              <Focus size={15} /> Fokus
+            </button>
+          </div>
           <DigitalTwinCanvas
             key={`${laboratoryId}:${laboratoryDetail?.modelFileId ?? "default"}`}
             modelUrl={modelUrl}
+            cameraMode={cameraMode}
             onModelLoaded={() => setModelState("loaded")}
             onModelError={() => setModelState("failed")}
           />

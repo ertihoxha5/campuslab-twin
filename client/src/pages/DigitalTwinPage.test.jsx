@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api/client.js";
 import { DigitalTwinPage } from "./DigitalTwinPage.jsx";
@@ -66,5 +67,34 @@ describe("DigitalTwinPage", () => {
     expect(
       await screen.findByText("Nuk ka laborator për t’u paraqitur"),
     ).toBeInTheDocument();
+  });
+
+  it("switches between deterministic camera presets", async () => {
+    const user = userEvent.setup();
+    api.get.mockImplementation((path) =>
+      Promise.resolve(
+        path === "/api/laboratories/15"
+          ? { data: { laboratory: { id: "15" } } }
+          : {
+              data: {
+                laboratories: [
+                  { id: "15", name: "Laboratori Test", code: "TEST-01" },
+                ],
+              },
+            },
+      ),
+    );
+    render(<DigitalTwinPage />);
+    await screen.findByRole("option", { name: "Laboratori Test (TEST-01)" });
+
+    await user.click(screen.getByRole("button", { name: /Nga lart/ }));
+
+    expect(canvasSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cameraMode: "top" }),
+    );
+    expect(screen.getByRole("button", { name: /Nga lart/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });

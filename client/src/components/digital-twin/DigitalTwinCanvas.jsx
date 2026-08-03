@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
-import { Component, Suspense } from "react";
+import { Component, Suspense, useEffect, useRef } from "react";
 import { Bounds, OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { DefaultLaboratoryScene } from "./DefaultLaboratoryScene.jsx";
 import { ProtectedLaboratoryModel } from "./ProtectedLaboratoryModel.jsx";
 import { supportsWebGL } from "./webgl.js";
@@ -46,7 +46,45 @@ function LaboratoryContent({ modelUrl, onModelLoaded, onModelError, children }) 
   );
 }
 
-function Scene({ modelUrl, onModelLoaded, onModelError, children }) {
+const cameraPresets = {
+  overview: { position: [10, 7.5, 11], target: [0, 1.2, 0] },
+  top: { position: [0, 15, 0.01], target: [0, 0, 0] },
+  focus: { position: [5.2, 3.3, 5.6], target: [0, 1.15, 0] },
+};
+
+function CameraRig({ mode }) {
+  const controls = useRef(null);
+  const camera = useThree((state) => state.camera);
+
+  useEffect(() => {
+    const preset = cameraPresets[mode] ?? cameraPresets.overview;
+    camera.position.set(...preset.position);
+    camera.lookAt(...preset.target);
+    camera.updateProjectionMatrix();
+    controls.current?.target.set(...preset.target);
+    controls.current?.update();
+  }, [camera, mode]);
+
+  return (
+    <OrbitControls
+      ref={controls}
+      makeDefault
+      target={cameraPresets[mode]?.target ?? cameraPresets.overview.target}
+      minDistance={3}
+      maxDistance={26}
+      maxPolarAngle={Math.PI / 2.04}
+      enableDamping
+    />
+  );
+}
+
+function Scene({
+  modelUrl,
+  onModelLoaded,
+  onModelError,
+  cameraMode,
+  children,
+}) {
   return (
     <>
       <color attach="background" args={["#ecebef"]} />
@@ -58,7 +96,7 @@ function Scene({ modelUrl, onModelLoaded, onModelError, children }) {
         shadow-mapSize={[1024, 1024]}
       />
       <PerspectiveCamera makeDefault position={[10, 8, 12]} fov={48} />
-      <Bounds fit clip observe margin={1.18}>
+      <Bounds clip margin={1.18}>
         <LaboratoryContent
           modelUrl={modelUrl}
           onModelLoaded={onModelLoaded}
@@ -67,14 +105,7 @@ function Scene({ modelUrl, onModelLoaded, onModelError, children }) {
           {children}
         </LaboratoryContent>
       </Bounds>
-      <OrbitControls
-        makeDefault
-        target={[0, 1.2, 0]}
-        minDistance={5}
-        maxDistance={26}
-        maxPolarAngle={Math.PI / 2.04}
-        enableDamping
-      />
+      <CameraRig mode={cameraMode} />
     </>
   );
 }
@@ -111,6 +142,7 @@ export function DigitalTwinCanvas({
   modelUrl,
   onModelLoaded,
   onModelError,
+  cameraMode = "overview",
   children,
 }) {
   if (!supportsWebGL()) return <WebGLFallback />;
@@ -124,6 +156,7 @@ export function DigitalTwinCanvas({
               modelUrl={modelUrl}
               onModelLoaded={onModelLoaded}
               onModelError={onModelError}
+              cameraMode={cameraMode}
             >
               {children}
             </Scene>
