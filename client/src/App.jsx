@@ -63,6 +63,11 @@ const RealtimeMonitoringPage = lazy(() =>
     default: module.RealtimeMonitoringPage,
   })),
 );
+const DigitalTwinPage = lazy(() =>
+  import("@/pages/DigitalTwinPage.jsx").then((module) => ({
+    default: module.DigitalTwinPage,
+  })),
+);
 
 const laboratoryPage = (Page) => (
   <Suspense fallback={<p className="workspace-loading">Po ngarkohet faqja…</p>}>
@@ -102,12 +107,7 @@ export default function App() {
               />
               <Route
                 path="digital-twin"
-                element={
-                  <WorkspaceSectionPage
-                    title="Digital Twin 3D"
-                    description="Pamja interaktive e laboratorëve të autorizuar."
-                  />
-                }
+                element={laboratoryPage(DigitalTwinPage)}
               />
               <Route path="pajisjet" element={laboratoryPage(EquipmentPage)} />
               <Route
