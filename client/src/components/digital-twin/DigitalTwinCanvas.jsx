@@ -2,6 +2,7 @@
 import { Component, Suspense } from "react";
 import { Bounds, Grid, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
+import { ProtectedLaboratoryModel } from "./ProtectedLaboratoryModel.jsx";
 import { supportsWebGL } from "./webgl.js";
 
 function DefaultLaboratoryShell() {
@@ -38,7 +39,47 @@ function DefaultLaboratoryShell() {
   );
 }
 
-function Scene({ children }) {
+class ModelErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { failed: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch() {
+    this.props.onError?.();
+  }
+
+  render() {
+    if (this.state.failed) return <DefaultLaboratoryShell />;
+    return this.props.children;
+  }
+}
+
+function LaboratoryContent({ modelUrl, onModelLoaded, onModelError, children }) {
+  if (!modelUrl) {
+    return (
+      <>
+        <DefaultLaboratoryShell />
+        {children}
+      </>
+    );
+  }
+
+  return (
+    <ModelErrorBoundary onError={onModelError}>
+      <Suspense fallback={<DefaultLaboratoryShell />}>
+        <ProtectedLaboratoryModel url={modelUrl} onLoaded={onModelLoaded} />
+        {children}
+      </Suspense>
+    </ModelErrorBoundary>
+  );
+}
+
+function Scene({ modelUrl, onModelLoaded, onModelError, children }) {
   return (
     <>
       <color attach="background" args={["#ecebef"]} />
@@ -51,8 +92,13 @@ function Scene({ children }) {
       />
       <PerspectiveCamera makeDefault position={[10, 8, 12]} fov={48} />
       <Bounds fit clip observe margin={1.18}>
-        <DefaultLaboratoryShell />
-        {children}
+        <LaboratoryContent
+          modelUrl={modelUrl}
+          onModelLoaded={onModelLoaded}
+          onModelError={onModelError}
+        >
+          {children}
+        </LaboratoryContent>
       </Bounds>
       <OrbitControls
         makeDefault
@@ -94,7 +140,12 @@ function WebGLFallback() {
   );
 }
 
-export function DigitalTwinCanvas({ children }) {
+export function DigitalTwinCanvas({
+  modelUrl,
+  onModelLoaded,
+  onModelError,
+  children,
+}) {
   if (!supportsWebGL()) return <WebGLFallback />;
 
   return (
@@ -102,7 +153,13 @@ export function DigitalTwinCanvas({ children }) {
       <div className="digital-twin-canvas" aria-label="Pamja 3D e laboratorit">
         <Canvas shadows dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: "high-performance" }}>
           <Suspense fallback={null}>
-            <Scene>{children}</Scene>
+            <Scene
+              modelUrl={modelUrl}
+              onModelLoaded={onModelLoaded}
+              onModelError={onModelError}
+            >
+              {children}
+            </Scene>
           </Suspense>
         </Canvas>
       </div>

@@ -1667,6 +1667,27 @@ a {
   font-size: 0.82rem;
 }
 
+.digital-twin-model-state {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 8px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9px;
+  background: rgba(17, 24, 39, 0.88);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.digital-twin-model-state.loaded {
+  background: rgba(108, 118, 83, 0.94);
+}
+
+.digital-twin-model-state.failed {
+  background: rgba(140, 57, 57, 0.94);
+}
+
 .digital-twin-help p {
   margin: 0;
 }

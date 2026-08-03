@@ -6,6 +6,8 @@ import { DigitalTwinCanvas } from "@/components/digital-twin/DigitalTwinCanvas.j
 export function DigitalTwinPage() {
   const [laboratories, setLaboratories] = useState([]);
   const [laboratoryId, setLaboratoryId] = useState("");
+  const [laboratoryDetail, setLaboratoryDetail] = useState(null);
+  const [modelState, setModelState] = useState("fallback");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -21,9 +23,40 @@ export function DigitalTwinPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!laboratoryId) {
+      setLaboratoryDetail(null);
+      return;
+    }
+    let active = true;
+    setModelState("loading");
+    api
+      .get(`/api/laboratories/${laboratoryId}`)
+      .then((response) => {
+        if (!active) return;
+        const detail = response.data.laboratory;
+        setLaboratoryDetail(detail);
+        setModelState(
+          detail.modelMimeType?.startsWith("model/") ? "loading" : "fallback",
+        );
+      })
+      .catch((error) => {
+        if (!active) return;
+        setLaboratoryDetail(null);
+        setModelState("fallback");
+        setMessage(error.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, [laboratoryId]);
+
   const selectedLaboratory = laboratories.find(
     (laboratory) => String(laboratory.id) === laboratoryId,
   );
+  const modelUrl = laboratoryDetail?.modelMimeType?.startsWith("model/")
+    ? `/api/laboratories/${laboratoryId}/model?v=${laboratoryDetail.modelFileId}`
+    : undefined;
 
   return (
     <section className="workspace-overview digital-twin-page">
@@ -68,7 +101,23 @@ export function DigitalTwinPage() {
 
       {laboratoryId ? (
         <div className="digital-twin-stage">
-          <DigitalTwinCanvas key={laboratoryId} />
+          <DigitalTwinCanvas
+            key={`${laboratoryId}:${laboratoryDetail?.modelFileId ?? "default"}`}
+            modelUrl={modelUrl}
+            onModelLoaded={() => setModelState("loaded")}
+            onModelError={() => setModelState("failed")}
+          />
+          <div className={`digital-twin-model-state ${modelState}`} role="status">
+            {modelState === "loaded"
+              ? `Modeli: ${laboratoryDetail.modelOriginalName}`
+              : modelState === "loading"
+                ? "Po ngarkohet modeli 3D…"
+                : modelState === "failed"
+                  ? "Modeli nuk u hap; po përdoret skena bazë."
+                  : laboratoryDetail?.modelMimeType?.startsWith("image/")
+                    ? "Është ngarkuar një foto; po përdoret skena bazë 3D."
+                    : "Po përdoret skena bazë 3D."}
+          </div>
           <div className="digital-twin-help">
             <Info size={17} />
             <p>Rrotullo me zvarritje, afrohu me scroll dhe lëviz pamjen me butonin e djathtë.</p>
