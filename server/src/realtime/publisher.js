@@ -1,4 +1,4 @@
-import { laboratoryRoom } from "./create-realtime-server.js";
+import { laboratoryRoom, userRoom } from "./create-realtime-server.js";
 
 export function createRealtimePublisher() {
   let io = null;
@@ -68,6 +68,37 @@ export function createRealtimePublisher() {
         recordedAt,
         reason: "simulation_reading",
       });
+    },
+    publishAlert({ universityId, laboratoryId, alert, recordedAt }) {
+      const reference = { universityId, laboratoryId };
+      emitToLaboratory(
+        reference,
+        alert.created ? "alert:created" : "alert:updated",
+        {
+          id: alert.id,
+          laboratoryId: String(laboratoryId),
+          sensorId: alert.sensorId,
+          equipmentId: alert.equipmentId,
+          category: alert.category,
+          severity: alert.severity,
+          title: alert.title,
+          description: alert.description,
+          status: "new",
+          source: alert.source,
+          recordedAt,
+        },
+      );
+      if (alert.created) {
+        for (const userId of alert.recipientUserIds ?? []) {
+          io?.to(userRoom(universityId, userId)).emit("notification:created", {
+            alertId: alert.id,
+            type: `alert_${alert.severity}`,
+            title: alert.title,
+            message: alert.description,
+            createdAt: recordedAt,
+          });
+        }
+      }
     },
   };
 }

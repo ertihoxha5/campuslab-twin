@@ -86,6 +86,14 @@ export function createSimulationCoordinator({
           recordedAt,
           event: generated.event,
         });
+        for (const alert of persistence?.alerts ?? []) {
+          realtimePublisher?.publishAlert({
+            universityId: runtime.universityId,
+            laboratoryId: runtime.laboratoryId,
+            alert,
+            recordedAt,
+          });
+        }
       }
       return persisted;
     } catch (error) {

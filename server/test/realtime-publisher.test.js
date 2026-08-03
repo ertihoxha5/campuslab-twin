@@ -67,3 +67,73 @@ test("publisher is safely inactive before Socket.IO is attached", () => {
     }),
   );
 });
+
+test("new alerts publish once to the laboratory and recipient user rooms", () => {
+  const events = [];
+  const publisher = createRealtimePublisher();
+  publisher.attach({
+    to(room) {
+      return {
+        emit(eventName, payload) {
+          events.push({ room, eventName, payload });
+        },
+      };
+    },
+  });
+
+  publisher.publishAlert({
+    universityId: "7",
+    laboratoryId: "15",
+    recordedAt: "2026-08-03T10:00:00.000Z",
+    alert: {
+      id: "71",
+      created: true,
+      sensorId: "4",
+      equipmentId: null,
+      category: "sensor_temperature_threshold",
+      severity: "critical",
+      title: "Prag kritik: Temperatura",
+      description: "Temperatura kaloi pragun kritik.",
+      source: "simulated",
+      recipientUserIds: ["9", "10"],
+    },
+  });
+
+  assert.equal(events[0].room, "university:7:laboratory:15");
+  assert.equal(events[0].eventName, "alert:created");
+  assert.deepEqual(
+    events.slice(1).map(({ room }) => room),
+    ["university:7:user:9", "university:7:user:10"],
+  );
+  assert.ok(events.slice(1).every(({ eventName }) => eventName === "notification:created"));
+});
+
+test("existing alerts publish updates without duplicate notifications", () => {
+  const events = [];
+  const publisher = createRealtimePublisher();
+  publisher.attach({
+    to(room) {
+      return { emit: (eventName) => events.push({ room, eventName }) };
+    },
+  });
+
+  publisher.publishAlert({
+    universityId: "7",
+    laboratoryId: "15",
+    recordedAt: "2026-08-03T10:01:00.000Z",
+    alert: {
+      id: "71",
+      created: false,
+      sensorId: "4",
+      severity: "critical",
+      title: "Prag kritik",
+      description: "Vlera vazhdon jashtë pragut.",
+      source: "simulated",
+      recipientUserIds: ["9"],
+    },
+  });
+
+  assert.deepEqual(events, [
+    { room: "university:7:laboratory:15", eventName: "alert:updated" },
+  ]);
+});

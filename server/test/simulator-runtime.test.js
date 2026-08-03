@@ -151,6 +151,12 @@ test("runtime persistence is atomic and tenant-scoped", async () => {
       if (sql.includes("SELECT id, result_json")) {
         return [[{ id: 51, result: JSON.stringify({ readingCount: 2 }) }]];
       }
+      if (sql.includes("SELECT DISTINCT user_account.id")) {
+        return [[{ id: 9 }]];
+      }
+      if (sql.includes("INSERT INTO alerts")) {
+        return [{ affectedRows: 1, insertId: 71 }];
+      }
       return [{ affectedRows: 1 }];
     },
   };
@@ -206,6 +212,10 @@ test("runtime persistence is atomic and tenant-scoped", async () => {
   const alertInsert = calls.find(({ sql }) => sql.includes("INSERT INTO alerts"));
   assert.match(alertInsert.sql, /ON DUPLICATE KEY UPDATE/);
   assert.ok(alertInsert.parameters.includes("sensor:1:threshold"));
+  const notificationInsert = calls.find(({ sql }) =>
+    sql.includes("INSERT INTO notifications"),
+  );
+  assert.deepEqual(notificationInsert.parameters.slice(0, 3), ["7", 9, 71]);
   assert.ok(calls.every(({ parameters }) => parameters.includes("7")));
   const update = calls.at(-1);
   const result = JSON.parse(update.parameters[0]);

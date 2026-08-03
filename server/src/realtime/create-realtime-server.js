@@ -7,6 +7,8 @@ import { ACCESS_COOKIE } from "../modules/auth/tokens.js";
 export const universityRoom = (universityId) => `university:${universityId}`;
 export const laboratoryRoom = (universityId, laboratoryId) =>
   `${universityRoom(universityId)}:laboratory:${laboratoryId}`;
+export const userRoom = (universityId, userId) =>
+  `${universityRoom(universityId)}:user:${userId}`;
 
 const realtimeError = (code, message) => ({
   success: false,
@@ -43,6 +45,7 @@ export function createRealtimeServer(
   io.on("connection", async (socket) => {
     const auth = socket.data.auth;
     await socket.join(universityRoom(auth.universityId));
+    await socket.join(userRoom(auth.universityId, auth.userId));
 
     socket.on(
       "laboratory:join",

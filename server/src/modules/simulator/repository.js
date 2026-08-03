@@ -330,6 +330,53 @@ export function createSimulatorRepository(pool) {
             created: Number(alertResult.affectedRows) === 1,
             ...candidate,
           });
+          if (Number(alertResult.affectedRows) === 1) {
+            const recipients = await query(
+              connection,
+              `SELECT DISTINCT user_account.id
+               FROM users user_account
+               INNER JOIN user_roles user_role
+                 ON user_role.user_id = user_account.id
+                AND user_role.university_id = user_account.university_id
+               INNER JOIN roles role ON role.id = user_role.role_id
+               WHERE user_account.university_id = ?
+                 AND user_account.status = 'active'
+                 AND user_account.deleted_at IS NULL
+                 AND role.name IN (
+                   'university_admin', 'lab_manager', 'technician',
+                   'academic_staff', 'observer'
+                 )
+                 AND (
+                   role.name = 'university_admin'
+                   OR EXISTS (
+                     SELECT 1 FROM user_laboratory_assignments assignment
+                     WHERE assignment.university_id = user_account.university_id
+                       AND assignment.user_id = user_account.id
+                       AND assignment.laboratory_id = ?
+                   )
+                 )`,
+              [universityId, laboratoryId],
+            );
+            for (const recipient of recipients) {
+              await query(
+                connection,
+                `INSERT INTO notifications (
+                   university_id, user_id, alert_id, type, title, message
+                 ) VALUES (?, ?, ?, ?, ?, ?)`,
+                [
+                  universityId,
+                  recipient.id,
+                  alertResult.insertId,
+                  `alert_${candidate.severity}`,
+                  candidate.title,
+                  candidate.description,
+                ],
+              );
+            }
+            alerts.at(-1).recipientUserIds = recipients.map(({ id }) =>
+              String(id),
+            );
+          }
         }
         const previous = parseJson(runs[0].result) ?? {};
         const result = {

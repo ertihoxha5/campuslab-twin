@@ -8,6 +8,7 @@ import {
   createRealtimeServer,
   laboratoryRoom,
   universityRoom,
+  userRoom,
 } from "../src/realtime/create-realtime-server.js";
 
 const secret = "realtime-test-secret-that-is-at-least-32-characters";
@@ -145,6 +146,7 @@ test("tenant socket joins namespaced university and assigned laboratory rooms", 
   assert.equal(result.success, true);
   assert.equal(result.data.room, laboratoryRoom("7", "20"));
   assert.equal(serverSocket.rooms.has(universityRoom("7")), true);
+  assert.equal(serverSocket.rooms.has(userRoom("7", "50")), true);
   assert.equal(serverSocket.rooms.has(laboratoryRoom("7", "20")), true);
 });
 
