@@ -1775,6 +1775,56 @@ a {
   color: #fff;
 }
 
+.digital-twin-layer-controls {
+  position: absolute;
+  z-index: 2;
+  top: 154px;
+  right: 16px;
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  background: rgba(17, 24, 39, 0.88);
+}
+
+.digital-twin-layer-controls button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.digital-twin-layer-controls button:hover,
+.digital-twin-layer-controls button.active {
+  background: #6c7653;
+  color: #fff;
+}
+
+.digital-twin-zone-label {
+  display: grid;
+  min-width: 105px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 7px;
+  background: rgba(88, 66, 124, 0.92);
+  color: #fff;
+  text-align: center;
+}
+
+.digital-twin-zone-label span {
+  font-size: 0.68rem;
+}
+
 .digital-twin-equipment-label {
   display: grid;
   gap: 2px;
@@ -1842,7 +1892,7 @@ a {
 .digital-twin-equipment-detail {
   position: absolute;
   z-index: 3;
-  top: 154px;
+  top: 234px;
   right: 16px;
   display: grid;
   min-width: 280px;
@@ -1971,8 +2021,13 @@ a {
     right: 12px;
   }
 
+  .digital-twin-layer-controls {
+    top: 146px;
+    right: 12px;
+  }
+
   .digital-twin-equipment-detail {
-    top: 148px;
+    top: 226px;
     right: 12px;
     left: 12px;
     min-width: 0;

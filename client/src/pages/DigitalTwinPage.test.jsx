@@ -5,10 +5,12 @@ import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { DigitalTwinPage } from "./DigitalTwinPage.jsx";
 
-const { canvasSpy, markerSpy, equipmentMarkerSpy } = vi.hoisted(() => ({
+const { canvasSpy, markerSpy, equipmentMarkerSpy, zoneSpy, flowSpy } = vi.hoisted(() => ({
   canvasSpy: vi.fn(),
   markerSpy: vi.fn(),
   equipmentMarkerSpy: vi.fn(),
+  zoneSpy: vi.fn(),
+  flowSpy: vi.fn(),
 }));
 
 vi.mock("@/api/client.js", () => ({
@@ -26,6 +28,16 @@ vi.mock("@/components/digital-twin/SensorMarkers.jsx", () => ({
 vi.mock("@/components/digital-twin/EquipmentMarkers.jsx", () => ({
   EquipmentMarkers: (props) => {
     equipmentMarkerSpy(props);
+    return null;
+  },
+}));
+vi.mock("@/components/digital-twin/ZoneAndDataFlow.jsx", () => ({
+  ZoneOverlays: (props) => {
+    zoneSpy(props);
+    return null;
+  },
+  DataFlowLines: (props) => {
+    flowSpy(props);
     return null;
   },
 }));
@@ -131,6 +143,33 @@ describe("DigitalTwinPage", () => {
           visible: true,
         }),
       ),
+    );
+  });
+
+  it("toggles stored zones and real sensor equipment data flows", async () => {
+    const user = userEvent.setup();
+    mockLaboratoryApi({
+      sensors: [{ id: "4", equipmentId: "21" }],
+      equipment: [{ id: "21", zoneId: "8" }],
+      zones: [
+        {
+          id: "8",
+          name: "Zona e automatizimit",
+          position: { x: 2, y: 0, z: -1 },
+          dimensions: { width: 3, height: 2, depth: 2 },
+        },
+      ],
+    });
+    render(<DigitalTwinPage />);
+    await screen.findByRole("option", { name: "Laboratori Test (TEST-01)" });
+    await user.click(screen.getByRole("button", { name: /Zonat/ }));
+    await user.click(screen.getByRole("button", { name: /Rrjedha e të dhënave/ }));
+
+    expect(zoneSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ visible: true }),
+    );
+    expect(flowSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ visible: true }),
     );
   });
 

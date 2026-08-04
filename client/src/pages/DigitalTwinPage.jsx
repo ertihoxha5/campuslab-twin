@@ -9,12 +9,18 @@ import {
   RotateCcw,
   RadioTower,
   Cpu,
+  Boxes,
+  Waypoints,
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { DigitalTwinCanvas } from "@/components/digital-twin/DigitalTwinCanvas.jsx";
 import { SensorMarkers } from "@/components/digital-twin/SensorMarkers.jsx";
 import { EquipmentMarkers } from "@/components/digital-twin/EquipmentMarkers.jsx";
+import {
+  DataFlowLines,
+  ZoneOverlays,
+} from "@/components/digital-twin/ZoneAndDataFlow.jsx";
 
 export function DigitalTwinPage() {
   const [laboratories, setLaboratories] = useState([]);
@@ -33,6 +39,8 @@ export function DigitalTwinPage() {
   const [equipmentAlerts, setEquipmentAlerts] = useState([]);
   const [showEquipment, setShowEquipment] = useState(true);
   const [selectedEquipment, setSelectedEquipment] = useState(null);
+  const [showZones, setShowZones] = useState(false);
+  const [showDataFlow, setShowDataFlow] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -257,6 +265,24 @@ export function DigitalTwinPage() {
             <RadioTower size={16} />
             {discoverSensors ? "Fshih sensorët" : "Zbulo sensorët"}
           </button>
+          <div className="digital-twin-layer-controls" aria-label="Shtresat e Digital Twin">
+            <button
+              type="button"
+              className={showZones ? "active" : ""}
+              onClick={() => setShowZones((value) => !value)}
+              aria-pressed={showZones}
+            >
+              <Boxes size={15} /> Zonat
+            </button>
+            <button
+              type="button"
+              className={showDataFlow ? "active" : ""}
+              onClick={() => setShowDataFlow((value) => !value)}
+              aria-pressed={showDataFlow}
+            >
+              <Waypoints size={15} /> Rrjedha e të dhënave
+            </button>
+          </div>
           <button
             type="button"
             className={`digital-twin-equipment-toggle ${showEquipment ? "active" : ""}`}
@@ -291,6 +317,13 @@ export function DigitalTwinPage() {
                 setSelectedEquipment(item);
                 setSelectedSensor(null);
               }}
+            />
+            <ZoneOverlays zones={zones} visible={showZones} />
+            <DataFlowLines
+              sensors={sensors}
+              equipment={equipment}
+              zones={zones}
+              visible={showDataFlow}
             />
           </DigitalTwinCanvas>
           <div className={`digital-twin-model-state ${modelState}`} role="status">
