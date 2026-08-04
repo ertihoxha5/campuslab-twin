@@ -1749,6 +1749,57 @@ a {
   color: #fff;
 }
 
+.digital-twin-equipment-toggle {
+  position: absolute;
+  z-index: 2;
+  top: 110px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9px;
+  background: rgba(17, 24, 39, 0.88);
+  color: #fff;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.digital-twin-equipment-toggle:hover,
+.digital-twin-equipment-toggle.active {
+  background: #6c7653;
+  color: #fff;
+}
+
+.digital-twin-equipment-label {
+  display: grid;
+  gap: 2px;
+  min-width: 120px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  background: rgba(17, 24, 39, 0.9);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.digital-twin-equipment-label.fault {
+  background: rgba(140, 57, 57, 0.94);
+}
+
+.digital-twin-equipment-label.maintenance {
+  background: rgba(88, 66, 124, 0.94);
+}
+
+.digital-twin-equipment-label span {
+  font-size: 0.72rem;
+}
+
 .digital-twin-sensor-label {
   display: grid;
   gap: 2px;
@@ -1786,6 +1837,59 @@ a {
   border-radius: 12px;
   background: rgba(17, 24, 39, 0.94);
   color: #fff;
+}
+
+.digital-twin-equipment-detail {
+  position: absolute;
+  z-index: 3;
+  top: 154px;
+  right: 16px;
+  display: grid;
+  min-width: 280px;
+  max-width: 340px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  background: rgba(17, 24, 39, 0.95);
+  color: #fff;
+}
+
+.digital-twin-equipment-detail > button {
+  position: absolute;
+  top: 7px;
+  right: 9px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.digital-twin-equipment-detail > span,
+.digital-twin-equipment-detail > small {
+  color: #c9c4d3;
+  font-size: 0.72rem;
+}
+
+.digital-twin-equipment-detail dl {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0;
+}
+
+.digital-twin-equipment-detail dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.digital-twin-equipment-detail dt {
+  color: #c9c4d3;
+}
+
+.digital-twin-equipment-detail dd {
+  margin: 0;
+  font-weight: 800;
 }
 
 .digital-twin-sensor-detail > button {
@@ -1860,6 +1964,18 @@ a {
   .digital-twin-discovery-toggle {
     top: 62px;
     right: 12px;
+  }
+
+  .digital-twin-equipment-toggle {
+    top: 104px;
+    right: 12px;
+  }
+
+  .digital-twin-equipment-detail {
+    top: 148px;
+    right: 12px;
+    left: 12px;
+    min-width: 0;
   }
 
   .digital-twin-sensor-detail {

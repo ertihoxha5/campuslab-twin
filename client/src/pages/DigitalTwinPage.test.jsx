@@ -5,9 +5,10 @@ import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { DigitalTwinPage } from "./DigitalTwinPage.jsx";
 
-const { canvasSpy, markerSpy } = vi.hoisted(() => ({
+const { canvasSpy, markerSpy, equipmentMarkerSpy } = vi.hoisted(() => ({
   canvasSpy: vi.fn(),
   markerSpy: vi.fn(),
+  equipmentMarkerSpy: vi.fn(),
 }));
 
 vi.mock("@/api/client.js", () => ({
@@ -19,6 +20,12 @@ vi.mock("@/api/realtime.js", () => ({
 vi.mock("@/components/digital-twin/SensorMarkers.jsx", () => ({
   SensorMarkers: (props) => {
     markerSpy(props);
+    return null;
+  },
+}));
+vi.mock("@/components/digital-twin/EquipmentMarkers.jsx", () => ({
+  EquipmentMarkers: (props) => {
+    equipmentMarkerSpy(props);
     return null;
   },
 }));
@@ -38,6 +45,9 @@ describe("DigitalTwinPage", () => {
     detail = { id: "15" },
     sensors = [],
     readings = [],
+    equipment = [],
+    zones = [],
+    alerts = [],
   } = {}) {
     api.get.mockImplementation((path) => {
       if (path === "/api/laboratories/15") {
@@ -50,6 +60,15 @@ describe("DigitalTwinPage", () => {
         return Promise.resolve({
           data: { summary: { latestSensorReadings: readings } },
         });
+      }
+      if (path.startsWith("/api/equipment?")) {
+        return Promise.resolve({ data: { equipment } });
+      }
+      if (path.endsWith("/zones")) {
+        return Promise.resolve({ data: { zones } });
+      }
+      if (path.startsWith("/api/alerts?")) {
+        return Promise.resolve({ data: { alerts } });
       }
       return Promise.resolve({
         data: { laboratories: [{ id: "15", name, code }] },
@@ -85,6 +104,33 @@ describe("DigitalTwinPage", () => {
       expect.objectContaining({
         modelUrl: "/api/laboratories/15/model?v=31",
       }),
+    );
+  });
+
+  it("loads tenant equipment and renders selectable 3D markers", async () => {
+    mockLaboratoryApi({
+      equipment: [
+        {
+          id: "21",
+          name: "PLC Siemens",
+          type: "controller",
+          status: "active",
+          healthScore: 97,
+          zoneId: "8",
+        },
+      ],
+      zones: [{ id: "8", positionX: 2, positionY: 0, positionZ: -1 }],
+    });
+    render(<DigitalTwinPage />);
+    await screen.findByRole("option", { name: "Laboratori Test (TEST-01)" });
+
+    await vi.waitFor(() =>
+      expect(equipmentMarkerSpy).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          equipment: [expect.objectContaining({ id: "21" })],
+          visible: true,
+        }),
+      ),
     );
   });
 

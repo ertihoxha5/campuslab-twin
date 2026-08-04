@@ -8,11 +8,13 @@ import {
   PersonStanding,
   RotateCcw,
   RadioTower,
+  Cpu,
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { DigitalTwinCanvas } from "@/components/digital-twin/DigitalTwinCanvas.jsx";
 import { SensorMarkers } from "@/components/digital-twin/SensorMarkers.jsx";
+import { EquipmentMarkers } from "@/components/digital-twin/EquipmentMarkers.jsx";
 
 export function DigitalTwinPage() {
   const [laboratories, setLaboratories] = useState([]);
@@ -25,6 +27,12 @@ export function DigitalTwinPage() {
   const [sensorReadings, setSensorReadings] = useState({});
   const [discoverSensors, setDiscoverSensors] = useState(false);
   const [selectedSensor, setSelectedSensor] = useState(null);
+  const [equipment, setEquipment] = useState([]);
+  const [zones, setZones] = useState([]);
+  const [equipmentEnergy, setEquipmentEnergy] = useState({});
+  const [equipmentAlerts, setEquipmentAlerts] = useState([]);
+  const [showEquipment, setShowEquipment] = useState(true);
+  const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -75,15 +83,31 @@ export function DigitalTwinPage() {
     setSensors([]);
     setSensorReadings({});
     setSelectedSensor(null);
+    setSelectedEquipment(null);
+    setEquipmentEnergy({});
     Promise.all([
       api.get(
         `/api/sensors?laboratoryId=${laboratoryId}&page=1&pageSize=100&sort=name&direction=asc`,
       ),
       api.get(`/api/dashboard/summary?laboratoryId=${laboratoryId}&hours=24`),
+      api.get(
+        `/api/equipment?laboratoryId=${laboratoryId}&page=1&pageSize=100&sort=name&direction=asc`,
+      ),
+      api.get(`/api/laboratories/${laboratoryId}/zones`),
+      api.get(`/api/alerts?laboratoryId=${laboratoryId}&page=1&pageSize=100`),
     ])
-      .then(([sensorResponse, dashboardResponse]) => {
+      .then(([
+        sensorResponse,
+        dashboardResponse,
+        equipmentResponse,
+        zonesResponse,
+        alertsResponse,
+      ]) => {
         if (!active) return;
         setSensors(sensorResponse.data.sensors ?? []);
+        setEquipment(equipmentResponse.data.equipment ?? []);
+        setZones(zonesResponse.data.zones ?? []);
+        setEquipmentAlerts(alertsResponse.data.alerts ?? []);
         setSensorReadings(
           Object.fromEntries(
             (dashboardResponse.data.summary.latestSensorReadings ?? []).map(
@@ -99,11 +123,30 @@ export function DigitalTwinPage() {
     const disconnect = connectMonitoringRealtime({
       laboratoryId,
       onEvent(eventName, payload) {
-        if (eventName !== "sensor:reading") return;
-        setSensorReadings((current) => ({
-          ...current,
-          [String(payload.sensorId)]: payload,
-        }));
+        if (eventName === "sensor:reading") {
+          setSensorReadings((current) => ({
+            ...current,
+            [String(payload.sensorId)]: payload,
+          }));
+        } else if (eventName === "energy:reading") {
+          setEquipmentEnergy((current) => ({
+            ...current,
+            [String(payload.equipmentId)]: payload,
+          }));
+        } else if (["alert:created", "alert:updated"].includes(eventName)) {
+          setEquipmentAlerts((current) => [
+            payload,
+            ...current.filter((alert) => String(alert.id) !== String(payload.id)),
+          ]);
+        } else if (eventName === "equipment:updated") {
+          setEquipment((current) =>
+            current.map((item) =>
+              String(item.id) === String(payload.id)
+                ? { ...item, ...payload }
+                : item,
+            ),
+          );
+        }
       },
     });
     return () => {
@@ -214,6 +257,15 @@ export function DigitalTwinPage() {
             <RadioTower size={16} />
             {discoverSensors ? "Fshih sensorët" : "Zbulo sensorët"}
           </button>
+          <button
+            type="button"
+            className={`digital-twin-equipment-toggle ${showEquipment ? "active" : ""}`}
+            onClick={() => setShowEquipment((value) => !value)}
+            aria-pressed={showEquipment}
+          >
+            <Cpu size={16} />
+            {showEquipment ? "Fshih pajisjet" : "Shfaq pajisjet"}
+          </button>
           <DigitalTwinCanvas
             key={`${laboratoryId}:${laboratoryDetail?.modelFileId ?? "default"}`}
             modelUrl={modelUrl}
@@ -226,7 +278,19 @@ export function DigitalTwinPage() {
               sensors={sensors}
               readings={sensorReadings}
               visible={discoverSensors}
-              onSelect={setSelectedSensor}
+              onSelect={(sensor) => {
+                setSelectedSensor(sensor);
+                setSelectedEquipment(null);
+              }}
+            />
+            <EquipmentMarkers
+              equipment={equipment}
+              zones={zones}
+              visible={showEquipment}
+              onSelect={(item) => {
+                setSelectedEquipment(item);
+                setSelectedSensor(null);
+              }}
             />
           </DigitalTwinCanvas>
           <div className={`digital-twin-model-state ${modelState}`} role="status">
@@ -259,6 +323,22 @@ export function DigitalTwinPage() {
                   : "Në pritje të leximit të parë"}
               </p>
               <small>Statusi: {selectedSensor.status}</small>
+            </aside>
+          )}
+          {selectedEquipment && (
+            <aside className="digital-twin-equipment-detail">
+              <button type="button" onClick={() => setSelectedEquipment(null)} aria-label="Mbyll pajisjen">×</button>
+              <span>{selectedEquipment.type}</span>
+              <strong>{selectedEquipment.name}</strong>
+              <dl>
+                <div><dt>Statusi</dt><dd>{selectedEquipment.status}</dd></div>
+                <div><dt>Shëndeti</dt><dd>{Number(selectedEquipment.healthScore).toLocaleString("sq-AL")}%</dd></div>
+                <div><dt>Fuqia nominale</dt><dd>{selectedEquipment.energyRatingWatts == null ? "—" : `${Number(selectedEquipment.energyRatingWatts).toLocaleString("sq-AL")} W`}</dd></div>
+                <div><dt>Fuqia live</dt><dd>{equipmentEnergy[String(selectedEquipment.id)] ? `${Number(equipmentEnergy[String(selectedEquipment.id)].powerWatts).toLocaleString("sq-AL")} W` : "Në pritje"}</dd></div>
+                <div><dt>Sensorë të lidhur</dt><dd>{sensors.filter((sensor) => String(sensor.equipmentId) === String(selectedEquipment.id)).length}</dd></div>
+                <div><dt>Alarme aktive</dt><dd>{equipmentAlerts.filter((alert) => String(alert.equipmentId) === String(selectedEquipment.id) && !["resolved", "closed"].includes(alert.status)).length}</dd></div>
+              </dl>
+              {selectedEquipment.object3dReference && <small>Objekti 3D: {selectedEquipment.object3dReference}</small>}
             </aside>
           )}
         </div>
