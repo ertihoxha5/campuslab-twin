@@ -120,19 +120,24 @@ function FirstPersonController({ resetNonce }) {
   return <PointerLockControls makeDefault />;
 }
 
-function CameraRig({ mode, resetNonce }) {
+function CameraRig({ mode, resetNonce, focusTarget }) {
   const controls = useRef(null);
   const camera = useThree((state) => state.camera);
 
   useEffect(() => {
     if (mode === "firstPerson") return;
     const preset = cameraPresets[mode] ?? cameraPresets.overview;
-    camera.position.set(...preset.position);
-    camera.lookAt(...preset.target);
+    const target = mode === "focus" && focusTarget ? focusTarget : preset.target;
+    const position =
+      mode === "focus" && focusTarget
+        ? [target[0] + 4, target[1] + 2.4, target[2] + 4]
+        : preset.position;
+    camera.position.set(...position);
+    camera.lookAt(...target);
     camera.updateProjectionMatrix();
-    controls.current?.target.set(...preset.target);
+    controls.current?.target.set(...target);
     controls.current?.update();
-  }, [camera, mode]);
+  }, [camera, focusTarget, mode]);
 
   if (mode === "firstPerson") {
     return <FirstPersonController resetNonce={resetNonce} />;
@@ -142,7 +147,11 @@ function CameraRig({ mode, resetNonce }) {
     <OrbitControls
       ref={controls}
       makeDefault
-      target={cameraPresets[mode]?.target ?? cameraPresets.overview.target}
+      target={
+        mode === "focus" && focusTarget
+          ? focusTarget
+          : (cameraPresets[mode]?.target ?? cameraPresets.overview.target)
+      }
       minDistance={3}
       maxDistance={26}
       maxPolarAngle={Math.PI / 2.04}
@@ -157,6 +166,7 @@ function Scene({
   onModelError,
   cameraMode,
   firstPersonReset,
+  focusTarget,
   children,
 }) {
   return (
@@ -179,7 +189,11 @@ function Scene({
           {children}
         </LaboratoryContent>
       </Bounds>
-      <CameraRig mode={cameraMode} resetNonce={firstPersonReset} />
+      <CameraRig
+        mode={cameraMode}
+        resetNonce={firstPersonReset}
+        focusTarget={focusTarget}
+      />
     </>
   );
 }
@@ -218,6 +232,7 @@ export function DigitalTwinCanvas({
   onModelError,
   cameraMode = "overview",
   firstPersonReset = 0,
+  focusTarget,
   children,
 }) {
   if (!supportsWebGL()) return <WebGLFallback />;
@@ -233,6 +248,7 @@ export function DigitalTwinCanvas({
               onModelError={onModelError}
               cameraMode={cameraMode}
               firstPersonReset={firstPersonReset}
+              focusTarget={focusTarget}
             >
               {children}
             </Scene>

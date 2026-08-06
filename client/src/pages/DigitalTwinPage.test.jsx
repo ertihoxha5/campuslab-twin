@@ -5,13 +5,14 @@ import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { DigitalTwinPage } from "./DigitalTwinPage.jsx";
 
-const { canvasSpy, markerSpy, equipmentMarkerSpy, zoneSpy, flowSpy, occupancySpy } = vi.hoisted(() => ({
+const { canvasSpy, markerSpy, equipmentMarkerSpy, zoneSpy, flowSpy, occupancySpy, alertSpy } = vi.hoisted(() => ({
   canvasSpy: vi.fn(),
   markerSpy: vi.fn(),
   equipmentMarkerSpy: vi.fn(),
   zoneSpy: vi.fn(),
   flowSpy: vi.fn(),
   occupancySpy: vi.fn(),
+  alertSpy: vi.fn(),
 }));
 
 vi.mock("@/api/client.js", () => ({
@@ -45,6 +46,12 @@ vi.mock("@/components/digital-twin/ZoneAndDataFlow.jsx", () => ({
 vi.mock("@/components/digital-twin/OccupancyFigures.jsx", () => ({
   OccupancyFigures: (props) => {
     occupancySpy(props);
+    return null;
+  },
+}));
+vi.mock("@/components/digital-twin/AlertIndicators.jsx", () => ({
+  AlertIndicators: (props) => {
+    alertSpy(props);
     return null;
   },
 }));
@@ -192,6 +199,34 @@ describe("DigitalTwinPage", () => {
     expect(await screen.findByText("37 persona")).toBeInTheDocument();
     expect(screen.getByText(/16 figura/)).toBeInTheDocument();
     expect(occupancySpy).toHaveBeenLastCalledWith({ occupancy: 37 });
+  });
+
+  it("focuses the camera on the real source of an active alert", async () => {
+    const user = userEvent.setup();
+    mockLaboratoryApi({
+      sensors: [
+        { id: "4", name: "Temperatura", positionX: 2, positionY: 1, positionZ: -1 },
+      ],
+      alerts: [
+        {
+          id: "71",
+          sensorId: "4",
+          title: "Temperaturë kritike",
+          severity: "critical",
+          status: "new",
+        },
+      ],
+    });
+    render(<DigitalTwinPage />);
+    await screen.findByText("Temperaturë kritike");
+    await user.click(screen.getByRole("button", { name: "Fokuso" }));
+
+    expect(canvasSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cameraMode: "focus", focusTarget: [2, 1.25, -1] }),
+    );
+    expect(alertSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ alerts: [expect.objectContaining({ id: "71" })] }),
+    );
   });
 
   it("shows an honest empty state when no laboratory is available", async () => {

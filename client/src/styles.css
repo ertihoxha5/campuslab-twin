@@ -1849,6 +1849,81 @@ a {
   font-size: 0.68rem;
 }
 
+.digital-twin-alerts-panel {
+  position: absolute;
+  z-index: 3;
+  top: 58px;
+  left: 16px;
+  width: min(300px, calc(100% - 32px));
+}
+
+.digital-twin-alerts-panel > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9px;
+  background: rgba(17, 24, 39, 0.9);
+  color: #fff;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.digital-twin-alerts-panel > div {
+  display: grid;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.digital-twin-alerts-panel article {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border-left: 3px solid #c58b32;
+  border-radius: 8px;
+  background: rgba(17, 24, 39, 0.92);
+  color: #fff;
+  font-size: 0.72rem;
+}
+
+.digital-twin-alerts-panel article.critical {
+  border-left-color: #b53e3e;
+}
+
+.digital-twin-alerts-panel article > span {
+  color: #c9c4d3;
+  font-size: 0.65rem;
+}
+
+.digital-twin-alerts-panel article > button {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.digital-twin-alert-indicator {
+  width: 27px;
+  height: 27px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #c58b32;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.digital-twin-alert-indicator.critical {
+  background: #b53e3e;
+}
+
 .digital-twin-equipment-label {
   display: grid;
   gap: 2px;

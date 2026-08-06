@@ -12,6 +12,7 @@ import {
   Boxes,
   Waypoints,
   Users,
+  BellRing,
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
@@ -24,6 +25,8 @@ import {
 } from "@/components/digital-twin/ZoneAndDataFlow.jsx";
 import { OccupancyFigures } from "@/components/digital-twin/OccupancyFigures.jsx";
 import { occupancyRepresentation } from "@/components/digital-twin/occupancy.js";
+import { AlertIndicators } from "@/components/digital-twin/AlertIndicators.jsx";
+import { resolveAlertTarget } from "@/components/digital-twin/alert-target.js";
 
 export function DigitalTwinPage() {
   const [laboratories, setLaboratories] = useState([]);
@@ -45,6 +48,8 @@ export function DigitalTwinPage() {
   const [occupancySnapshot, setOccupancySnapshot] = useState(0);
   const [showZones, setShowZones] = useState(false);
   const [showDataFlow, setShowDataFlow] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(true);
+  const [focusTarget, setFocusTarget] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -192,6 +197,26 @@ export function DigitalTwinPage() {
     [occupancySnapshot, sensorReadings, sensors],
   );
   const occupancyInfo = occupancyRepresentation(currentOccupancy);
+  const activeAlerts = useMemo(
+    () =>
+      equipmentAlerts.filter(
+        (alert) => !["resolved", "closed"].includes(alert.status),
+      ),
+    [equipmentAlerts],
+  );
+
+  function focusAlert(alert) {
+    setFocusTarget(resolveAlertTarget(alert, sensors, equipment, zones));
+    setCameraMode("focus");
+    const sensor = sensors.find(
+      (item) => String(item.id) === String(alert.sensorId),
+    );
+    const item = equipment.find(
+      (candidate) => String(candidate.id) === String(alert.equipmentId),
+    );
+    setSelectedSensor(sensor ?? null);
+    setSelectedEquipment(sensor ? null : (item ?? null));
+  }
 
   return (
     <section className="workspace-overview digital-twin-page">
@@ -320,6 +345,7 @@ export function DigitalTwinPage() {
             modelUrl={modelUrl}
             cameraMode={cameraMode}
             firstPersonReset={firstPersonReset}
+            focusTarget={focusTarget}
             onModelLoaded={() => setModelState("loaded")}
             onModelError={() => setModelState("failed")}
           >
@@ -349,6 +375,15 @@ export function DigitalTwinPage() {
               visible={showDataFlow}
             />
             <OccupancyFigures occupancy={currentOccupancy} />
+            {showAlerts && (
+              <AlertIndicators
+                alerts={activeAlerts}
+                sensors={sensors}
+                equipment={equipment}
+                zones={zones}
+                onFocus={focusAlert}
+              />
+            )}
           </DigitalTwinCanvas>
           <div className={`digital-twin-model-state ${modelState}`} role="status">
             {modelState === "loaded"
@@ -379,6 +414,28 @@ export function DigitalTwinPage() {
                   : `${occupancyInfo.visible} figura në skenë`}
               </span>
             </div>
+          </div>
+          <div className="digital-twin-alerts-panel">
+            <button
+              type="button"
+              onClick={() => setShowAlerts((value) => !value)}
+              aria-expanded={showAlerts}
+            >
+              <BellRing size={16} /> {activeAlerts.length} alarme aktive
+            </button>
+            {showAlerts && activeAlerts.length > 0 && (
+              <div>
+                {activeAlerts.slice(0, 5).map((alert) => (
+                  <article key={alert.id} className={alert.severity}>
+                    <span>{alert.severity}</span>
+                    <strong>{alert.title}</strong>
+                    <button type="button" onClick={() => focusAlert(alert)}>
+                      Fokuso
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
           {selectedSensor && (
             <aside className="digital-twin-sensor-detail">
