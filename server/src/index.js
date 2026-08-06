@@ -50,6 +50,8 @@ import { createReadingHistoryMaintenance } from "./modules/simulator/history-mai
 import { createRealtimePublisher } from "./realtime/publisher.js";
 import { createAlertRepository } from "./modules/alerts/repository.js";
 import { createAlertService } from "./modules/alerts/service.js";
+import { createMaintenanceRepository } from "./modules/maintenance/repository.js";
+import { createMaintenanceService } from "./modules/maintenance/service.js";
 
 loadEnvironmentFile();
 
@@ -148,6 +150,9 @@ const alertService = createAlertService({
   repository: createAlertRepository(databasePool),
   realtimePublisher,
 });
+const maintenanceService = createMaintenanceService({
+  repository: createMaintenanceRepository(databasePool),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -165,6 +170,7 @@ const app = createApp({
   sensorService,
   simulatorService,
   alertService,
+  maintenanceService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,

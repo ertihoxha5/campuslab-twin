@@ -20,6 +20,7 @@ import { createEquipmentRouter } from "./modules/equipment/router.js";
 import { createSensorRouter } from "./modules/sensors/router.js";
 import { createSimulatorRouter } from "./modules/simulator/router.js";
 import { createAlertRouter } from "./modules/alerts/router.js";
+import { createMaintenanceRouter } from "./modules/maintenance/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -42,6 +43,7 @@ export function createApp({
   sensorService,
   simulatorService,
   alertService,
+  maintenanceService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
@@ -187,6 +189,16 @@ export function createApp({
       "/api/alerts",
       createAlertRouter({
         service: alertService,
+        authenticateTenant: tenantAuthentication,
+      }),
+    );
+  }
+
+  if (maintenanceService && tenantAuthentication) {
+    app.use(
+      "/api/maintenance",
+      createMaintenanceRouter({
+        service: maintenanceService,
         authenticateTenant: tenantAuthentication,
       }),
     );
