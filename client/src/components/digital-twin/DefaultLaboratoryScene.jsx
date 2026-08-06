@@ -168,27 +168,6 @@ function SafetyAndClimate() {
   );
 }
 
-function HumanFigure({ position, shirt = "#58427c" }) {
-  return (
-    <group position={position}>
-      <mesh castShadow position={[0, 1.65, 0]}>
-        <sphereGeometry args={[0.16, 18, 14]} />
-        <meshStandardMaterial color="#b98262" roughness={0.75} />
-      </mesh>
-      <mesh castShadow position={[0, 1.18, 0]}>
-        <capsuleGeometry args={[0.22, 0.55, 6, 12]} />
-        <meshStandardMaterial color={shirt} roughness={0.68} />
-      </mesh>
-      {[-0.12, 0.12].map((x) => (
-        <mesh castShadow key={x} position={[x, 0.48, 0]}>
-          <capsuleGeometry args={[0.075, 0.65, 5, 10]} />
-          <meshStandardMaterial color="#303640" />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
 export function DefaultLaboratoryScene() {
   return (
     <group>
@@ -198,8 +177,6 @@ export function DefaultLaboratoryScene() {
       ))}
       <ServerRack />
       <SafetyAndClimate />
-      <HumanFigure position={[-1.7, 0, 3.2]} />
-      <HumanFigure position={[2.1, 0, 3.1]} shirt="#6c7653" />
     </group>
   );
 }

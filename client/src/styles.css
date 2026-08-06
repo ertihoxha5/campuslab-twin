@@ -1825,6 +1825,30 @@ a {
   font-size: 0.68rem;
 }
 
+.digital-twin-occupancy {
+  position: absolute;
+  z-index: 2;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9px;
+  background: rgba(17, 24, 39, 0.9);
+  color: #fff;
+}
+
+.digital-twin-occupancy > div {
+  display: grid;
+}
+
+.digital-twin-occupancy span {
+  color: #c9c4d3;
+  font-size: 0.68rem;
+}
+
 .digital-twin-equipment-label {
   display: grid;
   gap: 2px;
@@ -2000,6 +2024,12 @@ a {
   .digital-twin-help {
     right: 12px;
     bottom: 12px;
+    left: 12px;
+  }
+
+  .digital-twin-occupancy {
+    right: 12px;
+    bottom: 118px;
     left: 12px;
   }
 

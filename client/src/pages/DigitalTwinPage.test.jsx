@@ -5,12 +5,13 @@ import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { DigitalTwinPage } from "./DigitalTwinPage.jsx";
 
-const { canvasSpy, markerSpy, equipmentMarkerSpy, zoneSpy, flowSpy } = vi.hoisted(() => ({
+const { canvasSpy, markerSpy, equipmentMarkerSpy, zoneSpy, flowSpy, occupancySpy } = vi.hoisted(() => ({
   canvasSpy: vi.fn(),
   markerSpy: vi.fn(),
   equipmentMarkerSpy: vi.fn(),
   zoneSpy: vi.fn(),
   flowSpy: vi.fn(),
+  occupancySpy: vi.fn(),
 }));
 
 vi.mock("@/api/client.js", () => ({
@@ -38,6 +39,12 @@ vi.mock("@/components/digital-twin/ZoneAndDataFlow.jsx", () => ({
   },
   DataFlowLines: (props) => {
     flowSpy(props);
+    return null;
+  },
+}));
+vi.mock("@/components/digital-twin/OccupancyFigures.jsx", () => ({
+  OccupancyFigures: (props) => {
+    occupancySpy(props);
     return null;
   },
 }));
@@ -171,6 +178,20 @@ describe("DigitalTwinPage", () => {
     expect(flowSpy).toHaveBeenLastCalledWith(
       expect.objectContaining({ visible: true }),
     );
+  });
+
+  it("represents live occupancy without inventing people", async () => {
+    mockLaboratoryApi({
+      sensors: [
+        { id: "9", sensorType: "occupancy", unit: "persona", status: "online" },
+      ],
+      readings: [{ sensorId: "9", value: 37, unit: "persona" }],
+    });
+    render(<DigitalTwinPage />);
+
+    expect(await screen.findByText("37 persona")).toBeInTheDocument();
+    expect(screen.getByText(/16 figura/)).toBeInTheDocument();
+    expect(occupancySpy).toHaveBeenLastCalledWith({ occupancy: 37 });
   });
 
   it("shows an honest empty state when no laboratory is available", async () => {

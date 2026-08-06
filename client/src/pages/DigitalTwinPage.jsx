@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Focus,
@@ -11,6 +11,7 @@ import {
   Cpu,
   Boxes,
   Waypoints,
+  Users,
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
@@ -21,6 +22,8 @@ import {
   DataFlowLines,
   ZoneOverlays,
 } from "@/components/digital-twin/ZoneAndDataFlow.jsx";
+import { OccupancyFigures } from "@/components/digital-twin/OccupancyFigures.jsx";
+import { occupancyRepresentation } from "@/components/digital-twin/occupancy.js";
 
 export function DigitalTwinPage() {
   const [laboratories, setLaboratories] = useState([]);
@@ -39,6 +42,7 @@ export function DigitalTwinPage() {
   const [equipmentAlerts, setEquipmentAlerts] = useState([]);
   const [showEquipment, setShowEquipment] = useState(true);
   const [selectedEquipment, setSelectedEquipment] = useState(null);
+  const [occupancySnapshot, setOccupancySnapshot] = useState(0);
   const [showZones, setShowZones] = useState(false);
   const [showDataFlow, setShowDataFlow] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -93,6 +97,7 @@ export function DigitalTwinPage() {
     setSelectedSensor(null);
     setSelectedEquipment(null);
     setEquipmentEnergy({});
+    setOccupancySnapshot(0);
     Promise.all([
       api.get(
         `/api/sensors?laboratoryId=${laboratoryId}&page=1&pageSize=100&sort=name&direction=asc`,
@@ -116,6 +121,9 @@ export function DigitalTwinPage() {
         setEquipment(equipmentResponse.data.equipment ?? []);
         setZones(zonesResponse.data.zones ?? []);
         setEquipmentAlerts(alertsResponse.data.alerts ?? []);
+        setOccupancySnapshot(
+          Number(dashboardResponse.data.summary.metrics?.currentOccupancy ?? 0),
+        );
         setSensorReadings(
           Object.fromEntries(
             (dashboardResponse.data.summary.latestSensorReadings ?? []).map(
@@ -169,6 +177,21 @@ export function DigitalTwinPage() {
   const modelUrl = laboratoryDetail?.modelMimeType?.startsWith("model/")
     ? `/api/laboratories/${laboratoryId}/model?v=${laboratoryDetail.modelFileId}`
     : undefined;
+  const currentOccupancy = useMemo(
+    () => {
+      const occupancySensors = sensors
+        .filter((sensor) => sensor.sensorType === "occupancy")
+        .filter((sensor) => sensorReadings[String(sensor.id)] != null);
+      if (occupancySensors.length === 0) return occupancySnapshot;
+      return occupancySensors.reduce(
+          (total, sensor) =>
+            total + Number(sensorReadings[String(sensor.id)]?.value ?? 0),
+          0,
+        );
+    },
+    [occupancySnapshot, sensorReadings, sensors],
+  );
+  const occupancyInfo = occupancyRepresentation(currentOccupancy);
 
   return (
     <section className="workspace-overview digital-twin-page">
@@ -325,6 +348,7 @@ export function DigitalTwinPage() {
               zones={zones}
               visible={showDataFlow}
             />
+            <OccupancyFigures occupancy={currentOccupancy} />
           </DigitalTwinCanvas>
           <div className={`digital-twin-model-state ${modelState}`} role="status">
             {modelState === "loaded"
@@ -344,6 +368,17 @@ export function DigitalTwinPage() {
                 ? "Kliko pamjen, shiko me maus dhe lëviz me W, A, S, D. Shtyp Esc për të liruar mausin."
                 : "Rrotullo me zvarritje, afrohu me scroll dhe lëviz pamjen me butonin e djathtë."}
             </p>
+          </div>
+          <div className="digital-twin-occupancy" role="status">
+            <Users size={16} />
+            <div>
+              <strong>{occupancyInfo.total} persona</strong>
+              <span>
+                {occupancyInfo.aggregated
+                  ? `${occupancyInfo.visible} figura · deri ${occupancyInfo.peoplePerFigure} persona për figurë`
+                  : `${occupancyInfo.visible} figura në skenë`}
+              </span>
+            </div>
           </div>
           {selectedSensor && (
             <aside className="digital-twin-sensor-detail">
