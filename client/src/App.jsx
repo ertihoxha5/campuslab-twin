@@ -68,6 +68,11 @@ const DigitalTwinPage = lazy(() =>
     default: module.DigitalTwinPage,
   })),
 );
+const MaintenancePage = lazy(() =>
+  import("@/pages/MaintenancePage.jsx").then((module) => ({
+    default: module.MaintenancePage,
+  })),
+);
 
 const laboratoryPage = (Page) => (
   <Suspense fallback={<p className="workspace-loading">Po ngarkohet faqja…</p>}>
@@ -161,12 +166,7 @@ export default function App() {
             >
               <Route
                 path="mirembajtja"
-                element={
-                  <WorkspaceSectionPage
-                    title="Mirëmbajtja"
-                    description="Detyrat dhe historiku i mirëmbajtjes."
-                  />
-                }
+                element={laboratoryPage(MaintenancePage)}
               />
             </Route>
             <Route element={<PermissionRoute anyOf={["reports.view"]} />}>

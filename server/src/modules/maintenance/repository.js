@@ -11,6 +11,65 @@ const laboratoryAssignmentScope = `
 
 export function createMaintenanceRepository(pool) {
   return {
+    async options({
+      universityId,
+      userId,
+      restrictToAssignments,
+      laboratoryId,
+    }) {
+      const laboratories = await query(
+        pool,
+        `SELECT laboratory.id, laboratory.name, laboratory.code
+         FROM laboratories laboratory
+         WHERE laboratory.university_id = ?
+           AND laboratory.deleted_at IS NULL
+           AND (? = 0 OR EXISTS (
+             SELECT 1 FROM user_laboratory_assignments assignment
+             WHERE assignment.university_id = laboratory.university_id
+               AND assignment.laboratory_id = laboratory.id
+               AND assignment.user_id = ?
+           ))
+         ORDER BY laboratory.name, laboratory.id`,
+        [universityId, restrictToAssignments ? 1 : 0, userId],
+      );
+      const laboratoryIsAccessible =
+        laboratoryId &&
+        laboratories.some((item) => String(item.id) === String(laboratoryId));
+      if (!laboratoryIsAccessible) {
+        return { laboratories, equipment: [], technicians: [] };
+      }
+      const [equipment, technicians] = await Promise.all([
+        query(
+          pool,
+          `SELECT id, name, code, status
+           FROM equipment
+           WHERE university_id = ? AND laboratory_id = ?
+             AND deleted_at IS NULL
+           ORDER BY name, id`,
+          [universityId, laboratoryId],
+        ),
+        query(
+          pool,
+          `SELECT DISTINCT user.id, user.full_name AS fullName,
+                  user.job_title AS jobTitle
+           FROM users user
+           INNER JOIN user_roles user_role
+             ON user_role.user_id = user.id
+            AND user_role.university_id = user.university_id
+           INNER JOIN roles role ON role.id = user_role.role_id
+           INNER JOIN user_laboratory_assignments assignment
+             ON assignment.user_id = user.id
+            AND assignment.university_id = user.university_id
+            AND assignment.laboratory_id = ?
+           WHERE user.university_id = ? AND role.name = 'technician'
+             AND user.status = 'active' AND user.deleted_at IS NULL
+           ORDER BY user.full_name, user.id`,
+          [laboratoryId, universityId],
+        ),
+      ]);
+      return { laboratories, equipment, technicians };
+    },
+
     async list({
       universityId,
       userId,

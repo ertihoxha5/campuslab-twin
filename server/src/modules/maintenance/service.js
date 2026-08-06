@@ -140,6 +140,21 @@ export function createMaintenanceService({ repository }) {
   });
 
   return {
+    async options(input = {}, context) {
+      const laboratoryId = input.laboratoryId
+        ? String(input.laboratoryId)
+        : undefined;
+      if (laboratoryId && !validId(laboratoryId)) {
+        throw validationError("Laboratori i zgjedhur nuk është i vlefshëm.");
+      }
+      return repository.options({
+        universityId: context.universityId,
+        userId: context.userId,
+        restrictToAssignments: requiresLaboratoryAssignment(context),
+        laboratoryId,
+      });
+    },
+
     async list(input = {}, context) {
       const parsed = listSchema.safeParse(input);
       if (!parsed.success) {

@@ -70,6 +70,15 @@ export function createMaintenanceRouter({
   );
 
   router.get(
+    "/options",
+    requirePermissions(permissions.MAINTENANCE_MANAGE),
+    async (request, response) => {
+      const options = await service.options(request.query, context(request));
+      return success(response, { data: options });
+    },
+  );
+
+  router.get(
     "/:taskId",
     requirePermissions(permissions.MAINTENANCE_ASSIGNED),
     async (request, response) => {

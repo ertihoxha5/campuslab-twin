@@ -5,6 +5,36 @@ import { permissions } from "../src/authorization/permissions.js";
 import { createMaintenanceRepository } from "../src/modules/maintenance/repository.js";
 import { createMaintenanceService } from "../src/modules/maintenance/service.js";
 
+test("maintenance form options scope laboratories, equipment, and technicians", async () => {
+  const calls = [];
+  const repository = createMaintenanceRepository({
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      if (sql.includes("FROM laboratories laboratory")) {
+        return [[{ id: 15, name: "Laboratori Test" }]];
+      }
+      if (sql.includes("FROM equipment")) {
+        return [[{ id: 21, name: "Roboti" }]];
+      }
+      return [[{ id: 9, fullName: "Tekniku Test" }]];
+    },
+  });
+
+  const options = await repository.options({
+    universityId: "7",
+    userId: "5",
+    restrictToAssignments: true,
+    laboratoryId: "15",
+  });
+
+  assert.equal(options.equipment[0].id, 21);
+  assert.equal(options.technicians[0].id, 9);
+  assert.match(calls[0].sql, /laboratory\.university_id = \?/);
+  assert.match(calls[0].sql, /assignment\.user_id = \?/);
+  assert.deepEqual(calls[1].parameters, ["7", "15"]);
+  assert.deepEqual(calls[2].parameters, ["15", "7"]);
+});
+
 test("maintenance list is tenant scoped and technicians see only assigned work", async () => {
   const calls = [];
   const service = createMaintenanceService({
