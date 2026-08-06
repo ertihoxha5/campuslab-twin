@@ -24,6 +24,7 @@ const requiredTables = [
   "alert_status_updates",
   "maintenance_tasks",
   "maintenance_updates",
+  "maintenance_evidence",
   "simulation_scenarios",
   "simulation_runs",
   "reports",
