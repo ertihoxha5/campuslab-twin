@@ -56,6 +56,8 @@ import { createMaintenanceReminderRepository } from "./modules/maintenance/remin
 import { createMaintenanceReminderWorker } from "./modules/maintenance/reminder-worker.js";
 import { createMaintenanceEvidenceService } from "./modules/maintenance/evidence-service.js";
 import { createMaintenanceEvidenceStorage } from "./storage/maintenance-evidence-storage.js";
+import { createEnergyRepository } from "./modules/energy/repository.js";
+import { createEnergyService } from "./modules/energy/service.js";
 
 loadEnvironmentFile();
 
@@ -165,6 +167,9 @@ const maintenanceReminderWorker = createMaintenanceReminderWorker({
   onError: (error) =>
     console.error("Gjenerimi i njoftimeve të mirëmbajtjes dështoi.", error.message),
 });
+const energyService = createEnergyService({
+  repository: createEnergyRepository(databasePool),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -184,6 +189,7 @@ const app = createApp({
   alertService,
   maintenanceService,
   maintenanceEvidenceService,
+  energyService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
