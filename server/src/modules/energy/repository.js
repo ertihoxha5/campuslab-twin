@@ -1,4 +1,4 @@
-import { query } from "../../database/query.js";
+import { query, withTransaction } from "../../database/query.js";
 
 const bucketExpressions = {
   hourly: "DATE_FORMAT(point_at, '%Y-%m-%d %H:00:00')",
@@ -80,6 +80,56 @@ function pointParameters(input, startAt, endAt) {
 
 export function createEnergyRepository(pool) {
   return {
+    async getSettings({ universityId }) {
+      const rows = await query(
+        pool,
+        `SELECT tariff_per_kwh AS tariffPerKwh,
+                currency_code AS currencyCode, updated_at AS updatedAt
+         FROM university_energy_settings
+         WHERE university_id = ?
+         LIMIT 1`,
+        [universityId],
+      );
+      return rows[0] ?? null;
+    },
+
+    async updateSettings({ universityId, userId, ipAddress, settings }) {
+      return withTransaction(pool, async (connection) => {
+        await query(
+          connection,
+          `INSERT INTO university_energy_settings (
+             university_id, tariff_per_kwh, currency_code, updated_by_user_id
+           ) VALUES (?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE
+             tariff_per_kwh = VALUES(tariff_per_kwh),
+             currency_code = VALUES(currency_code),
+             updated_by_user_id = VALUES(updated_by_user_id)`,
+          [
+            universityId,
+            settings.tariffPerKwh,
+            settings.currencyCode,
+            userId,
+          ],
+        );
+        await query(
+          connection,
+          `INSERT INTO activity_logs (
+             university_id, user_id, action, entity_type, entity_id,
+             description, metadata_json, ip_address
+           ) VALUES (?, ?, 'energy.settings_updated', 'university', ?, ?, ?, ?)`,
+          [
+            universityId,
+            userId,
+            universityId,
+            "U përditësua tarifa e energjisë.",
+            JSON.stringify(settings),
+            ipAddress,
+          ],
+        );
+        return { ...settings };
+      });
+    },
+
     async overview(input) {
       const bucket = bucketExpressions[input.interval] ?? bucketExpressions.hourly;
       const currentParameters = accessParameters(input);

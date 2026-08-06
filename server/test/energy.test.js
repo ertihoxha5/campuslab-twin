@@ -9,6 +9,9 @@ test("energy service calculates comparison, shares, and normalized traceable tot
   const service = createEnergyService({
     now: () => new Date("2026-08-06T12:00:00.000Z"),
     repository: {
+      async getSettings() {
+        return { tariffPerKwh: "0.15", currencyCode: "EUR" };
+      },
       async overview(input) {
         calls.push(input);
         return {
@@ -57,6 +60,8 @@ test("energy service calculates comparison, shares, and normalized traceable tot
   assert.equal(overview.largestConsumers[0].sharePercent, 25);
   assert.equal(overview.current.powerWatts, 2400);
   assert.equal(overview.provenance[0].samples, 48);
+  assert.equal(overview.summary.estimatedCost, 18);
+  assert.ok(overview.recommendations.length >= 1);
   assert.equal(calls[0].universityId, "7");
   assert.equal(calls[0].restrictToAssignments, true);
   assert.equal(calls[0].startAt.toISOString(), "2026-08-05T12:00:00.000Z");
@@ -67,6 +72,9 @@ test("energy service supports hourly, daily, weekly, and monthly intervals", asy
   const service = createEnergyService({
     now: () => new Date("2026-08-06T12:00:00.000Z"),
     repository: {
+      async getSettings() {
+        return null;
+      },
       async overview(input) {
         intervals.push(input.interval);
         return {
@@ -125,4 +133,36 @@ test("energy repository scopes raw and aggregate analytics to tenant access", as
     calls.some(({ sql }) => sql.includes("FROM energy_reading_aggregates")),
   );
   assert.ok(calls.some(({ sql }) => sql.includes("WEEKDAY(point_at)")));
+});
+
+test("energy settings normalize currency and audit tariff updates atomically", async () => {
+  const events = [];
+  const calls = [];
+  const connection = {
+    async beginTransaction() { events.push("begin"); },
+    async commit() { events.push("commit"); },
+    async rollback() { events.push("rollback"); },
+    release() { events.push("release"); },
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      return [{ affectedRows: 1 }];
+    },
+  };
+  const repository = createEnergyRepository({
+    async getConnection() { return connection; },
+  });
+  const service = createEnergyService({ repository });
+
+  const settings = await service.updateSettings(
+    { tariffPerKwh: "0.185", currencyCode: " eur " },
+    { universityId: "7", userId: "5", ipAddress: "127.0.0.1" },
+  );
+
+  assert.deepEqual(settings, { tariffPerKwh: 0.185, currencyCode: "EUR" });
+  assert.deepEqual(events, ["begin", "commit", "release"]);
+  assert.ok(
+    calls.some(({ sql }) => sql.includes("university_energy_settings")),
+  );
+  assert.ok(calls.some(({ sql }) => sql.includes("'energy.settings_updated'")));
+  assert.ok(calls.every(({ parameters }) => parameters.includes("7")));
 });
