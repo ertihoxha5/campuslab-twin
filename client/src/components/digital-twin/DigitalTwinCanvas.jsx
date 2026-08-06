@@ -38,7 +38,14 @@ class ModelErrorBoundary extends Component {
   }
 }
 
-function LaboratoryContent({ modelUrl, onModelLoaded, onModelError, children }) {
+function LaboratoryContent({
+  modelUrl,
+  equipment,
+  onEquipmentSelect,
+  onModelLoaded,
+  onModelError,
+  children,
+}) {
   if (!modelUrl) {
     return (
       <>
@@ -51,7 +58,12 @@ function LaboratoryContent({ modelUrl, onModelLoaded, onModelError, children }) 
   return (
     <ModelErrorBoundary onError={onModelError}>
       <Suspense fallback={<DefaultLaboratoryScene />}>
-        <ProtectedLaboratoryModel url={modelUrl} onLoaded={onModelLoaded} />
+        <ProtectedLaboratoryModel
+          url={modelUrl}
+          equipment={equipment}
+          onEquipmentSelect={onEquipmentSelect}
+          onLoaded={onModelLoaded}
+        />
         {children}
       </Suspense>
     </ModelErrorBoundary>
@@ -170,6 +182,8 @@ function Scene({
   firstPersonReset,
   focusTarget,
   quality,
+  equipment,
+  onEquipmentSelect,
   children,
 }) {
   return (
@@ -188,6 +202,8 @@ function Scene({
           modelUrl={modelUrl}
           onModelLoaded={onModelLoaded}
           onModelError={onModelError}
+          equipment={equipment}
+          onEquipmentSelect={onEquipmentSelect}
         >
           {children}
         </LaboratoryContent>
@@ -250,6 +266,8 @@ export function DigitalTwinCanvas({
   firstPersonReset = 0,
   focusTarget,
   quality = "auto",
+  equipment = [],
+  onEquipmentSelect,
   children,
 }) {
   if (!supportsWebGL()) return <WebGLFallback />;
@@ -281,6 +299,8 @@ export function DigitalTwinCanvas({
               firstPersonReset={firstPersonReset}
               focusTarget={focusTarget}
               quality={resolvedQuality}
+              equipment={equipment}
+              onEquipmentSelect={onEquipmentSelect}
             >
               {children}
             </Scene>

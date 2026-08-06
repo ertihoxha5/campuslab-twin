@@ -242,6 +242,30 @@ describe("DigitalTwinPage", () => {
     );
   });
 
+  it("passes tenant equipment bindings to the protected GLB model", async () => {
+    mockLaboratoryApi({
+      equipment: [
+        {
+          id: "21",
+          name: "PLC Siemens",
+          object3dReference: "PLC_Main",
+          status: "active",
+        },
+      ],
+    });
+    render(<DigitalTwinPage />);
+    await screen.findByRole("option", { name: "Laboratori Test (TEST-01)" });
+
+    await vi.waitFor(() =>
+      expect(canvasSpy).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          equipment: [expect.objectContaining({ object3dReference: "PLC_Main" })],
+          onEquipmentSelect: expect.any(Function),
+        }),
+      ),
+    );
+  });
+
   it("shows an honest empty state when no laboratory is available", async () => {
     api.get.mockResolvedValue({ data: { laboratories: [] } });
     render(<DigitalTwinPage />);

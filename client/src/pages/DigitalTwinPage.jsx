@@ -359,6 +359,11 @@ export function DigitalTwinPage() {
             firstPersonReset={firstPersonReset}
             focusTarget={focusTarget}
             quality={graphicsQuality}
+            equipment={equipment}
+            onEquipmentSelect={(item) => {
+              setSelectedEquipment(item);
+              setSelectedSensor(null);
+            }}
             onModelLoaded={() => setModelState("loaded")}
             onModelError={() => setModelState("failed")}
           >
