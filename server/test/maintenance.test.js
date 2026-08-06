@@ -199,3 +199,128 @@ test("maintenance task, initial history, and audit are created atomically", asyn
       .every(({ parameters }) => parameters.includes("7")),
   );
 });
+
+test("maintenance detail includes immutable chronological history", async () => {
+  const calls = [];
+  const service = createMaintenanceService({
+    repository: {
+      async findById(input) {
+        calls.push({ operation: "detail", input });
+        return { id: "31", status: "planned", checklist: [] };
+      },
+      async history(input) {
+        calls.push({ operation: "history", input });
+        return [{ id: "41", status: "planned" }];
+      },
+    },
+  });
+
+  const task = await service.detail("31", {
+    universityId: "7",
+    userId: "9",
+    roles: ["technician"],
+    permissions: [permissions.MAINTENANCE_ASSIGNED],
+  });
+
+  assert.equal(task.history.length, 1);
+  assert.equal(calls[0].input.universityId, "7");
+  assert.equal(calls[0].input.restrictToAssignedWork, true);
+  assert.deepEqual(calls[1].input, { universityId: "7", taskId: "31" });
+});
+
+test("maintenance completion requires checklist and corrective repair details", async () => {
+  const context = {
+    universityId: "7",
+    userId: "9",
+    roles: ["technician"],
+    permissions: [permissions.MAINTENANCE_ASSIGNED],
+  };
+  const service = createMaintenanceService({
+    repository: {
+      async findById() {
+        return {
+          id: "31",
+          status: "in_progress",
+          type: "corrective",
+          checklist: [{ label: "Testo pajisjen", completed: false }],
+        };
+      },
+      async transition() {
+        throw new Error("should not transition");
+      },
+    },
+  });
+
+  await assert.rejects(
+    service.transition(
+      "31",
+      { status: "completed", notes: "U testua pajisja." },
+      context,
+    ),
+    (error) => error.status === 422,
+  );
+  await assert.rejects(
+    service.transition(
+      "31",
+      {
+        status: "completed",
+        notes: "U testua pajisja.",
+        checklist: [{ label: "Testo pajisjen", completed: true }],
+      },
+      context,
+    ),
+    (error) => error.status === 422,
+  );
+});
+
+test("maintenance transition updates task, history, equipment health, and audit atomically", async () => {
+  const events = [];
+  const calls = [];
+  const connection = {
+    async beginTransaction() { events.push("begin"); },
+    async commit() { events.push("commit"); },
+    async rollback() { events.push("rollback"); },
+    release() { events.push("release"); },
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      if (sql.includes("LIMIT 1 FOR UPDATE")) {
+        return [[{
+          id: 31,
+          laboratoryId: 15,
+          equipmentId: 21,
+          type: "corrective",
+          title: "Riparimi i robotit",
+          status: "in_progress",
+        }]];
+      }
+      return [{ affectedRows: 1 }];
+    },
+  };
+  const repository = createMaintenanceRepository({
+    async getConnection() { return connection; },
+  });
+
+  const task = await repository.transition({
+    universityId: "7",
+    userId: "9",
+    restrictToAssignments: true,
+    restrictToAssignedWork: true,
+    taskId: "31",
+    ipAddress: "127.0.0.1",
+    update: {
+      status: "completed",
+      notes: "Motori u zëvendësua dhe u testua.",
+      checklist: [{ label: "Testo motorin", completed: true }],
+      repairDetails: "U zëvendësua motori.",
+      cost: 125,
+    },
+  });
+
+  assert.equal(task.status, "completed");
+  assert.deepEqual(events, ["begin", "commit", "release"]);
+  assert.ok(calls.some(({ sql }) => sql.includes("UPDATE maintenance_tasks")));
+  assert.ok(calls.some(({ sql }) => sql.includes("INSERT INTO maintenance_updates")));
+  assert.ok(calls.some(({ sql }) => sql.includes("UPDATE equipment")));
+  assert.ok(calls.some(({ sql }) => sql.includes("GREATEST(health_score, 90)")));
+  assert.ok(calls.some(({ sql }) => sql.includes("'maintenance.status_changed'")));
+});

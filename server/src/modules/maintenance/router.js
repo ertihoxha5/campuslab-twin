@@ -43,5 +43,32 @@ export function createMaintenanceRouter({ service, authenticateTenant }) {
     },
   );
 
+  router.get(
+    "/:taskId",
+    requirePermissions(permissions.MAINTENANCE_ASSIGNED),
+    async (request, response) => {
+      const task = await service.detail(request.params.taskId, context(request));
+      return success(response, { data: { task } });
+    },
+  );
+
+  router.patch(
+    "/:taskId/status",
+    requirePermissions(permissions.MAINTENANCE_ASSIGNED),
+    async (request, response) => {
+      const task = await service.transition(
+        request.params.taskId,
+        request.body,
+        context(request),
+      );
+      return success(response, {
+        data: {
+          task,
+          message: "Statusi i mirëmbajtjes u përditësua me sukses.",
+        },
+      });
+    },
+  );
+
   return router;
 }

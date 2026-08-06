@@ -70,6 +70,26 @@ const createSchema = z
     }
   });
 
+const transitionSchema = z.object({
+  status: z.enum(["in_progress", "waiting", "completed", "cancelled"]),
+  notes: z.string().trim().min(2).max(2000),
+  checklist: z.array(checklistItemSchema).max(50).optional(),
+  repairDetails: optionalText(4000),
+  cost: z.coerce
+    .number()
+    .min(0)
+    .max(1000000000)
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
+});
+
+const allowedTransitions = {
+  planned: ["in_progress", "cancelled"],
+  in_progress: ["waiting", "completed", "cancelled"],
+  waiting: ["in_progress", "cancelled"],
+};
+
 const validationError = (message, issues) =>
   new AppError({
     status: 422,
@@ -99,6 +119,15 @@ function validateRelations(result) {
   }
   return result;
 }
+
+const notFound = () =>
+  new AppError({
+    status: 404,
+    code: "NOT_FOUND",
+    message: "Detyra e mirëmbajtjes nuk u gjet.",
+  });
+
+const validId = (value) => /^[1-9]\d*$/.test(String(value));
 
 export function createMaintenanceService({ repository }) {
   const access = (context) => ({
@@ -149,6 +178,81 @@ export function createMaintenanceService({ repository }) {
           task: parsed.data,
         }),
       );
+    },
+
+    async detail(taskId, context) {
+      if (!validId(taskId)) throw notFound();
+      const task = await repository.findById({
+        ...access(context),
+        taskId: String(taskId),
+      });
+      if (!task) throw notFound();
+      return {
+        ...task,
+        history: await repository.history({
+          universityId: context.universityId,
+          taskId: String(taskId),
+        }),
+      };
+    },
+
+    async transition(taskId, input, context) {
+      if (!validId(taskId)) throw notFound();
+      const parsed = transitionSchema.safeParse(input);
+      if (!parsed.success) {
+        throw validationError(
+          "Përditësimi i mirëmbajtjes nuk është i vlefshëm.",
+          parsed.error.issues,
+        );
+      }
+      const current = await repository.findById({
+        ...access(context),
+        taskId: String(taskId),
+      });
+      if (!current) throw notFound();
+      if (!allowedTransitions[current.status]?.includes(parsed.data.status)) {
+        throw new AppError({
+          status: 409,
+          code: "INVALID_MAINTENANCE_TRANSITION",
+          message: "Ky ndryshim i statusit të mirëmbajtjes nuk lejohet.",
+        });
+      }
+      const storedChecklist = Array.isArray(current.checklist)
+        ? current.checklist
+        : JSON.parse(current.checklist || "[]");
+      const checklist = parsed.data.checklist ?? storedChecklist;
+      if (
+        parsed.data.status === "completed" &&
+        checklist.some((item) => !item.completed)
+      ) {
+        throw validationError(
+          "Të gjithë hapat e checklist-it duhet të përfundohen.",
+        );
+      }
+      if (
+        parsed.data.status === "completed" &&
+        current.type === "corrective" &&
+        !parsed.data.repairDetails
+      ) {
+        throw validationError(
+          "Detajet e riparimit janë të detyrueshme për mirëmbajtjen korrigjuese.",
+        );
+      }
+      const result = await repository.transition({
+        ...access(context),
+        taskId: String(taskId),
+        ipAddress: context.ipAddress,
+        update: { ...parsed.data, checklist },
+      });
+      if (!result) throw notFound();
+      if (result.invalidTransition) {
+        throw new AppError({
+          status: 409,
+          code: "INVALID_MAINTENANCE_TRANSITION",
+          message: "Statusi ndryshoi. Rifreskojeni dhe provoni përsëri.",
+        });
+      }
+      return result;
     },
   };
 }
