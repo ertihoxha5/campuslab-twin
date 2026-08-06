@@ -58,6 +58,8 @@ import { createMaintenanceEvidenceService } from "./modules/maintenance/evidence
 import { createMaintenanceEvidenceStorage } from "./storage/maintenance-evidence-storage.js";
 import { createEnergyRepository } from "./modules/energy/repository.js";
 import { createEnergyService } from "./modules/energy/service.js";
+import { createEnergyAnomalyRepository } from "./modules/energy/anomaly-repository.js";
+import { createEnergyAnomalyWorker } from "./modules/energy/anomaly-worker.js";
 
 loadEnvironmentFile();
 
@@ -170,6 +172,11 @@ const maintenanceReminderWorker = createMaintenanceReminderWorker({
 const energyService = createEnergyService({
   repository: createEnergyRepository(databasePool),
 });
+const energyAnomalyWorker = createEnergyAnomalyWorker({
+  repository: createEnergyAnomalyRepository(databasePool),
+  onError: (error) =>
+    console.error("Gjenerimi i njoftimeve të energjisë dështoi.", error.message),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -212,6 +219,7 @@ async function startServer() {
     await checkDatabaseConnection(databasePool);
     await readingHistoryMaintenance.start();
     await maintenanceReminderWorker.start();
+    await energyAnomalyWorker.start();
     const restoredSimulations = await simulatorCoordinator.restore();
     if (restoredSimulations.restored > 0) {
       console.log(

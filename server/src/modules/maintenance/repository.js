@@ -61,7 +61,7 @@ export function createMaintenanceRepository(pool) {
              ON assignment.user_id = user.id
             AND assignment.university_id = user.university_id
             AND assignment.laboratory_id = ?
-           WHERE user.university_id = ? AND role.name = 'technician'
+           WHERE user.university_id = ? AND role.code = 'technician'
              AND user.status = 'active' AND user.deleted_at IS NULL
            ORDER BY user.full_name, user.id`,
           [laboratoryId, universityId],
@@ -337,7 +337,7 @@ export function createMaintenanceRepository(pool) {
              INNER JOIN roles role ON role.id = user_role.role_id
              WHERE user.university_id = ? AND user.id = ?
                AND user.status = 'active' AND user.deleted_at IS NULL
-               AND role.name = 'technician'
+               AND role.code = 'technician'
              LIMIT 1`,
             [universityId, task.assignedUserId],
           );
