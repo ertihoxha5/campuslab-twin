@@ -5,9 +5,10 @@ export function createNotificationRepository(pool) {
     async listForUser({ universityId, userId, limit = 20 }) {
       const items = await query(
         pool,
-        `SELECT id, type, title, message, readAt, createdAt
+        `SELECT id, maintenanceTaskId, type, title, message, readAt, createdAt
          FROM (
-           SELECT id, type, title, message, read_at AS readAt,
+           SELECT id, maintenance_task_id AS maintenanceTaskId,
+                  type, title, message, read_at AS readAt,
                   created_at AS createdAt,
                   ROW_NUMBER() OVER (
                     ORDER BY created_at DESC, id DESC

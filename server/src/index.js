@@ -52,6 +52,8 @@ import { createAlertRepository } from "./modules/alerts/repository.js";
 import { createAlertService } from "./modules/alerts/service.js";
 import { createMaintenanceRepository } from "./modules/maintenance/repository.js";
 import { createMaintenanceService } from "./modules/maintenance/service.js";
+import { createMaintenanceReminderRepository } from "./modules/maintenance/reminder-repository.js";
+import { createMaintenanceReminderWorker } from "./modules/maintenance/reminder-worker.js";
 
 loadEnvironmentFile();
 
@@ -153,6 +155,11 @@ const alertService = createAlertService({
 const maintenanceService = createMaintenanceService({
   repository: createMaintenanceRepository(databasePool),
 });
+const maintenanceReminderWorker = createMaintenanceReminderWorker({
+  repository: createMaintenanceReminderRepository(databasePool),
+  onError: (error) =>
+    console.error("Gjenerimi i njoftimeve të mirëmbajtjes dështoi.", error.message),
+});
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
   registrationService,
@@ -192,6 +199,7 @@ async function startServer() {
   try {
     await checkDatabaseConnection(databasePool);
     await readingHistoryMaintenance.start();
+    await maintenanceReminderWorker.start();
     const restoredSimulations = await simulatorCoordinator.restore();
     if (restoredSimulations.restored > 0) {
       console.log(
