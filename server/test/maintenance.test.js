@@ -212,6 +212,10 @@ test("maintenance detail includes immutable chronological history", async () => 
         calls.push({ operation: "history", input });
         return [{ id: "41", status: "planned" }];
       },
+      async listEvidence(input) {
+        calls.push({ operation: "evidence", input });
+        return [{ id: "51", fileId: "61" }];
+      },
     },
   });
 
@@ -223,9 +227,11 @@ test("maintenance detail includes immutable chronological history", async () => 
   });
 
   assert.equal(task.history.length, 1);
+  assert.equal(task.evidence.length, 1);
   assert.equal(calls[0].input.universityId, "7");
   assert.equal(calls[0].input.restrictToAssignedWork, true);
   assert.deepEqual(calls[1].input, { universityId: "7", taskId: "31" });
+  assert.equal(calls[2].input.restrictToAssignedWork, true);
 });
 
 test("maintenance completion requires checklist and corrective repair details", async () => {

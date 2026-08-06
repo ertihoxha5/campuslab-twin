@@ -178,6 +178,55 @@ export function createMaintenanceRepository(pool) {
       );
     },
 
+    async listEvidence({
+      universityId,
+      userId,
+      restrictToAssignments,
+      restrictToAssignedWork,
+      taskId,
+    }) {
+      const accessible = await query(
+        pool,
+        `SELECT task.id
+         FROM maintenance_tasks task
+         WHERE task.university_id = ? AND task.id = ?
+           AND ${laboratoryAssignmentScope}
+           AND (? = 0 OR task.assigned_user_id = ?)
+         LIMIT 1`,
+        [
+          universityId,
+          taskId,
+          restrictToAssignments ? 1 : 0,
+          userId,
+          restrictToAssignedWork ? 1 : 0,
+          userId,
+        ],
+      );
+      if (!accessible[0]) return null;
+
+      return query(
+        pool,
+        `SELECT evidence.id, evidence.maintenance_update_id AS maintenanceUpdateId,
+                evidence.caption, evidence.uploaded_by_user_id AS uploadedByUserId,
+                uploader.full_name AS uploadedByUserName,
+                stored_file.id AS fileId, stored_file.original_name AS originalName,
+                stored_file.mime_type AS mimeType,
+                stored_file.size_bytes AS sizeBytes,
+                evidence.created_at AS createdAt
+         FROM maintenance_evidence evidence
+         INNER JOIN stored_files stored_file
+           ON stored_file.id = evidence.stored_file_id
+          AND stored_file.university_id = evidence.university_id
+         INNER JOIN users uploader
+           ON uploader.id = evidence.uploaded_by_user_id
+          AND uploader.university_id = evidence.university_id
+         WHERE evidence.university_id = ?
+           AND evidence.maintenance_task_id = ?
+         ORDER BY evidence.created_at ASC, evidence.id ASC`,
+        [universityId, taskId],
+      );
+    },
+
     async create({
       universityId,
       userId,
@@ -293,6 +342,114 @@ export function createMaintenanceRepository(pool) {
           id: String(result.insertId),
           ...task,
           status: "planned",
+        };
+      });
+    },
+
+    async addEvidence({
+      universityId,
+      userId,
+      restrictToAssignments,
+      restrictToAssignedWork,
+      taskId,
+      ipAddress,
+      evidence,
+    }) {
+      return withTransaction(pool, async (connection) => {
+        const tasks = await query(
+          connection,
+          `SELECT task.id, task.title
+           FROM maintenance_tasks task
+           WHERE task.university_id = ? AND task.id = ?
+             AND ${laboratoryAssignmentScope}
+             AND (? = 0 OR task.assigned_user_id = ?)
+           LIMIT 1`,
+          [
+            universityId,
+            taskId,
+            restrictToAssignments ? 1 : 0,
+            userId,
+            restrictToAssignedWork ? 1 : 0,
+            userId,
+          ],
+        );
+        if (!tasks[0]) return null;
+
+        if (evidence.maintenanceUpdateId) {
+          const updates = await query(
+            connection,
+            `SELECT id FROM maintenance_updates
+             WHERE university_id = ? AND maintenance_task_id = ? AND id = ?
+             LIMIT 1`,
+            [universityId, taskId, evidence.maintenanceUpdateId],
+          );
+          if (!updates[0]) return { invalidUpdate: true };
+        }
+
+        const fileResult = await query(
+          connection,
+          `INSERT INTO stored_files (
+             university_id, uploaded_by_user_id, category,
+             original_name, stored_name, relative_path, mime_type,
+             size_bytes, checksum_sha256, related_entity_type, related_entity_id
+           ) VALUES (?, ?, 'maintenance_evidence', ?, ?, ?, ?, ?, ?,
+                     'maintenance_task', ?)`,
+          [
+            universityId,
+            userId,
+            evidence.originalName,
+            evidence.storedName,
+            evidence.relativePath,
+            evidence.mimeType,
+            evidence.sizeBytes,
+            evidence.checksumSha256,
+            taskId,
+          ],
+        );
+        const evidenceResult = await query(
+          connection,
+          `INSERT INTO maintenance_evidence (
+             university_id, maintenance_task_id, maintenance_update_id,
+             stored_file_id, uploaded_by_user_id, caption
+           ) VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            universityId,
+            taskId,
+            evidence.maintenanceUpdateId,
+            fileResult.insertId,
+            userId,
+            evidence.caption,
+          ],
+        );
+        await query(
+          connection,
+          `INSERT INTO activity_logs (
+             university_id, user_id, action, entity_type, entity_id,
+             description, metadata_json, ip_address
+           ) VALUES (?, ?, 'maintenance.evidence_added', 'maintenance_task',
+                     ?, ?, ?, ?)`,
+          [
+            universityId,
+            userId,
+            taskId,
+            `U shtua evidencë për detyrën ${tasks[0].title}.`,
+            JSON.stringify({
+              evidenceId: String(evidenceResult.insertId),
+              fileId: String(fileResult.insertId),
+              maintenanceUpdateId: evidence.maintenanceUpdateId,
+            }),
+            ipAddress,
+          ],
+        );
+        return {
+          id: String(evidenceResult.insertId),
+          fileId: String(fileResult.insertId),
+          maintenanceTaskId: String(taskId),
+          maintenanceUpdateId: evidence.maintenanceUpdateId,
+          originalName: evidence.originalName,
+          mimeType: evidence.mimeType,
+          sizeBytes: evidence.sizeBytes,
+          caption: evidence.caption,
         };
       });
     },

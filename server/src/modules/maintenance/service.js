@@ -187,12 +187,20 @@ export function createMaintenanceService({ repository }) {
         taskId: String(taskId),
       });
       if (!task) throw notFound();
-      return {
-        ...task,
-        history: await repository.history({
+      const [history, evidence] = await Promise.all([
+        repository.history({
           universityId: context.universityId,
           taskId: String(taskId),
         }),
+        repository.listEvidence({
+          ...access(context),
+          taskId: String(taskId),
+        }),
+      ]);
+      return {
+        ...task,
+        history,
+        evidence: evidence ?? [],
       };
     },
 

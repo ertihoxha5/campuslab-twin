@@ -54,6 +54,8 @@ import { createMaintenanceRepository } from "./modules/maintenance/repository.js
 import { createMaintenanceService } from "./modules/maintenance/service.js";
 import { createMaintenanceReminderRepository } from "./modules/maintenance/reminder-repository.js";
 import { createMaintenanceReminderWorker } from "./modules/maintenance/reminder-worker.js";
+import { createMaintenanceEvidenceService } from "./modules/maintenance/evidence-service.js";
+import { createMaintenanceEvidenceStorage } from "./storage/maintenance-evidence-storage.js";
 
 loadEnvironmentFile();
 
@@ -152,8 +154,11 @@ const alertService = createAlertService({
   repository: createAlertRepository(databasePool),
   realtimePublisher,
 });
-const maintenanceService = createMaintenanceService({
-  repository: createMaintenanceRepository(databasePool),
+const maintenanceRepository = createMaintenanceRepository(databasePool);
+const maintenanceService = createMaintenanceService({ repository: maintenanceRepository });
+const maintenanceEvidenceService = createMaintenanceEvidenceService({
+  repository: maintenanceRepository,
+  storage: createMaintenanceEvidenceStorage(),
 });
 const maintenanceReminderWorker = createMaintenanceReminderWorker({
   repository: createMaintenanceReminderRepository(databasePool),
@@ -178,6 +183,7 @@ const app = createApp({
   simulatorService,
   alertService,
   maintenanceService,
+  maintenanceEvidenceService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,

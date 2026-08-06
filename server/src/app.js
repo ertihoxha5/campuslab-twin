@@ -44,6 +44,7 @@ export function createApp({
   simulatorService,
   alertService,
   maintenanceService,
+  maintenanceEvidenceService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
@@ -199,6 +200,7 @@ export function createApp({
       "/api/maintenance",
       createMaintenanceRouter({
         service: maintenanceService,
+        evidenceService: maintenanceEvidenceService,
         authenticateTenant: tenantAuthentication,
       }),
     );
