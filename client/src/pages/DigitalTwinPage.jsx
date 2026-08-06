@@ -50,6 +50,7 @@ export function DigitalTwinPage() {
   const [showDataFlow, setShowDataFlow] = useState(false);
   const [showAlerts, setShowAlerts] = useState(true);
   const [focusTarget, setFocusTarget] = useState(null);
+  const [graphicsQuality, setGraphicsQuality] = useState("auto");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -244,6 +245,17 @@ export function DigitalTwinPage() {
             ))}
           </select>
         </label>
+        <label className="digital-twin-quality-select">
+          <span>Cilësia 3D</span>
+          <select
+            value={graphicsQuality}
+            onChange={(event) => setGraphicsQuality(event.target.value)}
+          >
+            <option value="auto">Automatike</option>
+            <option value="high">E lartë</option>
+            <option value="low">E ulët</option>
+          </select>
+        </label>
         {selectedLaboratory && (
           <div className="digital-twin-laboratory-name">
             <Box size={18} />
@@ -346,6 +358,7 @@ export function DigitalTwinPage() {
             cameraMode={cameraMode}
             firstPersonReset={firstPersonReset}
             focusTarget={focusTarget}
+            quality={graphicsQuality}
             onModelLoaded={() => setModelState("loaded")}
             onModelError={() => setModelState("failed")}
           >

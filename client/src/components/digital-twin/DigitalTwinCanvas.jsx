@@ -5,6 +5,7 @@ import {
   OrbitControls,
   PerspectiveCamera,
   PointerLockControls,
+  useProgress,
 } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Vector3 } from "three";
@@ -15,6 +16,7 @@ import {
 } from "./first-person-movement.js";
 import { ProtectedLaboratoryModel } from "./ProtectedLaboratoryModel.jsx";
 import { supportsWebGL } from "./webgl.js";
+import { resolveGraphicsQuality } from "./graphics-quality.js";
 
 class ModelErrorBoundary extends Component {
   constructor(props) {
@@ -167,6 +169,7 @@ function Scene({
   cameraMode,
   firstPersonReset,
   focusTarget,
+  quality,
   children,
 }) {
   return (
@@ -174,10 +177,10 @@ function Scene({
       <color attach="background" args={["#ecebef"]} />
       <ambientLight intensity={1.2} />
       <directionalLight
-        castShadow
+        castShadow={quality === "high"}
         intensity={2.2}
         position={[4, 8, 5]}
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={quality === "high" ? [1024, 1024] : [512, 512]}
       />
       <PerspectiveCamera makeDefault position={[10, 8, 12]} fov={48} />
       <Bounds clip margin={1.18}>
@@ -226,6 +229,19 @@ function WebGLFallback() {
   );
 }
 
+function LoadingOverlay() {
+  const { active, progress, item } = useProgress();
+  if (!active) return null;
+  return (
+    <div className="digital-twin-loading" role="status">
+      <strong>Po ngarkohet modeli 3D…</strong>
+      <span>{Math.round(progress)}%</span>
+      <div><i style={{ width: `${progress}%` }} /></div>
+      {item && <small>{item.split("/").at(-1)}</small>}
+    </div>
+  );
+}
+
 export function DigitalTwinCanvas({
   modelUrl,
   onModelLoaded,
@@ -233,14 +249,29 @@ export function DigitalTwinCanvas({
   cameraMode = "overview",
   firstPersonReset = 0,
   focusTarget,
+  quality = "auto",
   children,
 }) {
   if (!supportsWebGL()) return <WebGLFallback />;
+  const resolvedQuality = resolveGraphicsQuality(quality, {
+    hardwareConcurrency: navigator.hardwareConcurrency,
+    deviceMemory: navigator.deviceMemory,
+    reducedMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+  });
 
   return (
     <CanvasErrorBoundary fallback={<WebGLFallback />}>
       <div className="digital-twin-canvas" aria-label="Pamja 3D e laboratorit">
-        <Canvas shadows dpr={[1, 1.5]} gl={{ antialias: true, powerPreference: "high-performance" }}>
+        <LoadingOverlay />
+        <Canvas
+          shadows={resolvedQuality === "high"}
+          dpr={resolvedQuality === "high" ? [1, 1.5] : 1}
+          gl={{
+            antialias: resolvedQuality === "high",
+            powerPreference:
+              resolvedQuality === "high" ? "high-performance" : "low-power",
+          }}
+        >
           <Suspense fallback={null}>
             <Scene
               modelUrl={modelUrl}
@@ -249,6 +280,7 @@ export function DigitalTwinCanvas({
               cameraMode={cameraMode}
               firstPersonReset={firstPersonReset}
               focusTarget={focusTarget}
+              quality={resolvedQuality}
             >
               {children}
             </Scene>

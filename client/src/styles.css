@@ -1621,6 +1621,11 @@ a {
   font-weight: 700;
 }
 
+.digital-twin-toolbar .digital-twin-quality-select {
+  min-width: 150px;
+  margin-left: auto;
+}
+
 .digital-twin-toolbar select {
   min-height: 44px;
   border: 1px solid var(--border);
@@ -1649,6 +1654,42 @@ a {
 .digital-twin-canvas {
   width: 100%;
   height: 620px;
+}
+
+.digital-twin-loading {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 7px;
+  padding: 24px;
+  background: rgba(17, 24, 39, 0.9);
+  color: #fff;
+}
+
+.digital-twin-loading > div {
+  overflow: hidden;
+  width: min(280px, 70vw);
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.digital-twin-loading i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #6c7653;
+}
+
+.digital-twin-loading small {
+  max-width: 300px;
+  overflow: hidden;
+  color: #c9c4d3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .digital-twin-help {
@@ -2087,6 +2128,10 @@ a {
   .digital-twin-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .digital-twin-toolbar .digital-twin-quality-select {
+    margin-left: 0;
   }
 
   .digital-twin-stage,

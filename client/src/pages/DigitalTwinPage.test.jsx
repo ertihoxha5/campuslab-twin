@@ -229,6 +229,19 @@ describe("DigitalTwinPage", () => {
     );
   });
 
+  it("passes an explicit graphics quality preference to the canvas", async () => {
+    const user = userEvent.setup();
+    mockLaboratoryApi();
+    render(<DigitalTwinPage />);
+    await screen.findByRole("option", { name: "Laboratori Test (TEST-01)" });
+
+    await user.selectOptions(screen.getByLabelText("Cilësia 3D"), "low");
+
+    expect(canvasSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ quality: "low" }),
+    );
+  });
+
   it("shows an honest empty state when no laboratory is available", async () => {
     api.get.mockResolvedValue({ data: { laboratories: [] } });
     render(<DigitalTwinPage />);

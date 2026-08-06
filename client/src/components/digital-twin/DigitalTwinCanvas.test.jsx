@@ -11,6 +11,7 @@ vi.mock("@react-three/drei", () => ({
   Grid: () => null,
   OrbitControls: () => null,
   PerspectiveCamera: () => null,
+  useProgress: () => ({ active: false, progress: 0, item: "" }),
 }));
 
 describe("DigitalTwinCanvas", () => {
