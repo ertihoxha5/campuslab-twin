@@ -73,6 +73,11 @@ const MaintenancePage = lazy(() =>
     default: module.MaintenancePage,
   })),
 );
+const EnergyPage = lazy(() =>
+  import("@/pages/EnergyPage.jsx").then((module) => ({
+    default: module.EnergyPage,
+  })),
+);
 
 const laboratoryPage = (Page) => (
   <Suspense fallback={<p className="workspace-loading">Po ngarkohet faqja…</p>}>
@@ -132,12 +137,7 @@ export default function App() {
               />
               <Route
                 path="energjia"
-                element={
-                  <WorkspaceSectionPage
-                    title="Konsumi i energjisë"
-                    description="Konsumi i matur dhe historiku energjetik."
-                  />
-                }
+                element={laboratoryPage(EnergyPage)}
               />
             </Route>
             <Route
