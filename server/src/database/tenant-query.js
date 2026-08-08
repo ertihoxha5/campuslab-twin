@@ -26,6 +26,7 @@ export const tenantTables = Object.freeze([
   "maintenance_evidence",
   "simulation_scenarios",
   "simulation_runs",
+  "simulation_run_events",
   "reports",
   "notifications",
   "activity_logs",
