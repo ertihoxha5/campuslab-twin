@@ -9,6 +9,30 @@ const transitions = {
 
 export function createSimulatorRepository(pool) {
   return {
+    async previewSource(context) {
+      const laboratory = await findAccessibleLaboratory(pool, {
+        ...context,
+        lock: false,
+      });
+      if (!laboratory) return { invalidLaboratory: true };
+      const rows = await query(
+        pool,
+        `SELECT id, name, scenario_type AS scenarioType,
+                configuration_json AS configuration, seed_value AS seedValue
+         FROM simulation_scenarios
+         WHERE university_id = ? AND laboratory_id = ? AND id = ?
+           AND status = 'active'
+         LIMIT 1`,
+        [context.universityId, context.laboratoryId, context.scenarioId],
+      );
+      if (!rows[0]) return { invalidScenario: true };
+      return {
+        ...rows[0],
+        id: String(rows[0].id),
+        configuration: parseJson(rows[0].configuration) ?? {},
+      };
+    },
+
     async status(context) {
       const laboratory = await findAccessibleLaboratory(pool, {
         ...context,

@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { requiresLaboratoryAssignment } from "../../middleware/require-laboratory-access.js";
 import { AppError } from "../../utils/app-error.js";
+import {
+  createInitialSimulationState,
+  generateSimulationStep,
+} from "./generator.js";
+import { buildScenarioConfiguration } from "./scenarios.js";
 
 const startSchema = z.object({
   scenarioId: z.coerce.number().int().positive().transform(String),
@@ -8,6 +13,11 @@ const startSchema = z.object({
 });
 
 const validId = (value) => /^[1-9]\d*$/.test(String(value));
+
+const previewSchema = z.object({
+  scenarioId: z.coerce.number().int().positive().transform(String),
+  overrides: z.record(z.string(), z.unknown()).default({}),
+});
 
 const notFound = () =>
   new AppError({
@@ -33,6 +43,72 @@ function repositoryContext(context, laboratoryId) {
   };
 }
 
+async function previewScenario(repository, laboratoryId, input, context) {
+  if (!validId(laboratoryId)) throw notFound();
+  const parsed = previewSchema.safeParse(input);
+  if (!parsed.success)
+    throw validationError(
+      "Preview i skenarit nuk është i vlefshëm.",
+      parsed.error,
+    );
+  const source = validateResult(
+    await repository.previewSource({
+      ...repositoryContext(context, laboratoryId),
+      scenarioId: parsed.data.scenarioId,
+    }),
+  );
+  const built = buildScenarioConfiguration({
+    scenarioType: source.scenarioType,
+    storedConfiguration: source.configuration,
+    overrides: parsed.data.overrides,
+  });
+  if (built.invalidScenarioType) throw notFound();
+  if (built.validationError) {
+    throw validationError(
+      "Konfigurimi i skenarit nuk është i vlefshëm.",
+      built.validationError,
+    );
+  }
+  let state = createInitialSimulationState(built.configuration);
+  const timeline = [];
+  for (let tick = 1; tick <= built.previewTicks; tick += 1) {
+    const step = generateSimulationStep({
+      seed: source.seedValue,
+      sensors: [],
+      previousState: state,
+      configuration: built.configuration,
+      recordedAt: new Date(tick * 1000).toISOString(),
+    });
+    state = step.state;
+    timeline.push({ tick, values: step.state.values, event: step.event });
+  }
+  return {
+    scenario: {
+      id: source.id,
+      name: source.name,
+      type: built.scenarioType,
+      label: built.label,
+    },
+    configuration: built.configuration,
+    timeline,
+    persisted: false,
+  };
+}
+
+function validationError(message, error) {
+  return new AppError({
+    status: 422,
+    code: "VALIDATION_ERROR",
+    message,
+    details: Object.fromEntries(
+      error.issues.map((issue) => [
+        String(issue.path.join(".") || "form"),
+        [issue.message],
+      ]),
+    ),
+  });
+}
+
 function validateResult(result) {
   if (!result || result.invalidLaboratory || result.invalidScenario) {
     throw notFound();
@@ -51,6 +127,10 @@ function validateResult(result) {
 
 export function createSimulatorService({ repository, coordinator }) {
   return {
+    async preview(laboratoryId, input, context) {
+      return previewScenario(repository, laboratoryId, input, context);
+    },
+
     async status(laboratoryId, context) {
       if (!validId(laboratoryId)) throw notFound();
       const result = await repository.status(

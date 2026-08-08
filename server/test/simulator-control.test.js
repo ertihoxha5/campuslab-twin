@@ -44,6 +44,45 @@ test("simulator service uses authenticated tenant context and rejects duplicate 
   assert.equal(calls[0].restrictToAssignments, true);
 });
 
+test("scenario preview is deterministic, tenant-scoped, and does not persist", async () => {
+  const calls = [];
+  const service = createSimulatorService({
+    repository: {
+      async previewSource(input) {
+        calls.push(input);
+        return {
+          id: "4",
+          name: "Rritje temperature",
+          scenarioType: "temperature_rise",
+          configuration: { ambientTemperature: 21 },
+          seedValue: 741,
+        };
+      },
+    },
+  });
+  const context = {
+    universityId: "7",
+    userId: "9",
+    roles: ["lab_manager"],
+    ipAddress: "127.0.0.1",
+  };
+  const input = {
+    scenarioId: "4",
+    overrides: { startTick: 2, durationTicks: 2, previewTicks: 4 },
+  };
+
+  const first = await service.preview("15", input, context);
+  const second = await service.preview("15", input, context);
+
+  assert.deepEqual(first, second);
+  assert.equal(first.persisted, false);
+  assert.equal(first.timeline.length, 4);
+  assert.equal(first.timeline[1].event.type, "temperature_rise");
+  assert.equal(calls[0].universityId, "7");
+  assert.equal(calls[0].laboratoryId, "15");
+  assert.equal(calls[0].scenarioId, "4");
+});
+
 test("simulation start locks the laboratory and persists one audited active run", async () => {
   const events = [];
   const calls = [];
@@ -246,6 +285,10 @@ before(async () => {
       captured = { action: "start", laboratoryId, input, context };
       return { id: "51", status: "running" };
     },
+    async preview(laboratoryId, input, context) {
+      captured = { action: "preview", laboratoryId, input, context };
+      return { persisted: false, timeline: [] };
+    },
     async pause(laboratoryId, context) {
       captured = { action: "pause", laboratoryId, context };
       return { id: "51", status: "paused" };
@@ -300,6 +343,18 @@ test("simulator control routes require permission and derive tenant context", as
   assert.equal(captured.context.universityId, "7");
   assert.equal(captured.context.userId, "9");
   assert.equal(captured.laboratoryId, "15");
+
+  const previewed = await fetch(
+    `${baseUrl}/api/simulator/laboratories/15/preview`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ scenarioId: "4", overrides: {} }),
+    },
+  );
+  assert.equal(previewed.status, 200);
+  assert.equal(captured.action, "preview");
+  assert.equal(captured.context.universityId, "7");
 
   for (const action of ["pause", "resume", "stop"]) {
     const response = await fetch(

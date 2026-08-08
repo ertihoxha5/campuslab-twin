@@ -83,6 +83,14 @@ export function generateSimulationStep({
 
   const timestamp = normalizeTimestamp(recordedAt);
   const readings = sensors
+    .filter(
+      (sensor) =>
+        !(
+          event?.type === "sensor_offline" &&
+          (!event.targetSensorId ||
+            String(sensor.id) === String(event.targetSensorId))
+        ),
+    )
     .filter((sensor) => Object.hasOwn(values, sensor.sensorType))
     .map((sensor) => {
       const sensorNoise =
@@ -149,6 +157,9 @@ function calculateTargets({ configuration, event, previousValues, random }) {
     }
     if (event.type === "smoke_incident") smokeTarget = 12 * intensity;
     if (event.type === "power_spike") powerMultiplier += 0.65 * intensity;
+    if (event.type === "energy_saving") {
+      powerMultiplier *= Math.max(0.25, 1 - 0.3 * intensity);
+    }
     if (event.type === "temperature_rise") temperatureOffset = 5 * intensity;
   }
 

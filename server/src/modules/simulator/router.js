@@ -27,6 +27,18 @@ export function createSimulatorRouter({ service, authenticateTenant }) {
   );
 
   router.post(
+    "/laboratories/:laboratoryId/preview",
+    async (request, response) => {
+      const preview = await service.preview(
+        request.params.laboratoryId,
+        request.body,
+        context(request),
+      );
+      return success(response, { data: { preview } });
+    },
+  );
+
+  router.post(
     "/laboratories/:laboratoryId/start",
     async (request, response) => {
       const run = await service.start(
