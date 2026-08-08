@@ -342,12 +342,12 @@ export function createSimulatorRepository(pool) {
                WHERE user_account.university_id = ?
                  AND user_account.status = 'active'
                  AND user_account.deleted_at IS NULL
-                 AND role.name IN (
+                 AND role.code IN (
                    'university_admin', 'lab_manager', 'technician',
                    'academic_staff', 'observer'
                  )
                  AND (
-                   role.name = 'university_admin'
+                   role.code = 'university_admin'
                    OR EXISTS (
                      SELECT 1 FROM user_laboratory_assignments assignment
                      WHERE assignment.university_id = user_account.university_id

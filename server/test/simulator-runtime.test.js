@@ -221,6 +221,11 @@ test("runtime persistence is atomic and tenant-scoped", async () => {
   const result = JSON.parse(update.parameters[0]);
   assert.equal(result.readingCount, 3);
   assert.equal(result.energyReadingCount, 1);
+  const recipientQuery = calls.find(({ sql }) =>
+    sql.includes("SELECT DISTINCT user_account.id"),
+  );
+  assert.match(recipientQuery.sql, /role\.code IN/);
+  assert.doesNotMatch(recipientQuery.sql, /role\.name/);
   assert.equal(result.generatorState.tick, 3);
 });
 
