@@ -10,6 +10,7 @@ import { buildScenarioConfiguration } from "./scenarios.js";
 const startSchema = z.object({
   scenarioId: z.coerce.number().int().positive().transform(String),
   samplingIntervalSeconds: z.coerce.number().int().min(1).max(3600).default(60),
+  overrides: z.record(z.string(), z.unknown()).default({}),
 });
 
 const validId = (value) => /^[1-9]\d*$/.test(String(value));
@@ -122,6 +123,13 @@ function validateResult(result) {
   if (result.invalidState) {
     throw conflict("Simulimi nuk është në gjendjen e duhur për këtë veprim.");
   }
+  if (result.invalidConfiguration) {
+    throw new AppError({
+      status: 422,
+      code: "VALIDATION_ERROR",
+      message: "Konfigurimi i skenarit nuk është i vlefshëm.",
+    });
+  }
   return result;
 }
 
@@ -192,6 +200,17 @@ export function createSimulatorService({ repository, coordinator }) {
 
     async stop(laboratoryId, context) {
       return transition(repository, coordinator, "stop", laboratoryId, context);
+    },
+
+    async reset(laboratoryId, context) {
+      if (!validId(laboratoryId)) throw notFound();
+      await coordinator?.stop({
+        universityId: context.universityId,
+        laboratoryId,
+      });
+      return validateResult(
+        await repository.reset(repositoryContext(context, laboratoryId)),
+      );
     },
   };
 }

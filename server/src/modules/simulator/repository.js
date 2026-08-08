@@ -1,4 +1,6 @@
 import { query, withTransaction } from "../../database/query.js";
+import { createInitialSimulationState } from "./generator.js";
+import { buildScenarioConfiguration } from "./scenarios.js";
 
 const activeStatuses = ["queued", "running", "paused"];
 const transitions = {
@@ -94,8 +96,18 @@ export function createSimulatorRepository(pool) {
         );
         const scenario = scenarios[0];
         if (!scenario) return { invalidScenario: true };
+        const built = buildScenarioConfiguration({
+          scenarioType: scenario.scenarioType,
+          storedConfiguration: parseJson(scenario.configuration) ?? {},
+          overrides: context.overrides,
+        });
+        if (built.validationError || built.invalidScenarioType) {
+          return { invalidConfiguration: true };
+        }
+        const configuration = built.configuration;
+        const baselineState = createInitialSimulationState(configuration);
         const input = {
-          configuration: parseJson(scenario.configuration) ?? {},
+          configuration,
           samplingIntervalSeconds: context.samplingIntervalSeconds,
           generatorVersion: 1,
         };
@@ -103,8 +115,9 @@ export function createSimulatorRepository(pool) {
           connection,
           `INSERT INTO simulation_runs (
              university_id, laboratory_id, scenario_id, started_by_user_id,
-             status, seed_value, input_json, started_at
-           ) VALUES (?, ?, ?, ?, 'running', ?, ?, UTC_TIMESTAMP(3))`,
+             status, seed_value, input_json, configuration_snapshot_json,
+             baseline_state_json, result_json, started_at
+           ) VALUES (?, ?, ?, ?, 'running', ?, ?, ?, ?, ?, UTC_TIMESTAMP(3))`,
           [
             context.universityId,
             context.laboratoryId,
@@ -112,6 +125,9 @@ export function createSimulatorRepository(pool) {
             context.userId,
             scenario.seedValue,
             JSON.stringify(input),
+            JSON.stringify(configuration),
+            JSON.stringify(baselineState),
+            JSON.stringify({ generatorState: baselineState }),
           ],
         );
         const run = {
@@ -123,7 +139,18 @@ export function createSimulatorRepository(pool) {
           status: "running",
           seedValue: scenario.seedValue,
           input,
+          baselineState,
         };
+        await appendRunEvent(connection, {
+          ...context,
+          runId: run.id,
+          eventType: "started",
+          eventData: {
+            scenarioId: context.scenarioId,
+            configuration,
+            baselineState,
+          },
+        });
         await writeAudit(connection, {
           ...context,
           runId: run.id,
@@ -171,6 +198,16 @@ export function createSimulatorRepository(pool) {
            WHERE university_id = ? AND laboratory_id = ? AND id = ?`,
           [transition.to, context.universityId, context.laboratoryId, run.id],
         );
+        await appendRunEvent(connection, {
+          ...context,
+          runId: String(run.id),
+          eventType: {
+            pause: "paused",
+            resume: "resumed",
+            stop: "stopped",
+          }[context.action],
+          eventData: { previousStatus: run.status, status: transition.to },
+        });
         const actionLabels = {
           pause: "simulation.paused",
           resume: "simulation.resumed",
@@ -188,6 +225,70 @@ export function createSimulatorRepository(pool) {
           laboratoryId: String(context.laboratoryId),
           scenarioName: run.scenarioName,
           status: transition.to,
+        };
+      });
+    },
+
+    async reset(context) {
+      return withTransaction(pool, async (connection) => {
+        const laboratory = await findAccessibleLaboratory(connection, context);
+        if (!laboratory) return { invalidLaboratory: true };
+        const rows = await query(
+          connection,
+          `SELECT run.id, run.status, run.baseline_state_json AS baselineState,
+                  scenario.name AS scenarioName
+           FROM simulation_runs run
+           INNER JOIN simulation_scenarios scenario
+             ON scenario.id = run.scenario_id
+            AND scenario.university_id = run.university_id
+           WHERE run.university_id = ? AND run.laboratory_id = ?
+           ORDER BY run.id DESC LIMIT 1 FOR UPDATE`,
+          [context.universityId, context.laboratoryId],
+        );
+        const run = rows[0];
+        if (!run) return { noActiveRun: true };
+        const baselineState = parseJson(run.baselineState);
+        if (!baselineState) return { invalidState: true };
+        await query(
+          connection,
+          `UPDATE simulation_runs
+           SET status = 'stopped',
+               result_json = JSON_OBJECT('generatorState', CAST(? AS JSON)),
+               outcome_json = JSON_OBJECT(
+                 'resetFromStatus', ?, 'baselineRestored', TRUE
+               ),
+               reset_by_user_id = ?, reset_at = UTC_TIMESTAMP(3),
+               ended_at = COALESCE(ended_at, UTC_TIMESTAMP(3))
+           WHERE university_id = ? AND laboratory_id = ? AND id = ?`,
+          [
+            JSON.stringify(baselineState),
+            run.status,
+            context.userId,
+            context.universityId,
+            context.laboratoryId,
+            run.id,
+          ],
+        );
+        await appendRunEvent(connection, {
+          ...context,
+          runId: String(run.id),
+          eventType: "reset",
+          eventData: { previousStatus: run.status, baselineState },
+        });
+        await writeAudit(connection, {
+          ...context,
+          runId: String(run.id),
+          action: "simulation.reset",
+          description: `U rivendos simulimi ${run.scenarioName} në baseline.`,
+          metadata: { previousStatus: run.status, baselineRestored: true },
+        });
+        return {
+          id: String(run.id),
+          laboratoryId: String(context.laboratoryId),
+          scenarioName: run.scenarioName,
+          status: "stopped",
+          baselineState,
+          reset: true,
         };
       });
     },
@@ -419,6 +520,31 @@ export function createSimulatorRepository(pool) {
            WHERE university_id = ? AND laboratory_id = ? AND id = ?`,
           [JSON.stringify(result), universityId, laboratoryId, runId],
         );
+        await appendRunEvent(connection, {
+          universityId,
+          runId,
+          eventType: "reading_generated",
+          eventData: {
+            readingCount: readings.length,
+            energyReadingCount: energyReadings.length,
+            generatorState,
+            event,
+          },
+          occurredAt: recordedAt,
+        });
+        for (const alert of alerts.filter(({ created }) => created)) {
+          await appendRunEvent(connection, {
+            universityId,
+            runId,
+            eventType: "alert_generated",
+            eventData: {
+              alertId: alert.id,
+              severity: alert.severity,
+              category: alert.category,
+            },
+            occurredAt: recordedAt,
+          });
+        }
         return { persisted: true, alerts };
       });
     },
@@ -438,6 +564,36 @@ export function createSimulatorRepository(pool) {
       );
     },
   };
+}
+
+async function appendRunEvent(
+  connection,
+  { universityId, runId, userId = null, eventType, eventData, occurredAt },
+) {
+  const rows = await query(
+    connection,
+    `SELECT COALESCE(MAX(sequence_number), 0) + 1 AS nextSequence
+     FROM simulation_run_events
+     WHERE university_id = ? AND simulation_run_id = ?
+     FOR UPDATE`,
+    [universityId, runId],
+  );
+  return query(
+    connection,
+    `INSERT INTO simulation_run_events (
+       university_id, simulation_run_id, user_id, event_type,
+       sequence_number, event_data_json, occurred_at
+     ) VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, UTC_TIMESTAMP(3)))`,
+    [
+      universityId,
+      runId,
+      userId,
+      eventType,
+      Number(rows[0]?.nextSequence ?? 1),
+      JSON.stringify(eventData ?? {}),
+      occurredAt ?? null,
+    ],
+  );
 }
 
 async function findAccessibleLaboratory(

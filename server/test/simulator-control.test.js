@@ -129,7 +129,15 @@ test("simulation start locks the laboratory and persists one audited active run"
   assert.equal(run.status, "running");
   assert.equal(run.seedValue, 741);
   assert.deepEqual(run.input, {
-    configuration: { baselineOccupancy: 12 },
+    configuration: {
+      baselineOccupancy: 12,
+      abnormalEvent: {
+        type: "energy_saving",
+        intensity: 1,
+        startTick: 3,
+        durationTicks: 8,
+      },
+    },
     samplingIntervalSeconds: 30,
     generatorVersion: 1,
   });
@@ -144,6 +152,60 @@ test("simulation start locks the laboratory and persists one audited active run"
       .filter(({ sql }) => /simulation_runs|simulation_scenarios/.test(sql))
       .every(({ parameters }) => parameters.includes("7")),
   );
+});
+
+test("reset restores the persisted baseline and records tenant user attribution", async () => {
+  const events = [];
+  const calls = [];
+  const baselineState = { tick: 0, values: { temperature: 22, power: 0 } };
+  const connection = transactionConnection(events, calls, (sql) => {
+    if (sql.includes("FROM laboratories laboratory")) return [[{ id: 15 }]];
+    if (sql.includes("SELECT run.id") && sql.includes("baseline_state_json")) {
+      return [
+        [
+          {
+            id: 51,
+            status: "running",
+            baselineState: JSON.stringify(baselineState),
+            scenarioName: "Kursim energjie",
+          },
+        ],
+      ];
+    }
+    return [{ affectedRows: 1 }];
+  });
+  const repository = createSimulatorRepository({
+    async getConnection() {
+      return connection;
+    },
+  });
+
+  const reset = await repository.reset({
+    universityId: "7",
+    userId: "9",
+    restrictToAssignments: false,
+    laboratoryId: "15",
+    ipAddress: "127.0.0.1",
+  });
+
+  assert.equal(reset.reset, true);
+  assert.deepEqual(reset.baselineState, baselineState);
+  const update = calls.find(({ sql }) => sql.includes("reset_by_user_id = ?"));
+  assert.deepEqual(update.parameters.slice(0, 3), [
+    JSON.stringify(baselineState),
+    "running",
+    "9",
+  ]);
+  const timeline = calls.find(
+    ({ sql, parameters }) =>
+      sql.includes("INSERT INTO simulation_run_events") &&
+      parameters.includes("reset"),
+  );
+  assert.ok(timeline);
+  assert.ok(
+    calls.some(({ parameters }) => parameters.includes("simulation.reset")),
+  );
+  assert.deepEqual(events, ["begin", "commit", "release"]);
 });
 
 test("pause, resume and stop enforce deterministic persisted transitions", async () => {
@@ -301,6 +363,10 @@ before(async () => {
       captured = { action: "stop", laboratoryId, context };
       return { id: "51", status: "stopped" };
     },
+    async reset(laboratoryId, context) {
+      captured = { action: "reset", laboratoryId, context };
+      return { id: "51", status: "stopped", reset: true };
+    },
   };
   server = createServer(
     createApp({
@@ -356,7 +422,7 @@ test("simulator control routes require permission and derive tenant context", as
   assert.equal(captured.action, "preview");
   assert.equal(captured.context.universityId, "7");
 
-  for (const action of ["pause", "resume", "stop"]) {
+  for (const action of ["pause", "resume", "stop", "reset"]) {
     const response = await fetch(
       `${baseUrl}/api/simulator/laboratories/15/${action}`,
       { method: "POST", headers },

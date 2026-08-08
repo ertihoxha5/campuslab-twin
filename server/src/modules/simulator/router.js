@@ -53,7 +53,7 @@ export function createSimulatorRouter({ service, authenticateTenant }) {
     },
   );
 
-  for (const action of ["pause", "resume", "stop"]) {
+  for (const action of ["pause", "resume", "stop", "reset"]) {
     router.post(
       `/laboratories/:laboratoryId/${action}`,
       async (request, response) => {
@@ -65,6 +65,7 @@ export function createSimulatorRouter({ service, authenticateTenant }) {
           pause: "Simulimi u pezullua me sukses.",
           resume: "Simulimi rifilloi me sukses.",
           stop: "Simulimi u ndal me sukses.",
+          reset: "Simulimi u rikthye në gjendjen bazë me sukses.",
         };
         return success(response, {
           data: { run, message: messages[action] },

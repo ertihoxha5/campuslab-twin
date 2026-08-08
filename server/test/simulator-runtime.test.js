@@ -209,7 +209,9 @@ test("runtime persistence is atomic and tenant-scoped", async () => {
     sql.includes("INSERT INTO energy_readings"),
   );
   assert.match(energyInsert.sql, /'simulated'/);
-  const alertInsert = calls.find(({ sql }) => sql.includes("INSERT INTO alerts"));
+  const alertInsert = calls.find(({ sql }) =>
+    sql.includes("INSERT INTO alerts"),
+  );
   assert.match(alertInsert.sql, /ON DUPLICATE KEY UPDATE/);
   assert.ok(alertInsert.parameters.includes("sensor:1:threshold"));
   const notificationInsert = calls.find(({ sql }) =>
@@ -217,7 +219,7 @@ test("runtime persistence is atomic and tenant-scoped", async () => {
   );
   assert.deepEqual(notificationInsert.parameters.slice(0, 3), ["7", 9, 71]);
   assert.ok(calls.every(({ parameters }) => parameters.includes("7")));
-  const update = calls.at(-1);
+  const update = calls.find(({ sql }) => sql.includes("SET result_json = ?"));
   const result = JSON.parse(update.parameters[0]);
   assert.equal(result.readingCount, 3);
   assert.equal(result.energyReadingCount, 1);
