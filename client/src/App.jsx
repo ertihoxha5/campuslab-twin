@@ -78,6 +78,11 @@ const EnergyPage = lazy(() =>
     default: module.EnergyPage,
   })),
 );
+const SimulationsPage = lazy(() =>
+  import("@/pages/SimulationsPage.jsx").then((module) => ({
+    default: module.SimulationsPage,
+  })),
+);
 
 const laboratoryPage = (Page) => (
   <Suspense fallback={<p className="workspace-loading">Po ngarkohet faqja…</p>}>
@@ -135,10 +140,7 @@ export default function App() {
                 path="monitorimi"
                 element={laboratoryPage(RealtimeMonitoringPage)}
               />
-              <Route
-                path="energjia"
-                element={laboratoryPage(EnergyPage)}
-              />
+              <Route path="energjia" element={laboratoryPage(EnergyPage)} />
             </Route>
             <Route
               element={
@@ -192,12 +194,7 @@ export default function App() {
             <Route element={<PermissionRoute anyOf={["simulations.run"]} />}>
               <Route
                 path="simulimet"
-                element={
-                  <WorkspaceSectionPage
-                    title="Simulimet"
-                    description="Skenarët e kontrolluar të laboratorëve."
-                  />
-                }
+                element={laboratoryPage(SimulationsPage)}
               />
             </Route>
             <Route
