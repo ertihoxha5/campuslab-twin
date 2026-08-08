@@ -339,6 +339,21 @@ before(async () => {
     next();
   };
   const simulatorService = {
+    async scenarios(laboratoryId, context) {
+      captured = { action: "scenarios", laboratoryId, context };
+      return [{ id: "4", scenarioType: "temperature_rise" }];
+    },
+    async runs(laboratoryId, input, context) {
+      captured = { action: "runs", laboratoryId, input, context };
+      return {
+        items: [{ id: "51", status: "stopped" }],
+        pagination: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+      };
+    },
+    async runDetail(laboratoryId, runId, context) {
+      captured = { action: "runDetail", laboratoryId, runId, context };
+      return { id: runId, timeline: [] };
+    },
     async status(laboratoryId, context) {
       captured = { action: "status", laboratoryId, context };
       return { run: null };
@@ -393,6 +408,20 @@ test("simulator control routes require permission and derive tenant context", as
     "content-type": "application/json",
     "x-test-simulate": "true",
   };
+  for (const [path, action] of [
+    ["scenarios", "scenarios"],
+    ["runs?status=stopped", "runs"],
+    ["runs/51", "runDetail"],
+  ]) {
+    const response = await fetch(
+      `${baseUrl}/api/simulator/laboratories/15/${path}`,
+      { headers },
+    );
+    assert.equal(response.status, 200);
+    assert.equal(captured.action, action);
+    assert.equal(captured.context.universityId, "7");
+    assert.equal(captured.laboratoryId, "15");
+  }
   const started = await fetch(
     `${baseUrl}/api/simulator/laboratories/15/start`,
     {

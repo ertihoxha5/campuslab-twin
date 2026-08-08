@@ -26,6 +26,41 @@ export function createSimulatorRouter({ service, authenticateTenant }) {
     },
   );
 
+  router.get(
+    "/laboratories/:laboratoryId/scenarios",
+    async (request, response) => {
+      const scenarios = await service.scenarios(
+        request.params.laboratoryId,
+        context(request),
+      );
+      return success(response, { data: { scenarios } });
+    },
+  );
+
+  router.get("/laboratories/:laboratoryId/runs", async (request, response) => {
+    const result = await service.runs(
+      request.params.laboratoryId,
+      request.query,
+      context(request),
+    );
+    return success(response, {
+      data: { runs: result.items },
+      meta: { pagination: result.pagination },
+    });
+  });
+
+  router.get(
+    "/laboratories/:laboratoryId/runs/:runId",
+    async (request, response) => {
+      const run = await service.runDetail(
+        request.params.laboratoryId,
+        request.params.runId,
+        context(request),
+      );
+      return success(response, { data: { run } });
+    },
+  );
+
   router.post(
     "/laboratories/:laboratoryId/preview",
     async (request, response) => {

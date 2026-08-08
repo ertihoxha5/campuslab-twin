@@ -11,6 +11,142 @@ const transitions = {
 
 export function createSimulatorRepository(pool) {
   return {
+    async scenarios(context) {
+      const laboratory = await findAccessibleLaboratory(pool, {
+        ...context,
+        lock: false,
+      });
+      if (!laboratory) return { invalidLaboratory: true };
+      const rows = await query(
+        pool,
+        `SELECT id, name, scenario_type AS scenarioType, description,
+                configuration_json AS configuration, seed_value AS seedValue,
+                status, created_at AS createdAt, updated_at AS updatedAt
+         FROM simulation_scenarios
+         WHERE university_id = ? AND laboratory_id = ? AND status = 'active'
+         ORDER BY name, id`,
+        [context.universityId, context.laboratoryId],
+      );
+      return {
+        scenarios: rows.map((scenario) => ({
+          ...scenario,
+          id: String(scenario.id),
+          configuration: parseJson(scenario.configuration) ?? {},
+        })),
+      };
+    },
+
+    async runs(context) {
+      const laboratory = await findAccessibleLaboratory(pool, {
+        ...context,
+        lock: false,
+      });
+      if (!laboratory) return { invalidLaboratory: true };
+      const filters = ["run.university_id = ?", "run.laboratory_id = ?"];
+      const parameters = [context.universityId, context.laboratoryId];
+      if (context.status) {
+        filters.push("run.status = ?");
+        parameters.push(context.status);
+      }
+      const limit = Math.max(1, Math.trunc(Number(context.limit)) || 20);
+      const offset = Math.max(0, Math.trunc(Number(context.offset)) || 0);
+      const where = `WHERE ${filters.join(" AND ")}`;
+      const [items, totals] = await Promise.all([
+        query(
+          pool,
+          `SELECT run.id, run.laboratory_id AS laboratoryId,
+                  run.scenario_id AS scenarioId, scenario.name AS scenarioName,
+                  scenario.scenario_type AS scenarioType,
+                  run.status, run.started_by_user_id AS startedByUserId,
+                  starter.full_name AS startedByUserName,
+                  run.started_at AS startedAt, run.ended_at AS endedAt,
+                  run.reset_at AS resetAt, run.created_at AS createdAt,
+                  JSON_EXTRACT(run.result_json, '$.readingCount') AS readingCount,
+                  JSON_EXTRACT(run.result_json, '$.energyReadingCount') AS energyReadingCount
+           FROM simulation_runs run
+           INNER JOIN simulation_scenarios scenario
+             ON scenario.id = run.scenario_id
+            AND scenario.university_id = run.university_id
+           INNER JOIN users starter
+             ON starter.id = run.started_by_user_id
+            AND starter.university_id = run.university_id
+           ${where}
+           ORDER BY run.id DESC LIMIT ${limit} OFFSET ${offset}`,
+          parameters,
+        ),
+        query(
+          pool,
+          `SELECT COUNT(*) AS total FROM simulation_runs run ${where}`,
+          parameters,
+        ),
+      ]);
+      return {
+        items: items.map(normalizeRunListItem),
+        total: Number(totals[0]?.total ?? 0),
+      };
+    },
+
+    async runDetail(context) {
+      const laboratory = await findAccessibleLaboratory(pool, {
+        ...context,
+        lock: false,
+      });
+      if (!laboratory) return { invalidLaboratory: true };
+      const rows = await query(
+        pool,
+        `SELECT run.id, run.laboratory_id AS laboratoryId,
+                run.scenario_id AS scenarioId, scenario.name AS scenarioName,
+                scenario.scenario_type AS scenarioType, run.status,
+                run.seed_value AS seedValue, run.input_json AS input,
+                run.configuration_snapshot_json AS configurationSnapshot,
+                run.baseline_state_json AS baselineState,
+                run.result_json AS result, run.outcome_json AS outcome,
+                run.started_by_user_id AS startedByUserId,
+                starter.full_name AS startedByUserName,
+                run.reset_by_user_id AS resetByUserId,
+                resetter.full_name AS resetByUserName,
+                run.started_at AS startedAt, run.ended_at AS endedAt,
+                run.reset_at AS resetAt, run.created_at AS createdAt
+         FROM simulation_runs run
+         INNER JOIN simulation_scenarios scenario
+           ON scenario.id = run.scenario_id
+          AND scenario.university_id = run.university_id
+         INNER JOIN users starter
+           ON starter.id = run.started_by_user_id
+          AND starter.university_id = run.university_id
+         LEFT JOIN users resetter
+           ON resetter.id = run.reset_by_user_id
+          AND resetter.university_id = run.university_id
+         WHERE run.university_id = ? AND run.laboratory_id = ? AND run.id = ?
+         LIMIT 1`,
+        [context.universityId, context.laboratoryId, context.runId],
+      );
+      if (!rows[0]) return null;
+      const timeline = await query(
+        pool,
+        `SELECT id, user_id AS userId, event_type AS eventType,
+                sequence_number AS sequenceNumber,
+                event_data_json AS eventData, occurred_at AS occurredAt
+         FROM simulation_run_events
+         WHERE university_id = ? AND simulation_run_id = ?
+         ORDER BY sequence_number, id`,
+        [context.universityId, context.runId],
+      );
+      return {
+        ...normalizeRun(rows[0]),
+        configurationSnapshot: parseJson(rows[0].configurationSnapshot),
+        baselineState: parseJson(rows[0].baselineState),
+        outcome: parseJson(rows[0].outcome),
+        timeline: timeline.map((event) => ({
+          ...event,
+          id: String(event.id),
+          userId: event.userId == null ? null : String(event.userId),
+          sequenceNumber: Number(event.sequenceNumber),
+          eventData: parseJson(event.eventData) ?? {},
+        })),
+      };
+    },
+
     async previewSource(context) {
       const laboratory = await findAccessibleLaboratory(pool, {
         ...context,
@@ -661,6 +797,18 @@ function normalizeRun(run) {
     scenarioId: String(run.scenarioId),
     input: parseJson(run.input),
     result: parseJson(run.result),
+  };
+}
+
+function normalizeRunListItem(run) {
+  return {
+    ...run,
+    id: String(run.id),
+    laboratoryId: String(run.laboratoryId),
+    scenarioId: String(run.scenarioId),
+    startedByUserId: String(run.startedByUserId),
+    readingCount: Number(run.readingCount ?? 0),
+    energyReadingCount: Number(run.energyReadingCount ?? 0),
   };
 }
 

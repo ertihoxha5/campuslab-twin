@@ -20,6 +20,20 @@ const previewSchema = z.object({
   overrides: z.record(z.string(), z.unknown()).default({}),
 });
 
+const runStatuses = [
+  "queued",
+  "running",
+  "paused",
+  "completed",
+  "stopped",
+  "failed",
+];
+const runsSchema = z.object({
+  status: z.enum(runStatuses).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 const notFound = () =>
   new AppError({
     status: 404,
@@ -135,6 +149,52 @@ function validateResult(result) {
 
 export function createSimulatorService({ repository, coordinator }) {
   return {
+    async scenarios(laboratoryId, context) {
+      if (!validId(laboratoryId)) throw notFound();
+      return validateResult(
+        await repository.scenarios(repositoryContext(context, laboratoryId)),
+      ).scenarios;
+    },
+
+    async runs(laboratoryId, input, context) {
+      if (!validId(laboratoryId)) throw notFound();
+      const parsed = runsSchema.safeParse(input);
+      if (!parsed.success) {
+        throw validationError(
+          "Filtrat e historikut nuk janë të vlefshëm.",
+          parsed.error,
+        );
+      }
+      const { page, pageSize, status } = parsed.data;
+      const result = validateResult(
+        await repository.runs({
+          ...repositoryContext(context, laboratoryId),
+          status,
+          limit: pageSize,
+          offset: (page - 1) * pageSize,
+        }),
+      );
+      return {
+        items: result.items,
+        pagination: {
+          page,
+          pageSize,
+          total: result.total,
+          totalPages: Math.ceil(result.total / pageSize),
+        },
+      };
+    },
+
+    async runDetail(laboratoryId, runId, context) {
+      if (!validId(laboratoryId) || !validId(runId)) throw notFound();
+      const result = await repository.runDetail({
+        ...repositoryContext(context, laboratoryId),
+        runId: String(runId),
+      });
+      if (!result || result.invalidLaboratory) throw notFound();
+      return result;
+    },
+
     async preview(laboratoryId, input, context) {
       return previewScenario(repository, laboratoryId, input, context);
     },
