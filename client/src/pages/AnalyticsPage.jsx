@@ -4,6 +4,7 @@ import {
   BarChart3,
   CalendarDays,
   Database,
+  Lightbulb,
   RefreshCw,
 } from "lucide-react";
 import {
@@ -393,6 +394,67 @@ export function AnalyticsPage() {
                 </div>
               </article>
             </div>
+            <article className="analytics-panel analytics-recommendations-panel">
+              <header>
+                <div>
+                  <h2>Rekomandime të bazuara në rregulla</h2>
+                  <p>
+                    {analytics.recommendationMethod?.description ??
+                      "Rekomandimet krijohen nga pragje të dokumentuara, jo nga parashikime automatike."}
+                  </p>
+                </div>
+                <Lightbulb size={18} />
+              </header>
+              <div className="analytics-method">
+                <span>Metoda</span>
+                <strong>
+                  Rule-based · versioni{" "}
+                  {analytics.recommendationMethod?.version ?? "1.0"}
+                </strong>
+              </div>
+              {(analytics.recommendations ?? []).length ? (
+                <div className="analytics-recommendation-list">
+                  {analytics.recommendations.map((recommendation) => (
+                    <section
+                      className={`analytics-recommendation severity-${recommendation.severity}`}
+                      key={recommendation.ruleId}
+                    >
+                      <div className="analytics-rule-heading">
+                        <div>
+                          <span>Rregulli · {recommendation.ruleId}</span>
+                          <h3>{recommendation.title}</h3>
+                        </div>
+                        <strong>{recommendation.severity}</strong>
+                      </div>
+                      <p>{recommendation.explanation}</p>
+                      <div className="analytics-evidence">
+                        <span>Evidenca</span>
+                        <strong>
+                          {number(recommendation.evidence.observed)}{" "}
+                          {recommendation.evidence.unit}{" "}
+                          {recommendation.evidence.operator}{" "}
+                          {number(recommendation.evidence.threshold)}{" "}
+                          {recommendation.evidence.unit}
+                        </strong>
+                        <small>
+                          {number(recommendation.evidence.samples, 0)} mostra të
+                          analizuara
+                        </small>
+                      </div>
+                      <div className="analytics-action">
+                        <span>Veprimi i rekomanduar</span>
+                        <p>{recommendation.action}</p>
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <p className="analytics-empty-copy">
+                  Asnjë rregull nuk u aktivizua për të dhënat dhe filtrat
+                  aktualë.
+                </p>
+              )}
+            </article>
           </>
         )
       )}

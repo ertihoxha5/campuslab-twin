@@ -17,6 +17,28 @@ const analytics = {
     },
   ],
   provenance: [{ source: "simulated", samples: 4 }],
+  recommendationMethod: {
+    type: "rule_based",
+    version: "1.0",
+    description:
+      "Rekomandimet krijohen nga rregulla dhe pragje të dokumentuara.",
+  },
+  recommendations: [
+    {
+      ruleId: "temperature.high",
+      title: "Temperaturë e lartë",
+      severity: "high",
+      explanation: "Vlera e matur 30 °C është mbi pragun 28 °C.",
+      evidence: {
+        observed: 30,
+        operator: ">",
+        threshold: 28,
+        unit: "°C",
+        samples: 4,
+      },
+      action: "Kontrolloni ventilimin dhe burimet e nxehtësisë.",
+    },
+  ],
 };
 
 beforeEach(() => {
@@ -44,6 +66,13 @@ describe("AnalyticsPage", () => {
     expect(await screen.findByText("22,5 °C")).toBeInTheDocument();
     expect(screen.getByText("4 mostra")).toBeInTheDocument();
     expect(screen.getByText("Simuluar")).toBeInTheDocument();
+    expect(screen.getByText("Temperaturë e lartë")).toBeInTheDocument();
+    expect(screen.getByText("Rregulli · temperature.high")).toBeInTheDocument();
+    expect(screen.getByText("30 °C > 28 °C")).toBeInTheDocument();
+    expect(
+      screen.getByText("Kontrolloni ventilimin dhe burimet e nxehtësisë."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Rule-based · versioni 1.0")).toBeInTheDocument();
     const request = api.get.mock.calls.find(([url]) =>
       url.startsWith("/api/analytics/history?"),
     )[0];
