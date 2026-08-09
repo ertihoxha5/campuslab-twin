@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requiresLaboratoryAssignment } from "../../middleware/require-laboratory-access.js";
 import { AppError } from "../../utils/app-error.js";
+import { buildRuleBasedRecommendations } from "./recommendations.js";
 
 const metrics = [
   "temperature",
@@ -53,13 +54,14 @@ export function createAnalyticsService({ repository, maximumRangeDays = 366 }) {
         startAt,
         endAt,
       });
+      const summary = normalizeSummary(result.summary);
       return {
         filters: {
           ...parsed.data,
           startAt: startAt.toISOString(),
           endAt: endAt.toISOString(),
         },
-        summary: normalizeSummary(result.summary),
+        summary,
         series: result.series.map((point) => ({
           ...point,
           value: Number(point.value ?? 0),
@@ -71,6 +73,16 @@ export function createAnalyticsService({ repository, maximumRangeDays = 366 }) {
           ...item,
           samples: Number(item.samples ?? 0),
         })),
+        recommendations: buildRuleBasedRecommendations({
+          metric: parsed.data.metric,
+          summary,
+        }),
+        recommendationMethod: {
+          type: "rule_based",
+          version: "1.0",
+          description:
+            "Rekomandimet krijohen nga rregulla dhe pragje të dokumentuara.",
+        },
       };
     },
   };
