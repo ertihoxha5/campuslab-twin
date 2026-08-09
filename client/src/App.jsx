@@ -83,6 +83,11 @@ const SimulationsPage = lazy(() =>
     default: module.SimulationsPage,
   })),
 );
+const AnalyticsPage = lazy(() =>
+  import("@/pages/AnalyticsPage.jsx").then((module) => ({
+    default: module.AnalyticsPage,
+  })),
+);
 
 const laboratoryPage = (Page) => (
   <Suspense fallback={<p className="workspace-loading">Po ngarkohet faqja…</p>}>
@@ -172,15 +177,7 @@ export default function App() {
               />
             </Route>
             <Route element={<PermissionRoute anyOf={["reports.view"]} />}>
-              <Route
-                path="analitika"
-                element={
-                  <WorkspaceSectionPage
-                    title="Analitika"
-                    description="Analiza e të dhënave të universitetit."
-                  />
-                }
-              />
+              <Route path="analitika" element={laboratoryPage(AnalyticsPage)} />
               <Route
                 path="raportet"
                 element={
