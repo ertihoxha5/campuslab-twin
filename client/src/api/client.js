@@ -83,4 +83,23 @@ export const api = {
   patch: (path, body, options) =>
     apiRequest(path, { ...options, method: "PATCH", body }),
   delete: (path, options) => apiRequest(path, { ...options, method: "DELETE" }),
+  async download(path, options = {}) {
+    const response = await fetch(`${apiBaseUrl}${path}`, {
+      credentials: "include",
+      signal: options.signal,
+      headers: { Accept: "application/pdf, text/csv" },
+    });
+    if (!response.ok) {
+      const payload = await parsePayload(response);
+      notifyInvalidTenantSession(path, response.status, payload?.error?.code);
+      throw new ApiError({
+        status: response.status,
+        code: payload?.error?.code,
+        message: payload?.error?.message ?? "Raporti nuk mund të shkarkohej.",
+      });
+    }
+    const disposition = response.headers.get("content-disposition") ?? "";
+    const filename = disposition.match(/filename="([^"]+)"/)?.[1] ?? "raporti";
+    return { blob: await response.blob(), filename };
+  },
 };

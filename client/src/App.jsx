@@ -25,6 +25,7 @@ import { PermissionRoute } from "@/routes/PermissionRoute.jsx";
 import { UniversityLayout } from "@/layouts/UniversityLayout.jsx";
 import { UniversityOverviewPage } from "@/pages/UniversityOverviewPage.jsx";
 import { WorkspaceSectionPage } from "@/pages/WorkspaceSectionPage.jsx";
+import { ReportsPage } from "@/pages/ReportsPage.jsx";
 import { ForbiddenPage } from "@/pages/ForbiddenPage.jsx";
 import { WorkspaceNotFoundPage } from "@/pages/WorkspaceNotFoundPage.jsx";
 
@@ -178,15 +179,7 @@ export default function App() {
             </Route>
             <Route element={<PermissionRoute anyOf={["reports.view"]} />}>
               <Route path="analitika" element={laboratoryPage(AnalyticsPage)} />
-              <Route
-                path="raportet"
-                element={
-                  <WorkspaceSectionPage
-                    title="Raportet"
-                    description="Raportet e autorizuara të universitetit."
-                  />
-                }
-              />
+              <Route path="raportet" element={laboratoryPage(ReportsPage)} />
             </Route>
             <Route element={<PermissionRoute anyOf={["simulations.run"]} />}>
               <Route
