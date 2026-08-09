@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requiresLaboratoryAssignment } from "../../middleware/require-laboratory-access.js";
 import { AppError } from "../../utils/app-error.js";
+import { exportReport } from "./exporter.js";
 
 const reportTypes = [
   "laboratory",
@@ -26,7 +27,11 @@ const createSchema = z.object({
   dataSource: z.enum(["physical", "simulated", "mixed"]),
 });
 
-export function createReportService({ repository, clock = () => new Date() }) {
+export function createReportService({
+  repository,
+  analyticsService,
+  clock = () => new Date(),
+}) {
   return {
     async list(input, context) {
       const parsed = listSchema.safeParse(input);
@@ -55,6 +60,21 @@ export function createReportService({ repository, clock = () => new Date() }) {
       if (periodEnd <= periodStart)
         throw validationError("Fundi i periudhës duhet të jetë pas fillimit.");
       const generatedAt = clock();
+      const snapshot = analyticsService
+        ? await analyticsService.history(
+            {
+              metric: reportMetric(parsed.data.reportType),
+              interval: "daily",
+              laboratoryId: parsed.data.laboratoryId,
+              startAt: periodStart.toISOString(),
+              endAt: periodEnd.toISOString(),
+            },
+            context,
+          )
+        : undefined;
+      const detectedDataSource = snapshot
+        ? dataSourceFrom(snapshot.provenance)
+        : parsed.data.dataSource;
       const report = await repository.create({
         ...parsed.data,
         periodStart,
@@ -64,10 +84,12 @@ export function createReportService({ repository, clock = () => new Date() }) {
         restrictToAssignments: requiresLaboratoryAssignment(context),
         parameters: {
           format: parsed.data.format,
-          dataSource: parsed.data.dataSource,
+          dataSource: detectedDataSource,
+          requestedDataSource: parsed.data.dataSource,
           generatedAt: generatedAt.toISOString(),
           periodStart: periodStart.toISOString(),
           periodEnd: periodEnd.toISOString(),
+          ...(snapshot ? { snapshot } : {}),
         },
       });
       if (!report)
@@ -78,7 +100,52 @@ export function createReportService({ repository, clock = () => new Date() }) {
         });
       return normalizeReport(report);
     },
+
+    async download(reportId, context) {
+      if (!/^\d+$/.test(String(reportId))) throw reportNotFound();
+      const report = await repository.findAccessibleById({
+        reportId: String(reportId),
+        universityId: context.universityId,
+        userId: context.userId,
+        restrictToAssignments: requiresLaboratoryAssignment(context),
+      });
+      if (!report) throw reportNotFound();
+      const normalized = normalizeReport(report);
+      const exported = await exportReport(normalized);
+      return {
+        ...exported,
+        filename: `raporti-${normalized.id}.${exported.extension}`,
+      };
+    },
   };
+}
+
+function reportMetric(reportType) {
+  return {
+    energy: "power",
+    alerts: "alerts",
+    equipment_health: "equipment_health",
+    maintenance: "maintenance",
+    simulation: "equipment_health",
+    laboratory: "temperature",
+  }[reportType];
+}
+
+function dataSourceFrom(provenance = []) {
+  const sources = provenance
+    .filter((item) => Number(item.samples) > 0)
+    .map((item) => item.source);
+  if (!sources.length) return "unknown";
+  if (sources.length > 1) return "mixed";
+  return sources[0] === "simulated" ? "simulated" : "physical";
+}
+
+function reportNotFound() {
+  return new AppError({
+    status: 404,
+    code: "REPORT_NOT_FOUND",
+    message: "Raporti nuk ekziston ose nuk ju lejohet.",
+  });
 }
 
 function normalizeReport(report) {

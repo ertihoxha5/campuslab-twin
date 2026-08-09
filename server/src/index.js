@@ -189,6 +189,7 @@ const analyticsService = createAnalyticsService({
 });
 const reportService = createReportService({
   repository: createReportRepository(databasePool),
+  analyticsService,
 });
 const energyAnomalyWorker = createEnergyAnomalyWorker({
   repository: createEnergyAnomalyRepository(databasePool),

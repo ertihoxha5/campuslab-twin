@@ -99,6 +99,22 @@ export function createReportRepository(pool) {
       );
       return rows[0] ?? null;
     },
+
+    async findAccessibleById(context) {
+      const rows = await query(
+        pool,
+        `${reportSelect}
+         WHERE report.id = ? AND report.university_id = ?
+           AND report.deleted_at IS NULL AND ${assignmentScope()}`,
+        [
+          context.reportId,
+          context.universityId,
+          context.restrictToAssignments ? 1 : 0,
+          context.userId,
+        ],
+      );
+      return rows[0] ?? null;
+    },
   };
 }
 
