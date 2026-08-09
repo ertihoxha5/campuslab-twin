@@ -60,6 +60,8 @@ import { createEnergyRepository } from "./modules/energy/repository.js";
 import { createEnergyService } from "./modules/energy/service.js";
 import { createEnergyAnomalyRepository } from "./modules/energy/anomaly-repository.js";
 import { createEnergyAnomalyWorker } from "./modules/energy/anomaly-worker.js";
+import { createAnalyticsRepository } from "./modules/analytics/repository.js";
+import { createAnalyticsService } from "./modules/analytics/service.js";
 
 loadEnvironmentFile();
 
@@ -152,14 +154,19 @@ const readingHistoryMaintenance = createReadingHistoryMaintenance({
   aggregationIntervalMinutes: config.READING_AGGREGATION_INTERVAL_MINUTES,
   maintenanceIntervalMinutes: config.READING_MAINTENANCE_INTERVAL_MINUTES,
   onError: (error) =>
-    console.error("Mirëmbajtja e historikut të leximeve dështoi.", error.message),
+    console.error(
+      "Mirëmbajtja e historikut të leximeve dështoi.",
+      error.message,
+    ),
 });
 const alertService = createAlertService({
   repository: createAlertRepository(databasePool),
   realtimePublisher,
 });
 const maintenanceRepository = createMaintenanceRepository(databasePool);
-const maintenanceService = createMaintenanceService({ repository: maintenanceRepository });
+const maintenanceService = createMaintenanceService({
+  repository: maintenanceRepository,
+});
 const maintenanceEvidenceService = createMaintenanceEvidenceService({
   repository: maintenanceRepository,
   storage: createMaintenanceEvidenceStorage(),
@@ -167,15 +174,24 @@ const maintenanceEvidenceService = createMaintenanceEvidenceService({
 const maintenanceReminderWorker = createMaintenanceReminderWorker({
   repository: createMaintenanceReminderRepository(databasePool),
   onError: (error) =>
-    console.error("Gjenerimi i njoftimeve të mirëmbajtjes dështoi.", error.message),
+    console.error(
+      "Gjenerimi i njoftimeve të mirëmbajtjes dështoi.",
+      error.message,
+    ),
 });
 const energyService = createEnergyService({
   repository: createEnergyRepository(databasePool),
 });
+const analyticsService = createAnalyticsService({
+  repository: createAnalyticsRepository(databasePool),
+});
 const energyAnomalyWorker = createEnergyAnomalyWorker({
   repository: createEnergyAnomalyRepository(databasePool),
   onError: (error) =>
-    console.error("Gjenerimi i njoftimeve të energjisë dështoi.", error.message),
+    console.error(
+      "Gjenerimi i njoftimeve të energjisë dështoi.",
+      error.message,
+    ),
 });
 const app = createApp({
   clientOrigin: config.CLIENT_ORIGIN,
@@ -197,6 +213,7 @@ const app = createApp({
   maintenanceService,
   maintenanceEvidenceService,
   energyService,
+  analyticsService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
