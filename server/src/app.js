@@ -23,6 +23,7 @@ import { createAlertRouter } from "./modules/alerts/router.js";
 import { createMaintenanceRouter } from "./modules/maintenance/router.js";
 import { createEnergyRouter } from "./modules/energy/router.js";
 import { createAnalyticsRouter } from "./modules/analytics/router.js";
+import { createReportRouter } from "./modules/reports/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -49,6 +50,7 @@ export function createApp({
   maintenanceEvidenceService,
   energyService,
   analyticsService,
+  reportService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
@@ -225,6 +227,16 @@ export function createApp({
       "/api/analytics",
       createAnalyticsRouter({
         service: analyticsService,
+        authenticateTenant: tenantAuthentication,
+      }),
+    );
+  }
+
+  if (reportService && tenantAuthentication) {
+    app.use(
+      "/api/reports",
+      createReportRouter({
+        service: reportService,
         authenticateTenant: tenantAuthentication,
       }),
     );
