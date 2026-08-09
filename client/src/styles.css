@@ -83,9 +83,22 @@
 .report-row span { color: var(--muted); font-size: .68rem; }
 .report-row strong { font-size: .76rem; }
 .report-row-main strong { font-size: .86rem; }
+.report-row-actions { display: flex !important; gap: .4rem !important; }
+.report-preview { grid-column: 1 / -1; padding: 1rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); }
+.report-preview-heading { display: flex; justify-content: space-between; gap: 1rem; }
+.report-preview-heading h3 { margin: .2rem 0 0; font-size: 1rem; }
+.report-preview-heading > strong { color: var(--muted); font-size: .7rem; }
+.report-preview-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; margin-top: 1rem; }
+.report-preview-metrics > div, .report-preview-data { display: grid; gap: .25rem; padding: .75rem; border: 1px solid var(--border); border-radius: .65rem; background: var(--background); }
+.report-preview span { color: var(--muted); font-size: .68rem; }
+.report-preview-data { margin-top: .6rem; }
+.report-preview-recommendations { display: grid; gap: .6rem; margin-top: .8rem; }
+.report-preview-recommendations > div { padding: .75rem; border-left: 3px solid var(--grape); background: var(--background); }
+.report-preview-recommendations p { margin: .25rem 0; font-size: .75rem; }
+.report-preview-recommendations small { color: var(--muted); }
 .reports-empty { margin: 0; padding: 2rem; color: var(--muted); text-align: center; font-size: .8rem; }
 @media (max-width: 1250px) { .reports-generator form { grid-template-columns: repeat(4, minmax(140px, 1fr)); } .report-row { grid-template-columns: minmax(220px, 1.5fr) repeat(2, 1fr); } }
-@media (max-width: 700px) { .reports-heading, .reports-heading-actions { align-items: stretch; } .reports-heading-actions > * { flex: 1; } .reports-generator form, .reports-toolbar, .report-row { grid-template-columns: 1fr; } .report-row { padding: 1rem 0; } }
+@media (max-width: 700px) { .reports-heading, .reports-heading-actions { align-items: stretch; } .reports-heading-actions > * { flex: 1; } .reports-generator form, .reports-toolbar, .report-row, .report-preview-metrics { grid-template-columns: 1fr; } .report-row { padding: 1rem 0; } .report-preview-heading { display: grid; } }
 @media print { .university-sidebar, .university-topbar, .reports-generator, .reports-toolbar, .reports-heading-actions, .report-row button { display: none !important; } .university-main, .university-content { margin: 0 !important; padding: 0 !important; } .reports-panel { border: 0; padding: 0; } .report-row { break-inside: avoid; grid-template-columns: 2fr repeat(4, 1fr); } }
 
 :root[data-theme="dark"] {

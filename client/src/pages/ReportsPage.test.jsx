@@ -17,7 +17,23 @@ const report = {
   reportType: "energy",
   periodStart: "2026-08-01T00:00:00.000Z",
   periodEnd: "2026-08-09T00:00:00.000Z",
-  parameters: { format: "pdf", dataSource: "mixed" },
+  parameters: {
+    format: "pdf",
+    dataSource: "mixed",
+    generatedAt: "2026-08-09T10:30:00.000Z",
+    snapshot: {
+      summary: { value: 22.5, minimum: 20, maximum: 25, samples: 4 },
+      series: [{ bucketStart: "2026-08-01", value: 22.5 }],
+      recommendations: [
+        {
+          ruleId: "temperature.high",
+          title: "Temperaturë e lartë",
+          explanation: "Vlera kaloi pragun.",
+          action: "Kontrolloni ventilimin.",
+        },
+      ],
+    },
+  },
 };
 
 beforeEach(() => {
@@ -49,6 +65,10 @@ describe("ReportsPage", () => {
       screen.getByText("Universiteti Test · Laboratori A"),
     ).toBeInTheDocument();
     expect(screen.getByText("I kombinuar")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Shiko/i }));
+    expect(screen.getByText("Pamja e raportit")).toBeInTheDocument();
+    expect(screen.getByText("Temperaturë e lartë")).toBeInTheDocument();
+    expect(screen.getByText("1 intervale të ruajtura")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Formati"), {
       target: { value: "csv" },
     });

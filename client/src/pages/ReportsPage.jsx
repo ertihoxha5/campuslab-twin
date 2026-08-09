@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, FileText, Plus, Printer, RefreshCw } from "lucide-react";
+import {
+  Download,
+  Eye,
+  FileText,
+  Plus,
+  Printer,
+  RefreshCw,
+} from "lucide-react";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
@@ -42,6 +49,7 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [downloadingId, setDownloadingId] = useState("");
+  const [previewId, setPreviewId] = useState("");
   const [message, setMessage] = useState({ type: "", text: "" });
 
   const query = useMemo(() => {
@@ -330,16 +338,29 @@ export function ReportsPage() {
                   <span>Autori</span>
                   <strong>{report.generatedByName}</strong>
                 </div>
-                <Button
-                  size="sm"
-                  onClick={() => download(report)}
-                  disabled={downloadingId === report.id}
-                >
-                  <Download size={15} />{" "}
-                  {downloadingId === report.id
-                    ? "Po shkarkohet…"
-                    : report.parameters.format.toUpperCase()}
-                </Button>
+                <div className="report-row-actions">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setPreviewId(previewId === report.id ? "" : report.id)
+                    }
+                  >
+                    <Eye size={15} />{" "}
+                    {previewId === report.id ? "Mbyll" : "Shiko"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => download(report)}
+                    disabled={downloadingId === report.id}
+                  >
+                    <Download size={15} />{" "}
+                    {downloadingId === report.id
+                      ? "Po shkarkohet…"
+                      : report.parameters.format.toUpperCase()}
+                  </Button>
+                </div>
+                {previewId === report.id && <ReportPreview report={report} />}
               </section>
             ))}
           </div>
@@ -354,9 +375,76 @@ export function ReportsPage() {
 }
 
 function formatDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat("sq-AL", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  }).format(new Date(value));
+  }).format(date);
+}
+
+function ReportPreview({ report }) {
+  const snapshot = report.parameters.snapshot;
+  return (
+    <div className="report-preview">
+      <div className="report-preview-heading">
+        <div>
+          <span>Pamja e raportit</span>
+          <h3>{report.title}</h3>
+        </div>
+        <strong>
+          Gjeneruar më {formatDate(report.parameters.generatedAt)}
+        </strong>
+      </div>
+      {snapshot ? (
+        <>
+          <div className="report-preview-metrics">
+            <div>
+              <span>Vlera mesatare</span>
+              <strong>{snapshot.summary?.value ?? "—"}</strong>
+            </div>
+            <div>
+              <span>Minimumi</span>
+              <strong>{snapshot.summary?.minimum ?? "—"}</strong>
+            </div>
+            <div>
+              <span>Maksimumi</span>
+              <strong>{snapshot.summary?.maximum ?? "—"}</strong>
+            </div>
+            <div>
+              <span>Mostra</span>
+              <strong>{snapshot.summary?.samples ?? 0}</strong>
+            </div>
+          </div>
+          <div className="report-preview-data">
+            <span>Të dhënat historike</span>
+            <strong>
+              {snapshot.series?.length ?? 0} intervale të ruajtura
+            </strong>
+          </div>
+          {snapshot.recommendations?.length ? (
+            <div className="report-preview-recommendations">
+              <span>Rekomandimet e aktivizuara</span>
+              {snapshot.recommendations.map((item) => (
+                <div key={item.ruleId}>
+                  <strong>{item.title}</strong>
+                  <p>{item.explanation}</p>
+                  <small>{item.action}</small>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="reports-empty">
+              Asnjë rekomandim nuk u aktivizua për këtë snapshot.
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="reports-empty">
+          Ky raport i vjetër nuk përmban snapshot analitik.
+        </p>
+      )}
+    </div>
+  );
 }
