@@ -72,6 +72,8 @@ import { createUniversityLogoService } from "./modules/university-profile/logo-s
 import { createUniversityLogoStorage } from "./storage/university-logo-storage.js";
 import { createUniversitySettingsRepository } from "./modules/university-settings/repository.js";
 import { createUniversitySettingsService } from "./modules/university-settings/service.js";
+import { createAccountRepository } from "./modules/account/repository.js";
+import { createAccountService } from "./modules/account/service.js";
 
 loadEnvironmentFile();
 
@@ -212,6 +214,9 @@ const universityLogoService = createUniversityLogoService({
 const universitySettingsService = createUniversitySettingsService({
   repository: createUniversitySettingsRepository(databasePool),
 });
+const accountService = createAccountService({
+  repository: createAccountRepository(databasePool),
+});
 const energyAnomalyWorker = createEnergyAnomalyWorker({
   repository: createEnergyAnomalyRepository(databasePool),
   onError: (error) =>
@@ -246,6 +251,7 @@ const app = createApp({
   universityProfileService,
   universityLogoService,
   universitySettingsService,
+  accountService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
