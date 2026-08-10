@@ -39,6 +39,21 @@ beforeEach(() => {
           },
         },
       };
+    if (url === "/api/university/users/12")
+      return {
+        data: {
+          user: { ...user, lastLoginAt: "2026-08-10T09:00:00.000Z" },
+          activity: [
+            {
+              id: "31",
+              action: "auth.login",
+              description: "Përdoruesi u kyç me sukses.",
+              actorName: "Ada Testuese",
+              createdAt: "2026-08-10T09:00:00.000Z",
+            },
+          ],
+        },
+      };
     throw new Error(`Unexpected GET ${url}`);
   });
   api.post.mockResolvedValue({
@@ -104,6 +119,21 @@ describe("UniversityUsersPage", () => {
         }),
       ),
     );
+  });
+
+  it("loads the full profile and recent activity on demand", async () => {
+    render(<UniversityUsersPage />);
+    fireEvent.click(await screen.findByRole("button", { name: /Shiko/i }));
+    expect(
+      await screen.findByRole("dialog", { name: "Ada Testuese" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Hyrje në sistem")).toBeInTheDocument();
+    expect(screen.getByText("Përdoruesi u kyç me sukses.")).toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledWith("/api/university/users/12");
+    fireEvent.click(screen.getByRole("button", { name: "Mbyll profilin" }));
+    expect(
+      screen.queryByRole("dialog", { name: "Ada Testuese" }),
+    ).not.toBeInTheDocument();
   });
 
   it("edits access and changes the user status", async () => {

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  Clock3,
+  Eye,
   Pencil,
   Plus,
   RefreshCw,
@@ -44,6 +46,8 @@ export function UniversityUsersPage() {
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -93,6 +97,18 @@ export function UniversityUsersPage() {
       laboratoryIds: user.laboratories.map((item) => item.id),
     });
     setShowForm(true);
+  }
+  async function openProfile(userId) {
+    setLoadingProfile(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const response = await api.get(`/api/university/users/${userId}`);
+      setProfile(response.data);
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setLoadingProfile(false);
+    }
   }
   async function save(event) {
     event.preventDefault();
@@ -229,6 +245,14 @@ export function UniversityUsersPage() {
                 {statusLabels[user.status]}
               </span>
               <div className="university-user-actions">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openProfile(user.id)}
+                  disabled={loadingProfile}
+                >
+                  <Eye size={15} /> Shiko
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -430,6 +454,99 @@ export function UniversityUsersPage() {
           </section>
         </div>
       )}
+      {profile && (
+        <div className="workspace-modal-backdrop" role="presentation">
+          <section
+            className="workspace-modal university-user-profile-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="user-profile-title"
+          >
+            <header>
+              <div>
+                <p className="eyebrow">Profili i përdoruesit</p>
+                <h2 id="user-profile-title">{profile.user.fullName}</h2>
+                <p>{profile.user.email}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Mbyll profilin"
+                onClick={() => setProfile(null)}
+              >
+                <X size={18} />
+              </Button>
+            </header>
+            <div className="university-user-profile-grid">
+              <div>
+                <span>Statusi</span>
+                <strong>{statusLabels[profile.user.status]}</strong>
+              </div>
+              <div>
+                <span>Pozita</span>
+                <strong>{profile.user.jobTitle || "—"}</strong>
+              </div>
+              <div>
+                <span>Telefoni</span>
+                <strong>{profile.user.phone || "—"}</strong>
+              </div>
+              <div>
+                <span>Hyrja e fundit</span>
+                <strong>{dateTime(profile.user.lastLoginAt)}</strong>
+              </div>
+            </div>
+            <section className="university-user-profile-access">
+              <div>
+                <span>Rolet</span>
+                <p>
+                  {profile.user.roles
+                    .map((role) => roleLabels[role] ?? role)
+                    .join(", ")}
+                </p>
+              </div>
+              <div>
+                <span>Laboratorët</span>
+                <p>
+                  {profile.user.laboratories
+                    .map((item) => item.name)
+                    .join(", ") || "Pa caktim"}
+                </p>
+              </div>
+            </section>
+            <section className="university-user-timeline">
+              <div className="university-user-timeline-heading">
+                <div>
+                  <h3>Aktiviteti i fundit</h3>
+                  <p>Veprimet e përdoruesit dhe ndryshimet administrative.</p>
+                </div>
+                <Clock3 size={18} />
+              </div>
+              {profile.activity.length ? (
+                <ol>
+                  {profile.activity.map((item) => (
+                    <li key={item.id}>
+                      <span>
+                        <Clock3 size={14} />
+                      </span>
+                      <div>
+                        <strong>{activityTitle(item.action)}</strong>
+                        <p>{item.description}</p>
+                        <small>
+                          {item.actorName} · {dateTime(item.createdAt)}
+                        </small>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="university-user-no-activity">
+                  Nuk ka ende aktivitet të regjistruar.
+                </p>
+              )}
+            </section>
+          </section>
+        </div>
+      )}
     </section>
   );
 }
@@ -438,4 +555,27 @@ function toggle(values, value) {
   return values.includes(value)
     ? values.filter((item) => item !== value)
     : [...values, value];
+}
+
+function dateTime(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("sq-AL", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function activityTitle(action) {
+  return (
+    {
+      "auth.login": "Hyrje në sistem",
+      "auth.logout": "Dalje nga sistemi",
+      "university.user.created": "Përdoruesi u krijua",
+      "university.user.updated": "Profili u përditësua",
+      "university.user.deactivated": "Përdoruesi u çaktivizua",
+      "university.user.reactivated": "Përdoruesi u riaktivizua",
+    }[action] ?? "Aktivitet i regjistruar"
+  );
 }

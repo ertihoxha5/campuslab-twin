@@ -131,8 +131,29 @@
 .university-user-checks strong { font-size: .76rem; }
 .university-user-checks small { color: var(--muted); font-size: .66rem; }
 .university-user-modal footer { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; }
+.university-user-profile-modal { width: min(760px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; }
+.university-user-profile-modal > header p:last-child { margin: .25rem 0 0; color: var(--muted); font-size: .75rem; }
+.university-user-profile-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+.university-user-profile-grid > div, .university-user-profile-access > div { display: grid; gap: .25rem; padding: .75rem; border: 1px solid var(--border); border-radius: .65rem; background: var(--surface); }
+.university-user-profile-grid span, .university-user-profile-access span { color: var(--muted); font-size: .68rem; }
+.university-user-profile-grid strong { font-size: .78rem; }
+.university-user-profile-access { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: .6rem; }
+.university-user-profile-access p { margin: 0; font-size: .78rem; }
+.university-user-timeline { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.university-user-timeline-heading { display: flex; justify-content: space-between; gap: 1rem; }
+.university-user-timeline-heading h3 { margin: 0; font-size: .9rem; }
+.university-user-timeline-heading p { margin: .2rem 0 0; color: var(--muted); font-size: .68rem; }
+.university-user-timeline-heading svg { color: var(--grape); }
+.university-user-timeline ol { display: grid; gap: .75rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+.university-user-timeline li { display: flex; gap: .7rem; }
+.university-user-timeline li > span { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto; border-radius: 50%; background: var(--grape-soft); color: var(--grape); }
+.university-user-timeline li > div { display: grid; gap: .2rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border); flex: 1; }
+.university-user-timeline li strong { font-size: .76rem; }
+.university-user-timeline li p { margin: 0; font-size: .72rem; }
+.university-user-timeline li small, .university-user-no-activity { color: var(--muted); font-size: .66rem; }
+.university-user-no-activity { margin: 1rem 0 0; }
 @media (max-width: 1100px) { .university-user-row { grid-template-columns: minmax(220px, 1.2fr) repeat(2, 1fr); } }
-@media (max-width: 700px) { .university-user-filters, .university-user-row, .university-user-form-grid, .university-user-checks { grid-template-columns: 1fr; } .university-user-actions { flex-wrap: wrap; } }
+@media (max-width: 700px) { .university-user-filters, .university-user-row, .university-user-form-grid, .university-user-checks, .university-user-profile-grid, .university-user-profile-access { grid-template-columns: 1fr; } .university-user-actions { flex-wrap: wrap; } }
 
 :root[data-theme="dark"] {
   color: #f7f5f9;
