@@ -78,6 +78,66 @@ test("university user service maps assignments and excludes platform roles", asy
   assert.equal(options.laboratories[0].id, "15");
 });
 
+test("user detail and recent activity are scoped by tenant and target user", async () => {
+  const calls = [];
+  const repository = createUniversityUserRepository({
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      if (sql.includes("FROM activity_logs")) {
+        return [[{ id: 31, action: "auth.login", metadata: "{}" }]];
+      }
+      return [
+        [
+          {
+            id: 12,
+            universityId: 7,
+            fullName: "Ada Test",
+            roleCodes: "technician",
+            laboratoryAssignments: "15::Laboratori A",
+          },
+        ],
+      ];
+    },
+  });
+  const result = await repository.detail({ universityId: "7", userId: "12" });
+  assert.equal(result.activity.length, 1);
+  assert.ok(
+    calls.every(
+      ({ sql }) =>
+        sql.includes("university_id = ?") ||
+        sql.includes("user.university_id = ?"),
+    ),
+  );
+  assert.ok(calls.every(({ parameters }) => parameters.includes("7")));
+  assert.ok(calls.every(({ parameters }) => parameters.includes("12")));
+});
+
+test("user detail normalizes profile, assignments, and activity metadata", async () => {
+  const service = createUniversityUserService({
+    repository: {
+      async detail({ universityId, userId }) {
+        assert.equal(universityId, "7");
+        assert.equal(userId, "12");
+        return {
+          user: {
+            id: 12,
+            universityId: 7,
+            roleCodes: "technician",
+            laboratoryAssignments: "15::Laboratori A",
+          },
+          activity: [
+            { id: 31, action: "auth.login", metadata: '{"source":"web"}' },
+          ],
+        };
+      },
+    },
+  });
+  const result = await service.detail("12", { universityId: "7" });
+  assert.equal(result.user.laboratories[0].name, "Laboratori A");
+  assert.equal(result.activity[0].id, "31");
+  assert.equal(result.activity[0].metadata.source, "web");
+});
+
 test("user creation hashes passwords and derives tenant identity from context", async () => {
   let captured;
   const service = createUniversityUserService({
@@ -311,6 +371,10 @@ before(async () => {
         async options() {
           return { roles: [], laboratories: [] };
         },
+        async detail(_id, context) {
+          captured = { context };
+          return { user: { id: "12" }, activity: [] };
+        },
         async create(_input, context) {
           captured = { context };
           return { id: "12" };
@@ -349,6 +413,11 @@ test("university user endpoints require management permission and server tenant"
     ).status,
     200,
   );
+  const detail = await fetch(`${baseUrl}/api/university/users/12`, {
+    headers: { "x-test-users": "true" },
+  });
+  assert.equal(detail.status, 200);
+  assert.equal(captured.context.universityId, "7");
   const created = await fetch(`${baseUrl}/api/university/users`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-test-users": "true" },

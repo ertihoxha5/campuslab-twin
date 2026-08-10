@@ -71,6 +71,37 @@ export function createUniversityUserRepository(pool) {
       return { roles, laboratories };
     },
 
+    async detail({ universityId, userId }) {
+      const users = await query(
+        pool,
+        `${userSelect}
+         WHERE user.id = ? AND user.university_id = ? AND user.deleted_at IS NULL
+         GROUP BY user.id, user.university_id, user.full_name, user.email,
+                  user.phone, user.job_title, user.status, user.last_login_at,
+                  user.created_at
+         LIMIT 1`,
+        [userId, universityId],
+      );
+      if (!users[0]) return null;
+      const activity = await query(
+        pool,
+        `SELECT activity.id, activity.action, activity.description,
+                activity.metadata_json AS metadata,
+                COALESCE(actor.full_name, 'Sistemi') AS actorName,
+                activity.created_at AS createdAt
+           FROM activity_logs activity
+           LEFT JOIN users actor ON actor.id = activity.user_id
+             AND actor.university_id = activity.university_id
+          WHERE activity.university_id = ?
+            AND (activity.user_id = ? OR
+                 (activity.entity_type = 'user' AND activity.entity_id = ?))
+          ORDER BY activity.created_at DESC, activity.id DESC
+          LIMIT 20`,
+        [universityId, userId, userId],
+      );
+      return { user: users[0], activity };
+    },
+
     async create(input) {
       return withTransaction(pool, async (connection) => {
         const rolePlaceholders = input.roles.map(() => "?").join(", ");

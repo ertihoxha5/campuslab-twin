@@ -129,6 +129,26 @@ export function createUniversityUserService({
       };
     },
 
+    async detail(userId, context) {
+      if (!validId(userId)) throw userNotFound();
+      const result = await repository.detail({
+        universityId: context.universityId,
+        userId: String(userId),
+      });
+      if (!result) throw userNotFound();
+      return {
+        user: mapUser(result.user),
+        activity: result.activity.map((item) => ({
+          ...item,
+          id: String(item.id),
+          metadata:
+            typeof item.metadata === "string"
+              ? JSON.parse(item.metadata)
+              : item.metadata,
+        })),
+      };
+    },
+
     async create(input, context) {
       const parsed = createSchema.safeParse(input);
       if (!parsed.success)

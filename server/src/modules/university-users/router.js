@@ -15,6 +15,13 @@ export function createUniversityUserRouter({ service, authenticateTenant }) {
     const options = await service.options(context(request));
     return success(response, { data: { options } });
   });
+  router.get("/:userId", async (request, response) => {
+    const detail = await service.detail(
+      request.params.userId,
+      context(request),
+    );
+    return success(response, { data: detail });
+  });
   router.post("/", async (request, response) => {
     const user = await service.create(request.body, context(request));
     return success(response, {
