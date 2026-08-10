@@ -28,6 +28,7 @@ import { WorkspaceSectionPage } from "@/pages/WorkspaceSectionPage.jsx";
 import { ReportsPage } from "@/pages/ReportsPage.jsx";
 import { UniversityUsersPage } from "@/pages/UniversityUsersPage.jsx";
 import { UniversitySettingsPage } from "@/pages/UniversitySettingsPage.jsx";
+import { AccountSettingsPage } from "@/pages/AccountSettingsPage.jsx";
 import { ForbiddenPage } from "@/pages/ForbiddenPage.jsx";
 import { WorkspaceNotFoundPage } from "@/pages/WorkspaceNotFoundPage.jsx";
 
@@ -119,6 +120,7 @@ export default function App() {
           <Route path="aplikacioni" element={<UniversityLayout />}>
             <Route index element={<UniversityOverviewPage />} />
             <Route path="e-ndaluar" element={<ForbiddenPage />} />
+            <Route path="llogaria" element={<AccountSettingsPage />} />
             <Route element={<PermissionRoute anyOf={["laboratories.view"]} />}>
               <Route
                 path="laboratoret"

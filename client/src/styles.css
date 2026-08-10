@@ -201,6 +201,22 @@
 @media (max-width: 850px) { .university-settings-layout, .university-profile-form-grid { grid-template-columns: 1fr; } .settings-field-wide { grid-column: auto; } }
 @media (max-width: 1000px) { .university-preferences-grid { grid-template-columns: 1fr 1fr; } .university-notification-card { grid-column: 1 / -1; } }
 @media (max-width: 650px) { .university-preferences-grid, .university-setting-fields, .university-tariff-fields { grid-template-columns: 1fr; } .university-notification-card { grid-column: auto; } }
+.account-settings-page { display: grid; gap: 1rem; }
+.account-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 1rem; }
+.account-settings-card { padding: 1rem; border: 1px solid var(--border); border-radius: .9rem; background: var(--background); }
+.account-settings-card > header { display: flex; align-items: flex-start; gap: .7rem; margin-bottom: 1rem; }
+.account-settings-card > header > span { display: grid; place-items: center; flex: 0 0 38px; height: 38px; border-radius: .65rem; background: var(--grape-soft); color: var(--grape); }
+.account-settings-card h2 { margin: 0; font-size: .95rem; }
+.account-settings-card header p { margin: .25rem 0 0; color: var(--muted); font-size: .7rem; }
+.account-form-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.account-form-fields label { display: grid; gap: .35rem; }
+.account-form-fields label > span { color: var(--muted); font-size: .7rem; font-weight: 750; }
+.account-form-fields input { width: 100%; min-width: 0; min-height: 42px; padding: .65rem .75rem; border: 1px solid var(--border); border-radius: .65rem; background: var(--background); color: var(--text); }
+.account-security-card .account-form-fields { grid-template-columns: 1fr; }
+.account-password-help { margin: 0; color: var(--muted); font-size: .68rem; line-height: 1.55; }
+.account-settings-card footer { display: flex; justify-content: flex-end; margin-top: 1rem; }
+@media (max-width: 900px) { .account-settings-grid { grid-template-columns: 1fr; } }
+@media (max-width: 540px) { .account-form-fields { grid-template-columns: 1fr; } }
 
 :root[data-theme="dark"] {
   color: #f7f5f9;

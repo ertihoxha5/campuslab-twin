@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   Settings,
+  UserRound,
   Users,
   Wrench,
   X,
@@ -113,6 +114,7 @@ const navigation = [
     icon: Settings,
     permission: "university.profile.manage",
   },
+  { to: "/aplikacioni/llogaria", label: "Llogaria ime", icon: UserRound },
 ];
 
 function canView(item, permissions) {

@@ -9,7 +9,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const setSession = useAuthStore((state) => state.setSession);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(location.state?.message ?? "");
   const [loading, setLoading] = useState(false);
 
   async function submit(event) {
