@@ -15,6 +15,7 @@ import { SensorForm } from "@/components/SensorForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 import { sensorTypes } from "@/validation/sensor.js";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
 const statusLabels = {
   online: "Online",
@@ -42,6 +43,8 @@ export function SensorsPage() {
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const closeForm = useCallback(() => setShowForm(false), []);
+  const formDialogRef = useAccessibleDialog(showForm, closeForm);
 
   const loadSensors = useCallback(
     async ({ keepMessage = false } = {}) => {
@@ -296,6 +299,7 @@ export function SensorsPage() {
       {showForm && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={formDialogRef}
             className="workspace-modal sensor-form-modal"
             role="dialog"
             aria-modal="true"
@@ -309,7 +313,7 @@ export function SensorsPage() {
               <button
                 type="button"
                 aria-label="Mbyll formularin"
-                onClick={() => setShowForm(false)}
+                onClick={closeForm}
               >
                 <X size={20} />
               </button>
@@ -320,7 +324,7 @@ export function SensorsPage() {
               saving={saving}
               onLaboratoryChange={loadOptions}
               onSubmit={createSensor}
-              onCancel={() => setShowForm(false)}
+              onCancel={closeForm}
             />
           </section>
         </div>

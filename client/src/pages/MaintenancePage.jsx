@@ -14,6 +14,7 @@ import {
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
 const statusLabels = {
   planned: "Planifikuar",
@@ -79,6 +80,10 @@ export function MaintenancePage() {
   const [evidenceFile, setEvidenceFile] = useState(null);
   const [evidenceCaption, setEvidenceCaption] = useState("");
   const [selectedTask, setSelectedTask] = useState(null);
+  const closeCreate = useCallback(() => setShowCreate(false), []);
+  const closeTask = useCallback(() => setSelectedTask(null), []);
+  const createDialogRef = useAccessibleDialog(showCreate, closeCreate);
+  const taskDialogRef = useAccessibleDialog(Boolean(selectedTask), closeTask);
   const [transition, setTransition] = useState({
     status: "",
     notes: "",
@@ -220,16 +225,16 @@ export function MaintenancePage() {
     try {
       const body = new FormData();
       body.append("evidence", evidenceFile);
-      if (evidenceCaption.trim()) body.append("caption", evidenceCaption.trim());
+      if (evidenceCaption.trim())
+        body.append("caption", evidenceCaption.trim());
       const latestUpdate = selectedTask.history?.at(-1);
       if (latestUpdate?.id) body.append("maintenanceUpdateId", latestUpdate.id);
       const response = await api.post(
         `/api/maintenance/${selectedTask.id}/evidence`,
         body,
       );
-      const refreshed = (
-        await api.get(`/api/maintenance/${selectedTask.id}`)
-      ).data.task;
+      const refreshed = (await api.get(`/api/maintenance/${selectedTask.id}`))
+        .data.task;
       setSelectedTask(refreshed);
       setEvidenceFile(null);
       setEvidenceCaption("");
@@ -389,20 +394,18 @@ export function MaintenancePage() {
       {showCreate && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={createDialogRef}
             className="workspace-modal maintenance-modal"
             role="dialog"
             aria-modal="true"
+            aria-labelledby="maintenance-create-title"
           >
             <header>
               <div>
                 <span>Planifikim</span>
-                <h2>Detyrë e re</h2>
+                <h2 id="maintenance-create-title">Detyrë e re</h2>
               </div>
-              <button
-                type="button"
-                aria-label="Mbyll"
-                onClick={() => setShowCreate(false)}
-              >
+              <button type="button" aria-label="Mbyll" onClick={closeCreate}>
                 <X size={20} />
               </button>
             </header>
@@ -539,11 +542,7 @@ export function MaintenancePage() {
                 </label>
               </div>
               <footer>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowCreate(false)}
-                >
+                <Button type="button" variant="outline" onClick={closeCreate}>
                   Anulo
                 </Button>
                 <Button disabled={saving}>
@@ -557,20 +556,18 @@ export function MaintenancePage() {
       {selectedTask && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={taskDialogRef}
             className="workspace-modal maintenance-modal"
             role="dialog"
             aria-modal="true"
+            aria-labelledby="maintenance-detail-title"
           >
             <header>
               <div>
                 <span>{statusLabels[selectedTask.status]}</span>
-                <h2>{selectedTask.title}</h2>
+                <h2 id="maintenance-detail-title">{selectedTask.title}</h2>
               </div>
-              <button
-                type="button"
-                aria-label="Mbyll"
-                onClick={() => setSelectedTask(null)}
-              >
+              <button type="button" aria-label="Mbyll" onClick={closeTask}>
                 <X size={20} />
               </button>
             </header>
@@ -632,7 +629,9 @@ export function MaintenancePage() {
                           <a href={`/api/files/${item.fileId}`}>
                             {item.originalName}
                           </a>
-                          <small>{item.caption || formatDate(item.createdAt)}</small>
+                          <small>
+                            {item.caption || formatDate(item.createdAt)}
+                          </small>
                         </div>
                       </li>
                     ))}
@@ -642,14 +641,19 @@ export function MaintenancePage() {
                     Ende nuk është ngarkuar evidencë.
                   </p>
                 )}
-                <form className="maintenance-evidence-form" onSubmit={uploadEvidence}>
+                <form
+                  className="maintenance-evidence-form"
+                  onSubmit={uploadEvidence}
+                >
                   <label>
                     <span>Skedari · JPG, PNG, WebP ose PDF</span>
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp,application/pdf"
                       required
-                      onChange={(event) => setEvidenceFile(event.target.files?.[0] ?? null)}
+                      onChange={(event) =>
+                        setEvidenceFile(event.target.files?.[0] ?? null)
+                      }
                     />
                   </label>
                   <label>
@@ -657,12 +661,15 @@ export function MaintenancePage() {
                     <input
                       maxLength={500}
                       value={evidenceCaption}
-                      onChange={(event) => setEvidenceCaption(event.target.value)}
+                      onChange={(event) =>
+                        setEvidenceCaption(event.target.value)
+                      }
                       placeholder="P.sh. Gjendja pas riparimit"
                     />
                   </label>
                   <Button size="sm" disabled={uploading || !evidenceFile}>
-                    <Upload size={15} /> {uploading ? "Po ngarkohet…" : "Ngarko evidencën"}
+                    <Upload size={15} />{" "}
+                    {uploading ? "Po ngarkohet…" : "Ngarko evidencën"}
                   </Button>
                 </form>
               </section>
@@ -761,11 +768,7 @@ export function MaintenancePage() {
                   </>
                 )}
                 <footer>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setSelectedTask(null)}
-                  >
+                  <Button type="button" variant="outline" onClick={closeTask}>
                     Mbyll
                   </Button>
                   <Button disabled={saving}>

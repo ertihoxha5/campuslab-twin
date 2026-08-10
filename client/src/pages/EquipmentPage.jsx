@@ -14,6 +14,7 @@ import { api } from "@/api/client.js";
 import { EquipmentForm } from "@/components/EquipmentForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
 const statusLabels = {
   active: "Aktive",
@@ -41,6 +42,8 @@ export function EquipmentPage() {
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const closeForm = useCallback(() => setShowForm(false), []);
+  const formDialogRef = useAccessibleDialog(showForm, closeForm);
 
   const loadEquipment = useCallback(
     async ({ keepMessage = false } = {}) => {
@@ -307,6 +310,7 @@ export function EquipmentPage() {
       {showForm && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={formDialogRef}
             className="workspace-modal equipment-form-modal"
             role="dialog"
             aria-modal="true"
@@ -320,7 +324,7 @@ export function EquipmentPage() {
               <button
                 type="button"
                 aria-label="Mbyll formularin"
-                onClick={() => setShowForm(false)}
+                onClick={closeForm}
               >
                 <X size={20} />
               </button>
@@ -331,7 +335,7 @@ export function EquipmentPage() {
               saving={saving}
               onLaboratoryChange={loadOptions}
               onSubmit={createEquipment}
-              onCancel={() => setShowForm(false)}
+              onCancel={closeForm}
             />
           </section>
         </div>

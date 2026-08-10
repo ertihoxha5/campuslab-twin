@@ -15,6 +15,7 @@ import { api } from "@/api/client.js";
 import { LaboratoryForm } from "@/components/LaboratoryForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
 const statusLabels = {
   active: "Aktiv",
@@ -38,6 +39,8 @@ export function LaboratoriesPage() {
   const [loadingResponsibleUsers, setLoadingResponsibleUsers] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const closeForm = useCallback(() => setShowForm(false), []);
+  const formDialogRef = useAccessibleDialog(showForm, closeForm);
 
   const loadLaboratories = useCallback(
     async ({ keepMessage = false } = {}) => {
@@ -308,6 +311,7 @@ export function LaboratoriesPage() {
       {showForm && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={formDialogRef}
             className="workspace-modal laboratory-form-modal"
             role="dialog"
             aria-modal="true"
@@ -321,14 +325,14 @@ export function LaboratoriesPage() {
               <button
                 type="button"
                 aria-label="Mbyll formularin"
-                onClick={() => setShowForm(false)}
+                onClick={closeForm}
               >
                 <X size={20} />
               </button>
             </header>
             <LaboratoryForm
               onSubmit={createLaboratory}
-              onCancel={() => setShowForm(false)}
+              onCancel={closeForm}
               saving={saving}
               submitLabel="Krijo laboratorin"
               responsibleUsers={responsibleUsers}
