@@ -176,7 +176,31 @@
 .settings-input-icon { display: flex; align-items: center; gap: .5rem; min-height: 42px; padding-left: .7rem; border: 1px solid var(--border); border-radius: .65rem; color: var(--muted); }
 .settings-input-icon input { min-height: auto; padding-left: 0; border: 0; outline: 0; }
 .university-profile-form footer { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.university-operational-settings { display: grid; gap: 1rem; margin-top: .5rem; }
+.university-settings-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.university-settings-section-heading h2 { margin: .2rem 0; font-size: 1.15rem; }
+.university-settings-section-heading p:not(.eyebrow) { margin: 0; color: var(--muted); font-size: .76rem; }
+.university-settings-section-heading > svg { color: var(--grape); }
+.university-preferences-form, .university-tariff-form { padding: 1rem; border: 1px solid var(--border); border-radius: .9rem; background: var(--background); }
+.university-preferences-grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: .8rem; }
+.university-setting-card { min-width: 0; margin: 0; padding: .9rem; border: 1px solid var(--border); border-radius: .75rem; }
+.university-setting-card legend { display: flex; align-items: center; gap: .4rem; padding: 0 .35rem; color: var(--text); font-size: .76rem; font-weight: 800; }
+.university-setting-card legend svg, .university-tariff-form header svg { color: var(--grape); }
+.university-setting-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.university-setting-fields label, .university-tariff-fields label { display: grid; gap: .3rem; }
+.university-setting-fields label > span, .university-tariff-fields label > span { color: var(--muted); font-size: .67rem; font-weight: 750; }
+.university-setting-fields input, .university-tariff-fields input { width: 100%; min-width: 0; min-height: 40px; padding: .6rem .7rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--background); color: var(--text); }
+.university-toggle-list { display: grid; gap: .5rem; }
+.university-toggle-list label { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 40px; padding: .5rem .65rem; border: 1px solid var(--border); border-radius: .6rem; font-size: .7rem; font-weight: 700; }
+.university-toggle-list input { width: 17px; height: 17px; accent-color: var(--grape); }
+.university-preferences-form footer { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.university-tariff-form header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: .8rem; }
+.university-tariff-form h3 { margin: 0; font-size: .9rem; }
+.university-tariff-form header p { margin: .25rem 0 0; color: var(--muted); font-size: .7rem; }
+.university-tariff-fields { display: grid; grid-template-columns: minmax(150px, .7fr) minmax(110px, .4fr) auto; align-items: end; gap: .7rem; }
 @media (max-width: 850px) { .university-settings-layout, .university-profile-form-grid { grid-template-columns: 1fr; } .settings-field-wide { grid-column: auto; } }
+@media (max-width: 1000px) { .university-preferences-grid { grid-template-columns: 1fr 1fr; } .university-notification-card { grid-column: 1 / -1; } }
+@media (max-width: 650px) { .university-preferences-grid, .university-setting-fields, .university-tariff-fields { grid-template-columns: 1fr; } .university-notification-card { grid-column: auto; } }
 
 :root[data-theme="dark"] {
   color: #f7f5f9;

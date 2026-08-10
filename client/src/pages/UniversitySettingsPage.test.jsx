@@ -31,18 +31,60 @@ const refreshedUser = {
     logoFileId: "22",
   },
 };
+const preferences = {
+  temperatureMinC: 18,
+  temperatureMaxC: 28,
+  humidityMinPercent: 30,
+  humidityMaxPercent: 70,
+  co2MaxPpm: 1000,
+  smokeMaxPercent: 1,
+  maintenanceReminderDays: 3,
+  notifyAlerts: true,
+  notifyMaintenance: true,
+  notifyEnergy: true,
+  notifySimulations: true,
+  simulationDurationMinutes: 15,
+  simulationTickSeconds: 5,
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
   useAuthStore
     .getState()
     .setSession({ ...refreshedUser, university: { ...profile } });
-  api.get.mockResolvedValue({ data: { profile } });
-  api.put.mockResolvedValue({
-    data: {
-      profile: { ...profile, name: "Universiteti i Ri", acronym: "UIR" },
-      message: "Profili i universitetit u ruajt me sukses.",
-    },
+  api.get.mockImplementation(async (url) => {
+    if (url === "/api/university/profile") return { data: { profile } };
+    if (url === "/api/university/settings")
+      return { data: { settings: preferences } };
+    if (url === "/api/energy/settings")
+      return {
+        data: { settings: { tariffPerKwh: 0.12, currencyCode: "EUR" } },
+      };
+    throw new Error(`Unexpected GET ${url}`);
+  });
+  api.put.mockImplementation(async (url, body) => {
+    if (url === "/api/university/profile")
+      return {
+        data: {
+          profile: { ...profile, name: "Universiteti i Ri", acronym: "UIR" },
+          message: "Profili i universitetit u ruajt me sukses.",
+        },
+      };
+    if (url === "/api/university/settings")
+      return {
+        data: {
+          settings: { ...preferences, ...body },
+          message: "Preferencat u ruajtën me sukses.",
+        },
+      };
+    if (url === "/api/energy/settings")
+      return {
+        data: {
+          settings: { ...body, tariffPerKwh: Number(body.tariffPerKwh) },
+          message: "Tarifa u ruajt me sukses.",
+        },
+      };
+    throw new Error(`Unexpected PUT ${url}`);
   });
   api.post.mockImplementation(async (url) => {
     if (url === "/api/auth/session") return { data: { user: refreshedUser } };
@@ -102,5 +144,35 @@ describe("UniversitySettingsPage", () => {
     expect(
       await screen.findByText("Logoja e universitetit u ruajt me sukses."),
     ).toBeInTheDocument();
+  });
+
+  it("saves monitoring, notification and simulation preferences", async () => {
+    render(<UniversitySettingsPage />);
+    const co2 = await screen.findByLabelText("CO₂ maksimal (ppm)");
+    fireEvent.change(co2, { target: { value: "1200" } });
+    fireEvent.click(screen.getByLabelText("Raportet e energjisë"));
+    fireEvent.click(screen.getByRole("button", { name: /Ruaj preferencat/i }));
+    await waitFor(() =>
+      expect(api.put).toHaveBeenCalledWith(
+        "/api/university/settings",
+        expect.objectContaining({ co2MaxPpm: "1200", notifyEnergy: false }),
+      ),
+    );
+    expect(
+      await screen.findByText("Preferencat u ruajtën me sukses."),
+    ).toBeInTheDocument();
+  });
+
+  it("saves the centralized energy tariff", async () => {
+    render(<UniversitySettingsPage />);
+    const input = await screen.findByLabelText("Tarifa për kWh");
+    fireEvent.change(input, { target: { value: "0.18" } });
+    fireEvent.click(screen.getByRole("button", { name: /Ruaj tarifën/i }));
+    await waitFor(() =>
+      expect(api.put).toHaveBeenCalledWith("/api/energy/settings", {
+        tariffPerKwh: "0.18",
+        currencyCode: "EUR",
+      }),
+    );
   });
 });
