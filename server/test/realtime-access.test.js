@@ -150,7 +150,7 @@ test("tenant socket joins namespaced university and assigned laboratory rooms", 
   assert.equal(serverSocket.rooms.has(laboratoryRoom("7", "20")), true);
 });
 
-test("unassigned and cross-tenant laboratories are indistinguishable", async () => {
+test("tenant isolation matrix: unassigned and cross-tenant Socket.IO laboratories are indistinguishable", async () => {
   const restricted = connect(token("50", "7", ["technician"]));
   const otherTenant = connect(token("60", "8", ["university_admin"]));
   await Promise.all([connected(restricted), connected(otherTenant)]);

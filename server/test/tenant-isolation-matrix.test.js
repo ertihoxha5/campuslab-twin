@@ -6,6 +6,7 @@ import { createSensorRepository } from "../src/modules/sensors/repository.js";
 import { createAnalyticsRepository } from "../src/modules/analytics/repository.js";
 import { createReportRepository } from "../src/modules/reports/repository.js";
 import { createFileRepository } from "../src/modules/files/repository.js";
+import { createLaboratoryZoneRepository } from "../src/modules/laboratories/zone-repository.js";
 
 const tenantId = "7";
 const userId = "9";
@@ -147,4 +148,90 @@ test("tenant isolation matrix: stored file lookup", async () => {
   assert.equal(capture.calls.length, 1);
   assert.match(capture.calls[0].sql, /WHERE university_id = \? AND id = \?/);
   assert.deepEqual(capture.calls[0].parameters, [tenantId, "22"]);
+});
+
+const detailMatrix = [
+  {
+    surface: "laboratory detail",
+    create: createLaboratoryRepository,
+    run: (repository) =>
+      repository.findById({ universityId: tenantId, laboratoryId: "15" }),
+    scopes: [/laboratory\.id = \?/, /laboratory\.university_id = \?/],
+    identifiers: ["15", tenantId],
+  },
+  {
+    surface: "equipment detail",
+    create: createEquipmentRepository,
+    run: (repository) =>
+      repository.findById({
+        universityId: tenantId,
+        userId,
+        restrictToAssignments: true,
+        equipmentId: "31",
+      }),
+    scopes: [
+      /equipment\.id = \?/,
+      /equipment\.university_id = \?/,
+      /assignment\.user_id = \?/,
+    ],
+    identifiers: ["31", tenantId, userId],
+  },
+  {
+    surface: "sensor detail",
+    create: createSensorRepository,
+    run: (repository) =>
+      repository.findById({
+        universityId: tenantId,
+        userId,
+        restrictToAssignments: true,
+        sensorId: "41",
+      }),
+    scopes: [
+      /sensor\.id = \?/,
+      /sensor\.university_id = \?/,
+      /assignment\.user_id = \?/,
+    ],
+    identifiers: ["41", tenantId, userId],
+  },
+  {
+    surface: "report download detail",
+    create: createReportRepository,
+    run: (repository) =>
+      repository.findAccessibleById({
+        universityId: tenantId,
+        userId,
+        restrictToAssignments: true,
+        reportId: "51",
+      }),
+    scopes: [
+      /report\.id = \?/,
+      /report\.university_id = \?/,
+      /assignment\.user_id = \?/,
+    ],
+    identifiers: ["51", tenantId, userId],
+  },
+];
+
+for (const entry of detailMatrix) {
+  test(`tenant isolation matrix: ${entry.surface}`, async () => {
+    const capture = recorder();
+    await entry.run(entry.create(capture.executor));
+    assert.equal(capture.calls.length, 1);
+    for (const scope of entry.scopes) assert.match(capture.calls[0].sql, scope);
+    for (const identifier of entry.identifiers) {
+      assert.ok(capture.calls[0].parameters.includes(identifier));
+    }
+  });
+}
+
+test("tenant isolation matrix: nested laboratory zones", async () => {
+  const capture = recorder();
+  const repository = createLaboratoryZoneRepository(capture.executor);
+  await repository.list({ universityId: tenantId, laboratoryId: "15" });
+  assert.equal(capture.calls.length, 1);
+  assert.match(
+    capture.calls[0].sql,
+    /WHERE university_id = \? AND laboratory_id = \?/,
+  );
+  assert.deepEqual(capture.calls[0].parameters, [tenantId, "15"]);
 });
