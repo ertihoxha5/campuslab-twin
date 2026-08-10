@@ -5,6 +5,7 @@ import { after, before, test } from "node:test";
 import { createApp } from "../src/app.js";
 import { createUniversityProfileRepository } from "../src/modules/university-profile/repository.js";
 import { createUniversityProfileService } from "../src/modules/university-profile/service.js";
+import { createUniversityLogoService } from "../src/modules/university-profile/logo-service.js";
 
 const input = {
   name: "Universiteti Test",
@@ -78,6 +79,56 @@ test("profile update and audit commit atomically for the authenticated universit
   );
 });
 
+test("logo upload validates image content and persists tenant metadata", async () => {
+  let saved;
+  let attached;
+  const service = createUniversityLogoService({
+    storage: {
+      async save(input) {
+        saved = input;
+        return {
+          storedName: "logo.png",
+          relativePath: "uploads/universities/7/branding/logo.png",
+          checksumSha256: "abc",
+        };
+      },
+      async remove() {},
+    },
+    repository: {
+      async attachLogo(input) {
+        attached = input;
+        return { id: "22", mimeType: input.file.mimeType };
+      },
+    },
+  });
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1]);
+  const logo = await service.upload(
+    {
+      buffer: png,
+      mimetype: "image/png",
+      originalname: "logo.png",
+      size: png.length,
+    },
+    { universityId: "7", userId: "9", ipAddress: null },
+  );
+  assert.equal(saved.universityId, "7");
+  assert.equal(attached.universityId, "7");
+  assert.equal(attached.userId, "9");
+  assert.equal(logo.id, "22");
+  await assert.rejects(
+    service.upload(
+      {
+        buffer: Buffer.from("fake"),
+        mimetype: "image/png",
+        originalname: "fake.png",
+        size: 4,
+      },
+      { universityId: "7", userId: "9" },
+    ),
+    (error) => error.status === 422,
+  );
+});
+
 let server;
 let baseUrl;
 let captured;
@@ -107,6 +158,12 @@ before(async () => {
           return { id: "7" };
         },
       },
+      universityLogoService: {
+        async upload(file, context) {
+          captured = { context, file };
+          return { id: "22" };
+        },
+      },
     }),
   );
   server.listen(0);
@@ -129,4 +186,18 @@ test("profile endpoints require profile permission and server tenant context", a
   });
   assert.equal(update.status, 200);
   assert.equal(captured.userId, "9");
+  const form = new FormData();
+  form.set(
+    "logo",
+    new Blob([Buffer.from([0x89, 0x50, 0x4e, 0x47])], { type: "image/png" }),
+    "logo.png",
+  );
+  const logo = await fetch(`${baseUrl}/api/university/profile/logo`, {
+    method: "POST",
+    headers: { "x-test-profile": "true" },
+    body: form,
+  });
+  assert.equal(logo.status, 201);
+  assert.equal(captured.context.universityId, "7");
+  assert.equal(captured.file.originalname, "logo.png");
 });

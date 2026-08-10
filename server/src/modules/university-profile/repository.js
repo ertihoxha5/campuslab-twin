@@ -72,5 +72,65 @@ export function createUniversityProfileRepository(pool) {
         return rows[0] ?? null;
       });
     },
+
+    async attachLogo(input) {
+      return withTransaction(pool, async (connection) => {
+        const universities = await query(
+          connection,
+          "SELECT id FROM universities WHERE id = ? FOR UPDATE",
+          [input.universityId],
+        );
+        if (!universities[0]) return null;
+        const inserted = await query(
+          connection,
+          `INSERT INTO stored_files (
+             university_id, uploaded_by_user_id, category, original_name,
+             stored_name, relative_path, mime_type, size_bytes, checksum_sha256,
+             related_entity_type, related_entity_id
+           ) VALUES (?, ?, 'university_logo', ?, ?, ?, ?, ?, ?, 'university', ?)`,
+          [
+            input.universityId,
+            input.userId,
+            input.file.originalName,
+            input.file.storedName,
+            input.file.relativePath,
+            input.file.mimeType,
+            input.file.sizeBytes,
+            input.file.checksumSha256,
+            input.universityId,
+          ],
+        );
+        const fileId = String(inserted.insertId);
+        await query(
+          connection,
+          "UPDATE universities SET logo_file_id = ? WHERE id = ?",
+          [fileId, input.universityId],
+        );
+        await query(
+          connection,
+          `INSERT INTO activity_logs (university_id, user_id, action, entity_type,
+             entity_id, description, metadata_json, ip_address)
+           VALUES (?, ?, 'university.logo.updated', 'university', ?, ?, ?, ?)`,
+          [
+            input.universityId,
+            input.userId,
+            input.universityId,
+            "U përditësua logoja e universitetit.",
+            JSON.stringify({
+              fileId,
+              originalName: input.file.originalName,
+              sizeBytes: input.file.sizeBytes,
+            }),
+            input.ipAddress,
+          ],
+        );
+        return {
+          id: fileId,
+          originalName: input.file.originalName,
+          mimeType: input.file.mimeType,
+          sizeBytes: input.file.sizeBytes,
+        };
+      });
+    },
   };
 }

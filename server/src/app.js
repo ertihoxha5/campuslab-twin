@@ -55,6 +55,7 @@ export function createApp({
   reportService,
   universityUserService,
   universityProfileService,
+  universityLogoService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
@@ -261,6 +262,7 @@ export function createApp({
       "/api/university/profile",
       createUniversityProfileRouter({
         service: universityProfileService,
+        logoService: universityLogoService,
         authenticateTenant: tenantAuthentication,
       }),
     );

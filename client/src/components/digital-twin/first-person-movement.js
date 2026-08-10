@@ -56,3 +56,4 @@ export function resolveFirstPersonMove(position, movement) {
   }
   return { x: position.x, y: FIRST_PERSON_START.y, z: position.z };
 }
+1
