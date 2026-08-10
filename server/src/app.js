@@ -25,6 +25,7 @@ import { createEnergyRouter } from "./modules/energy/router.js";
 import { createAnalyticsRouter } from "./modules/analytics/router.js";
 import { createReportRouter } from "./modules/reports/router.js";
 import { createUniversityUserRouter } from "./modules/university-users/router.js";
+import { createUniversityProfileRouter } from "./modules/university-profile/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -53,6 +54,7 @@ export function createApp({
   analyticsService,
   reportService,
   universityUserService,
+  universityProfileService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
@@ -249,6 +251,16 @@ export function createApp({
       "/api/university/users",
       createUniversityUserRouter({
         service: universityUserService,
+        authenticateTenant: tenantAuthentication,
+      }),
+    );
+  }
+
+  if (universityProfileService && tenantAuthentication) {
+    app.use(
+      "/api/university/profile",
+      createUniversityProfileRouter({
+        service: universityProfileService,
         authenticateTenant: tenantAuthentication,
       }),
     );
