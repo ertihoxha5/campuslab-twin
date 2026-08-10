@@ -26,6 +26,7 @@ import { UniversityLayout } from "@/layouts/UniversityLayout.jsx";
 import { UniversityOverviewPage } from "@/pages/UniversityOverviewPage.jsx";
 import { WorkspaceSectionPage } from "@/pages/WorkspaceSectionPage.jsx";
 import { ReportsPage } from "@/pages/ReportsPage.jsx";
+import { UniversityUsersPage } from "@/pages/UniversityUsersPage.jsx";
 import { ForbiddenPage } from "@/pages/ForbiddenPage.jsx";
 import { WorkspaceNotFoundPage } from "@/pages/WorkspaceNotFoundPage.jsx";
 
@@ -192,12 +193,7 @@ export default function App() {
             >
               <Route
                 path="perdoruesit"
-                element={
-                  <WorkspaceSectionPage
-                    title="Përdoruesit"
-                    description="Përdoruesit dhe rolet e universitetit."
-                  />
-                }
+                element={laboratoryPage(UniversityUsersPage)}
               />
             </Route>
             <Route

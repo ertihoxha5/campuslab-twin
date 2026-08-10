@@ -101,6 +101,39 @@
 @media (max-width: 700px) { .reports-heading, .reports-heading-actions { align-items: stretch; } .reports-heading-actions > * { flex: 1; } .reports-generator form, .reports-toolbar, .report-row, .report-preview-metrics { grid-template-columns: 1fr; } .report-row { padding: 1rem 0; } .report-preview-heading { display: grid; } }
 @media print { .university-sidebar, .university-topbar, .reports-generator, .reports-toolbar, .reports-heading-actions, .report-row button { display: none !important; } .university-main, .university-content { margin: 0 !important; padding: 0 !important; } .reports-panel { border: 0; padding: 0; } .report-row { break-inside: avoid; grid-template-columns: 2fr repeat(4, 1fr); } }
 
+/* University users */
+.university-users-page { display: grid; gap: 1rem; }
+.university-user-filters { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(180px, 260px); gap: .7rem; padding: .8rem; border: 1px solid var(--border); border-radius: .8rem; background: var(--surface); }
+.university-user-filters form { display: flex; align-items: center; gap: .55rem; min-height: 42px; padding: 0 .7rem; border: 1px solid var(--border); border-radius: .65rem; background: var(--background); }
+.university-user-filters input, .university-user-filters select, .university-user-form-grid input, .university-user-form-grid select { width: 100%; min-width: 0; min-height: 42px; border: 1px solid var(--border); border-radius: .65rem; padding: 0 .7rem; background: var(--background); color: var(--text); }
+.university-user-filters form input { min-height: auto; border: 0; padding: 0; outline: 0; }
+.university-user-filters label, .university-user-form-grid label { display: grid; gap: .35rem; }
+.university-user-filters label > span, .university-user-form-grid label > span { color: var(--muted); font-size: .7rem; font-weight: 750; }
+.university-users-list { display: grid; border: 1px solid var(--border); border-radius: .9rem; background: var(--background); overflow: hidden; }
+.university-user-row { display: grid; grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(125px, .8fr)) auto auto; align-items: center; gap: 1rem; padding: 1rem; border-top: 1px solid var(--border); }
+.university-user-row:first-child { border-top: 0; }
+.university-user-row > div:not(.university-user-actions, .university-user-identity) { display: grid; gap: .2rem; }
+.university-user-row span, .university-user-row small { color: var(--muted); font-size: .68rem; }
+.university-user-row strong { font-size: .76rem; }
+.university-user-identity { display: flex; align-items: center; gap: .7rem; }
+.university-user-identity > span { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; border-radius: .65rem; background: var(--grape-soft); color: var(--grape); }
+.university-user-identity > div { display: grid; gap: .2rem; }
+.university-user-identity strong { font-size: .88rem; }
+.university-user-actions { display: flex; gap: .4rem; }
+.university-user-modal { width: min(880px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; }
+.university-user-form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; }
+.university-user-modal fieldset { margin: 1rem 0 0; padding: 0; border: 0; }
+.university-user-modal legend { margin-bottom: .55rem; font-size: .78rem; font-weight: 800; }
+.university-user-checks { display: grid; grid-template-columns: repeat(2, 1fr); gap: .55rem; }
+.university-user-checks label { display: flex; align-items: flex-start; gap: .6rem; padding: .7rem; border: 1px solid var(--border); border-radius: .65rem; background: var(--surface); cursor: pointer; }
+.university-user-checks input { margin-top: .2rem; accent-color: var(--grape); }
+.university-user-checks span { display: grid; gap: .15rem; }
+.university-user-checks strong { font-size: .76rem; }
+.university-user-checks small { color: var(--muted); font-size: .66rem; }
+.university-user-modal footer { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; }
+@media (max-width: 1100px) { .university-user-row { grid-template-columns: minmax(220px, 1.2fr) repeat(2, 1fr); } }
+@media (max-width: 700px) { .university-user-filters, .university-user-row, .university-user-form-grid, .university-user-checks { grid-template-columns: 1fr; } .university-user-actions { flex-wrap: wrap; } }
+
 :root[data-theme="dark"] {
   color: #f7f5f9;
   background: #111014;
