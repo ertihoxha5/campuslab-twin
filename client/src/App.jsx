@@ -27,6 +27,7 @@ import { UniversityOverviewPage } from "@/pages/UniversityOverviewPage.jsx";
 import { WorkspaceSectionPage } from "@/pages/WorkspaceSectionPage.jsx";
 import { ReportsPage } from "@/pages/ReportsPage.jsx";
 import { UniversityUsersPage } from "@/pages/UniversityUsersPage.jsx";
+import { UniversitySettingsPage } from "@/pages/UniversitySettingsPage.jsx";
 import { ForbiddenPage } from "@/pages/ForbiddenPage.jsx";
 import { WorkspaceNotFoundPage } from "@/pages/WorkspaceNotFoundPage.jsx";
 
@@ -203,12 +204,7 @@ export default function App() {
             >
               <Route
                 path="cilesimet"
-                element={
-                  <WorkspaceSectionPage
-                    title="Cilësimet"
-                    description="Profili dhe preferencat e universitetit."
-                  />
-                }
+                element={laboratoryPage(UniversitySettingsPage)}
               />
             </Route>
             <Route path="*" element={<WorkspaceNotFoundPage />} />

@@ -155,6 +155,29 @@
 @media (max-width: 1100px) { .university-user-row { grid-template-columns: minmax(220px, 1.2fr) repeat(2, 1fr); } }
 @media (max-width: 700px) { .university-user-filters, .university-user-row, .university-user-form-grid, .university-user-checks, .university-user-profile-grid, .university-user-profile-access { grid-template-columns: 1fr; } .university-user-actions { flex-wrap: wrap; } }
 
+/* University profile and branding */
+.university-settings-page { display: grid; gap: 1rem; }
+.university-settings-layout { display: grid; grid-template-columns: minmax(230px, .55fr) minmax(0, 1.8fr); align-items: start; gap: 1rem; }
+.university-branding-card, .university-profile-form { padding: 1rem; border: 1px solid var(--border); border-radius: .9rem; background: var(--background); }
+.university-branding-card { display: grid; justify-items: center; gap: .65rem; text-align: center; }
+.university-branding-logo { display: grid; place-items: center; width: 112px; height: 112px; border: 1px solid var(--border); border-radius: 1.25rem; overflow: hidden; background: var(--grape-soft); color: var(--grape); font-size: 1.5rem; font-weight: 850; }
+.university-branding-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.university-branding-card h2 { margin: .35rem 0 0; font-size: 1rem; }
+.university-branding-card p, .university-branding-card small { margin: 0; color: var(--muted); font-size: .7rem; }
+.university-profile-form > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
+.university-profile-form h2 { margin: 0; font-size: .95rem; }
+.university-profile-form header p { margin: .25rem 0 0; color: var(--muted); font-size: .7rem; }
+.university-profile-form header svg { color: var(--grape); }
+.university-profile-form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; }
+.university-profile-form-grid label { display: grid; gap: .35rem; }
+.university-profile-form-grid label > span { color: var(--muted); font-size: .7rem; font-weight: 750; }
+.university-profile-form-grid input, .university-profile-form-grid select, .university-profile-form-grid textarea { width: 100%; min-width: 0; min-height: 42px; padding: .65rem .75rem; border: 1px solid var(--border); border-radius: .65rem; background: var(--background); color: var(--text); resize: vertical; }
+.settings-field-wide { grid-column: 1 / -1; }
+.settings-input-icon { display: flex; align-items: center; gap: .5rem; min-height: 42px; padding-left: .7rem; border: 1px solid var(--border); border-radius: .65rem; color: var(--muted); }
+.settings-input-icon input { min-height: auto; padding-left: 0; border: 0; outline: 0; }
+.university-profile-form footer { display: flex; justify-content: flex-end; margin-top: 1rem; }
+@media (max-width: 850px) { .university-settings-layout, .university-profile-form-grid { grid-template-columns: 1fr; } .settings-field-wide { grid-column: auto; } }
+
 :root[data-theme="dark"] {
   color: #f7f5f9;
   background: #111014;
