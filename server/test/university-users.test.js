@@ -78,6 +78,114 @@ test("university user service maps assignments and excludes platform roles", asy
   assert.equal(options.laboratories[0].id, "15");
 });
 
+test("user creation hashes passwords and derives tenant identity from context", async () => {
+  let captured;
+  const service = createUniversityUserService({
+    passwordRounds: 4,
+    repository: {
+      async create(input) {
+        captured = input;
+        return { user: { id: "12", email: input.email, roles: input.roles } };
+      },
+    },
+  });
+  const user = await service.create(
+    {
+      fullName: "Ada Testuese",
+      email: "ADA@EXAMPLE.EDU",
+      phone: "+38344111222",
+      jobTitle: "Teknike",
+      status: "active",
+      password: "Fjalekalim!2026",
+      roles: ["technician"],
+      laboratoryIds: ["15"],
+      universityId: "999",
+    },
+    { universityId: "7", userId: "9", ipAddress: "127.0.0.1" },
+  );
+  assert.equal(user.id, "12");
+  assert.equal(captured.universityId, "7");
+  assert.equal(captured.actorUserId, "9");
+  assert.equal(captured.email, "ada@example.edu");
+  assert.notEqual(captured.passwordHash, "Fjalekalim!2026");
+  assert.equal(captured.password, undefined);
+});
+
+test("user creation rejects platform role escalation before persistence", async () => {
+  let persisted = false;
+  const service = createUniversityUserService({
+    repository: {
+      async create() {
+        persisted = true;
+      },
+    },
+  });
+  await assert.rejects(
+    service.create(
+      {
+        fullName: "Sulmues Test",
+        email: "sulmues@example.edu",
+        status: "active",
+        password: "Fjalekalim!2026",
+        roles: ["platform_admin"],
+        laboratoryIds: [],
+      },
+      { universityId: "7", userId: "9" },
+    ),
+    (error) => error.status === 422,
+  );
+  assert.equal(persisted, false);
+});
+
+test("user repository creates user, roles, assignments, and audit atomically", async () => {
+  const calls = [];
+  const connection = {
+    async beginTransaction() {
+      calls.push({ sql: "BEGIN", parameters: [] });
+    },
+    async commit() {
+      calls.push({ sql: "COMMIT", parameters: [] });
+    },
+    async rollback() {},
+    release() {},
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      if (sql.includes("SELECT id, code FROM roles"))
+        return [[{ id: 3, code: "technician" }]];
+      if (sql.includes("SELECT id FROM laboratories")) return [[{ id: 15 }]];
+      if (sql.includes("INSERT INTO users")) return [{ insertId: 12 }];
+      return [{ affectedRows: 1 }];
+    },
+  };
+  const repository = createUniversityUserRepository({
+    async getConnection() {
+      return connection;
+    },
+  });
+  const result = await repository.create({
+    universityId: "7",
+    actorUserId: "9",
+    fullName: "Ada Test",
+    email: "ada@example.edu",
+    passwordHash: "hash",
+    phone: null,
+    jobTitle: "Teknike",
+    status: "active",
+    roles: ["technician"],
+    laboratoryIds: ["15"],
+    ipAddress: "127.0.0.1",
+  });
+  assert.equal(result.user.id, "12");
+  assert.ok(calls.some(({ sql }) => sql.includes("INSERT INTO user_roles")));
+  assert.ok(
+    calls.some(({ sql }) =>
+      sql.includes("INSERT INTO user_laboratory_assignments"),
+    ),
+  );
+  assert.ok(calls.some(({ sql }) => sql.includes("'university.user.created'")));
+  assert.ok(calls.some(({ sql }) => sql === "COMMIT"));
+});
+
 let server;
 let baseUrl;
 let captured;
@@ -105,6 +213,10 @@ before(async () => {
         async options() {
           return { roles: [], laboratories: [] };
         },
+        async create(_input, context) {
+          captured = { context };
+          return { id: "12" };
+        },
       },
     }),
   );
@@ -131,4 +243,11 @@ test("university user endpoints require management permission and server tenant"
     ).status,
     200,
   );
+  const created = await fetch(`${baseUrl}/api/university/users`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-test-users": "true" },
+    body: "{}",
+  });
+  assert.equal(created.status, 201);
+  assert.equal(captured.context.universityId, "7");
 });

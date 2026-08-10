@@ -15,6 +15,13 @@ export function createUniversityUserRouter({ service, authenticateTenant }) {
     const options = await service.options(context(request));
     return success(response, { data: { options } });
   });
+  router.post("/", async (request, response) => {
+    const user = await service.create(request.body, context(request));
+    return success(response, {
+      status: 201,
+      data: { user, message: "Përdoruesi u krijua me sukses." },
+    });
+  });
   return router;
 }
 
@@ -23,5 +30,6 @@ function context(request) {
     universityId: request.auth.universityId,
     userId: request.auth.userId,
     roles: request.auth.roles,
+    ipAddress: request.ip?.slice(0, 45) ?? null,
   };
 }

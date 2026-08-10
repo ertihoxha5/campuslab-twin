@@ -1,4 +1,4 @@
-import { query } from "../../database/query.js";
+import { query, withTransaction } from "../../database/query.js";
 
 const userSelect = `
   SELECT user.id, user.university_id AS universityId, user.full_name AS fullName,
@@ -69,6 +69,103 @@ export function createUniversityUserRepository(pool) {
         ),
       ]);
       return { roles, laboratories };
+    },
+
+    async create(input) {
+      return withTransaction(pool, async (connection) => {
+        const rolePlaceholders = input.roles.map(() => "?").join(", ");
+        const roles = await query(
+          connection,
+          `SELECT id, code FROM roles WHERE code IN (${rolePlaceholders})`,
+          input.roles,
+        );
+        if (roles.length !== input.roles.length) return { invalidRoles: true };
+
+        let laboratories = [];
+        if (input.laboratoryIds.length) {
+          const laboratoryPlaceholders = input.laboratoryIds
+            .map(() => "?")
+            .join(", ");
+          laboratories = await query(
+            connection,
+            `SELECT id FROM laboratories
+              WHERE university_id = ? AND id IN (${laboratoryPlaceholders})
+                AND deleted_at IS NULL AND status <> 'archived'`,
+            [input.universityId, ...input.laboratoryIds],
+          );
+          if (laboratories.length !== input.laboratoryIds.length)
+            return { invalidLaboratories: true };
+        }
+
+        const inserted = await query(
+          connection,
+          `INSERT INTO users (
+             university_id, full_name, email, password_hash, phone, job_title, status
+           ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            input.universityId,
+            input.fullName,
+            input.email,
+            input.passwordHash,
+            input.phone,
+            input.jobTitle,
+            input.status,
+          ],
+        );
+        const userId = String(inserted.insertId);
+        for (const role of roles) {
+          await query(
+            connection,
+            `INSERT INTO user_roles (university_id, user_id, role_id)
+             VALUES (?, ?, ?)`,
+            [input.universityId, userId, role.id],
+          );
+        }
+        for (const laboratory of laboratories) {
+          await query(
+            connection,
+            `INSERT INTO user_laboratory_assignments
+               (university_id, user_id, laboratory_id)
+             VALUES (?, ?, ?)`,
+            [input.universityId, userId, laboratory.id],
+          );
+        }
+        await query(
+          connection,
+          `INSERT INTO activity_logs (
+             university_id, user_id, action, entity_type, entity_id,
+             description, metadata_json, ip_address
+           ) VALUES (?, ?, 'university.user.created', 'user', ?, ?, ?, ?)`,
+          [
+            input.universityId,
+            input.actorUserId,
+            userId,
+            "U krijua një përdorues i universitetit.",
+            JSON.stringify({
+              targetUserId: userId,
+              roles: input.roles,
+              laboratoryIds: input.laboratoryIds,
+              status: input.status,
+            }),
+            input.ipAddress,
+          ],
+        );
+        return {
+          user: {
+            id: userId,
+            universityId: input.universityId,
+            fullName: input.fullName,
+            email: input.email,
+            phone: input.phone,
+            jobTitle: input.jobTitle,
+            status: input.status,
+            roles: input.roles,
+            laboratories: laboratories.map((laboratory) => ({
+              id: String(laboratory.id),
+            })),
+          },
+        };
+      });
     },
   };
 }
