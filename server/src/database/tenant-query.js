@@ -19,6 +19,7 @@ export const tenantTables = Object.freeze([
   "sensor_reading_aggregates",
   "energy_reading_aggregates",
   "university_energy_settings",
+  "university_preferences",
   "alerts",
   "alert_status_updates",
   "maintenance_tasks",
