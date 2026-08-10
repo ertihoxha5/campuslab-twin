@@ -64,6 +64,8 @@ import { createAnalyticsRepository } from "./modules/analytics/repository.js";
 import { createAnalyticsService } from "./modules/analytics/service.js";
 import { createReportRepository } from "./modules/reports/repository.js";
 import { createReportService } from "./modules/reports/service.js";
+import { createUniversityUserRepository } from "./modules/university-users/repository.js";
+import { createUniversityUserService } from "./modules/university-users/service.js";
 
 loadEnvironmentFile();
 
@@ -191,6 +193,9 @@ const reportService = createReportService({
   repository: createReportRepository(databasePool),
   analyticsService,
 });
+const universityUserService = createUniversityUserService({
+  repository: createUniversityUserRepository(databasePool),
+});
 const energyAnomalyWorker = createEnergyAnomalyWorker({
   repository: createEnergyAnomalyRepository(databasePool),
   onError: (error) =>
@@ -221,6 +226,7 @@ const app = createApp({
   energyService,
   analyticsService,
   reportService,
+  universityUserService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
