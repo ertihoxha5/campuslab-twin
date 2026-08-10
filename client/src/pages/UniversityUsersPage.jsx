@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
 const statusLabels = {
   active: "Aktiv",
@@ -51,6 +52,10 @@ export function UniversityUsersPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const closeForm = useCallback(() => setShowForm(false), []);
+  const closeProfile = useCallback(() => setProfile(null), []);
+  const formDialogRef = useAccessibleDialog(showForm, closeForm);
+  const profileDialogRef = useAccessibleDialog(Boolean(profile), closeProfile);
 
   const loadUsers = useCallback(
     async ({ keepMessage = false } = {}) => {
@@ -290,6 +295,7 @@ export function UniversityUsersPage() {
       {showForm && (
         <div className="workspace-modal-backdrop" role="presentation">
           <section
+            ref={formDialogRef}
             className="workspace-modal university-user-modal"
             role="dialog"
             aria-modal="true"
@@ -307,7 +313,7 @@ export function UniversityUsersPage() {
                 variant="ghost"
                 size="icon"
                 aria-label="Mbyll formularin"
-                onClick={() => setShowForm(false)}
+                onClick={closeForm}
               >
                 <X size={18} />
               </Button>
@@ -457,6 +463,7 @@ export function UniversityUsersPage() {
       {profile && (
         <div className="workspace-modal-backdrop" role="presentation">
           <section
+            ref={profileDialogRef}
             className="workspace-modal university-user-profile-modal"
             role="dialog"
             aria-modal="true"
@@ -472,7 +479,7 @@ export function UniversityUsersPage() {
                 variant="ghost"
                 size="icon"
                 aria-label="Mbyll profilin"
-                onClick={() => setProfile(null)}
+                onClick={closeProfile}
               >
                 <X size={18} />
               </Button>

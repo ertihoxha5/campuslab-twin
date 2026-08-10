@@ -257,6 +257,11 @@ a {
   color: inherit;
 }
 
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid rgba(88, 66, 124, 0.38);
+  outline-offset: 3px;
+}
+
 .site-container {
   width: min(calc(100% - 48px), 1200px);
   margin-inline: auto;
@@ -5861,6 +5866,8 @@ a {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 /* Simulations workspace */

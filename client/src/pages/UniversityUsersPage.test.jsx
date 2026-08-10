@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { api } from "@/api/client.js";
 import { UniversityUsersPage } from "./UniversityUsersPage.jsx";
 
@@ -159,5 +160,24 @@ describe("UniversityUsersPage", () => {
         { status: "inactive" },
       ),
     );
+  });
+
+  it("traps keyboard focus, closes with Escape and restores the trigger", async () => {
+    const keyboard = userEvent.setup();
+    render(<UniversityUsersPage />);
+    const trigger = await screen.findByRole("button", {
+      name: /rdorues i ri/i,
+    });
+    await keyboard.click(trigger);
+    const dialog = screen.getByRole("dialog", { name: /rdorues i ri/i });
+    const close = screen.getByRole("button", { name: "Mbyll formularin" });
+    expect(close).toHaveFocus();
+    await keyboard.tab({ shift: true });
+    expect(dialog).toContainElement(document.activeElement);
+    await keyboard.keyboard("{Escape}");
+    expect(
+      screen.queryByRole("dialog", { name: /rdorues i ri/i }),
+    ).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 });
