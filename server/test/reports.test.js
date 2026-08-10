@@ -30,6 +30,11 @@ test("report repository scopes lists by tenant and laboratory assignments", asyn
   assert.ok(calls.every(({ sql }) => sql.includes("assignment.user_id = ?")));
   assert.ok(calls.every(({ parameters }) => parameters.includes("7")));
   assert.ok(calls.every(({ parameters }) => parameters.includes("15")));
+  assert.ok(
+    calls.some(({ sql }) => sql.includes("user.full_name AS generatedByName")),
+  );
+  assert.ok(calls.every(({ sql }) => !sql.includes("user.first_name")));
+  assert.ok(calls.every(({ sql }) => !sql.includes("user.last_name")));
 });
 
 test("report service persists immutable generation metadata", async () => {

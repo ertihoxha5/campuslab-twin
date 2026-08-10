@@ -5,7 +5,7 @@ const reportSelect = `
          report.laboratory_id AS laboratoryId,
          laboratory.name AS laboratoryName,
          report.generated_by_user_id AS generatedByUserId,
-         CONCAT(user.first_name, ' ', user.last_name) AS generatedByName,
+         user.full_name AS generatedByName,
          university.name AS universityName,
          report.report_type AS reportType, report.title,
          report.period_start AS periodStart, report.period_end AS periodEnd,
