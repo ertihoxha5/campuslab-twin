@@ -20,6 +20,7 @@ import { SensorForm } from "@/components/SensorForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 import { sensorTypes } from "@/validation/sensor.js";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
 const statusLabels = {
   online: "Online",
@@ -50,6 +51,18 @@ export function SensorDetailPage() {
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const closeEditor = useCallback(() => setEditing(false), []);
+  const closeArchive = useCallback(() => setConfirmArchive(false), []);
+  const closeCalibration = useCallback(
+    () => setRecordingCalibration(false),
+    [],
+  );
+  const editorDialogRef = useAccessibleDialog(editing, closeEditor);
+  const archiveDialogRef = useAccessibleDialog(confirmArchive, closeArchive);
+  const calibrationDialogRef = useAccessibleDialog(
+    recordingCalibration,
+    closeCalibration,
+  );
 
   const loadDetail = useCallback(async () => {
     setLoading(true);
@@ -337,6 +350,7 @@ export function SensorDetailPage() {
       {editing && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={editorDialogRef}
             className="workspace-modal sensor-form-modal"
             role="dialog"
             aria-modal="true"
@@ -350,7 +364,7 @@ export function SensorDetailPage() {
               <button
                 type="button"
                 aria-label="Mbyll formularin"
-                onClick={() => setEditing(false)}
+                onClick={closeEditor}
               >
                 <X size={20} />
               </button>
@@ -363,7 +377,7 @@ export function SensorDetailPage() {
               saving={saving}
               onLaboratoryChange={loadOptions}
               onSubmit={updateSensor}
-              onCancel={() => setEditing(false)}
+              onCancel={closeEditor}
             />
           </section>
         </div>
@@ -372,6 +386,7 @@ export function SensorDetailPage() {
       {confirmArchive && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={archiveDialogRef}
             className="workspace-modal archive-confirmation equipment-archive-confirmation"
             role="alertdialog"
             aria-modal="true"
@@ -387,7 +402,7 @@ export function SensorDetailPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setConfirmArchive(false)}
+                onClick={closeArchive}
                 disabled={saving}
               >
                 Anulo
@@ -403,6 +418,7 @@ export function SensorDetailPage() {
       {recordingCalibration && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={calibrationDialogRef}
             className="workspace-modal sensor-calibration-modal"
             role="dialog"
             aria-modal="true"
@@ -416,7 +432,7 @@ export function SensorDetailPage() {
               <button
                 type="button"
                 aria-label="Mbyll formularin"
-                onClick={() => setRecordingCalibration(false)}
+                onClick={closeCalibration}
               >
                 <X size={20} />
               </button>
@@ -424,7 +440,7 @@ export function SensorDetailPage() {
             <SensorCalibrationForm
               saving={saving}
               onSubmit={recordCalibration}
-              onCancel={() => setRecordingCalibration(false)}
+              onCancel={closeCalibration}
             />
           </section>
         </div>

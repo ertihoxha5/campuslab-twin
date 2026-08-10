@@ -20,6 +20,7 @@ import { LaboratoryModelPanel } from "@/components/LaboratoryModelPanel.jsx";
 import { LaboratoryZoneForm } from "@/components/LaboratoryZoneForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
 const statusLabels = {
   active: "Aktiv",
@@ -47,6 +48,20 @@ export function LaboratoryDetailPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingModel, setUploadingModel] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const closeEditor = useCallback(() => setEditing(false), []);
+  const closeZoneEditor = useCallback(() => setEditingZone(undefined), []);
+  const closeZoneDelete = useCallback(() => setZoneToDelete(null), []);
+  const closeArchive = useCallback(() => setConfirmArchive(false), []);
+  const editorDialogRef = useAccessibleDialog(editing, closeEditor);
+  const zoneDialogRef = useAccessibleDialog(
+    editingZone !== undefined,
+    closeZoneEditor,
+  );
+  const deleteDialogRef = useAccessibleDialog(
+    Boolean(zoneToDelete),
+    closeZoneDelete,
+  );
+  const archiveDialogRef = useAccessibleDialog(confirmArchive, closeArchive);
 
   const loadDetail = useCallback(
     async ({ keepMessage = false } = {}) => {
@@ -483,6 +498,7 @@ export function LaboratoryDetailPage() {
       {editing && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={editorDialogRef}
             className="workspace-modal"
             role="dialog"
             aria-modal="true"
@@ -496,7 +512,7 @@ export function LaboratoryDetailPage() {
               <button
                 type="button"
                 aria-label="Mbyll formularin"
-                onClick={() => setEditing(false)}
+                onClick={closeEditor}
               >
                 <X size={20} />
               </button>
@@ -504,7 +520,7 @@ export function LaboratoryDetailPage() {
             <LaboratoryForm
               initialValues={laboratory}
               onSubmit={updateLaboratory}
-              onCancel={() => setEditing(false)}
+              onCancel={closeEditor}
               saving={saving}
               submitLabel="Ruaj ndryshimet"
               responsibleUsers={responsibleUsers}
@@ -517,6 +533,7 @@ export function LaboratoryDetailPage() {
       {editingZone !== undefined && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={zoneDialogRef}
             className="workspace-modal zone-form-modal"
             role="dialog"
             aria-modal="true"
@@ -532,7 +549,7 @@ export function LaboratoryDetailPage() {
               <button
                 type="button"
                 aria-label="Mbyll konfigurimin e zonës"
-                onClick={() => setEditingZone(undefined)}
+                onClick={closeZoneEditor}
               >
                 <X size={20} />
               </button>
@@ -540,7 +557,7 @@ export function LaboratoryDetailPage() {
             <LaboratoryZoneForm
               initialZone={editingZone}
               onSubmit={saveZone}
-              onCancel={() => setEditingZone(undefined)}
+              onCancel={closeZoneEditor}
               saving={saving}
             />
           </section>
@@ -550,6 +567,7 @@ export function LaboratoryDetailPage() {
       {zoneToDelete && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={deleteDialogRef}
             className="workspace-modal archive-confirmation"
             role="alertdialog"
             aria-modal="true"
@@ -566,11 +584,7 @@ export function LaboratoryDetailPage() {
               Fshirja bllokohet nëse ka pajisje ose sensorë të lidhur.
             </p>
             <footer>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setZoneToDelete(null)}
-              >
+              <Button type="button" variant="outline" onClick={closeZoneDelete}>
                 Anulo
               </Button>
               <Button type="button" onClick={deleteZone} disabled={saving}>
@@ -584,6 +598,7 @@ export function LaboratoryDetailPage() {
       {confirmArchive && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={archiveDialogRef}
             className="workspace-modal archive-confirmation"
             role="alertdialog"
             aria-modal="true"
@@ -600,11 +615,7 @@ export function LaboratoryDetailPage() {
               tij do të ruhet.
             </p>
             <footer>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setConfirmArchive(false)}
-              >
+              <Button type="button" variant="outline" onClick={closeArchive}>
                 Anulo
               </Button>
               <Button

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FlaskConical, Menu, Moon, Sun, X } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button.jsx";
@@ -13,7 +13,19 @@ const navigation = [
 
 export function Header({ theme, onToggleTheme }) {
   const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef(null);
   const closeMenu = () => setOpen(false);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    function closeWithKeyboard(event) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      menuButtonRef.current?.focus();
+    }
+    document.addEventListener("keydown", closeWithKeyboard);
+    return () => document.removeEventListener("keydown", closeWithKeyboard);
+  }, [open]);
 
   return (
     <header className="site-header">
@@ -28,6 +40,7 @@ export function Header({ theme, onToggleTheme }) {
         </Link>
 
         <nav
+          id="main-navigation"
           className={`main-nav ${open ? "is-open" : ""}`}
           aria-label="Navigimi kryesor"
         >
@@ -75,10 +88,12 @@ export function Header({ theme, onToggleTheme }) {
             <Link to="/regjistrohu">Regjistro Universitetin</Link>
           </Button>
           <button
+            ref={menuButtonRef}
             className="icon-control menu-toggle"
             type="button"
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
+            aria-controls="main-navigation"
             aria-label={open ? "Mbyll menunë" : "Hap menunë"}
           >
             {open ? <X size={20} /> : <Menu size={20} />}

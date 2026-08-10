@@ -17,6 +17,7 @@ import { api } from "@/api/client.js";
 import { EquipmentForm } from "@/components/EquipmentForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
 const statusLabels = {
   active: "Aktive",
@@ -40,6 +41,10 @@ export function EquipmentDetailPage() {
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const closeEditor = useCallback(() => setEditing(false), []);
+  const closeArchive = useCallback(() => setConfirmArchive(false), []);
+  const editorDialogRef = useAccessibleDialog(editing, closeEditor);
+  const archiveDialogRef = useAccessibleDialog(confirmArchive, closeArchive);
 
   const loadDetail = useCallback(async () => {
     setLoading(true);
@@ -241,6 +246,7 @@ export function EquipmentDetailPage() {
       {editing && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={editorDialogRef}
             className="workspace-modal equipment-form-modal"
             role="dialog"
             aria-modal="true"
@@ -254,7 +260,7 @@ export function EquipmentDetailPage() {
               <button
                 type="button"
                 aria-label="Mbyll formularin"
-                onClick={() => setEditing(false)}
+                onClick={closeEditor}
               >
                 <X size={20} />
               </button>
@@ -267,7 +273,7 @@ export function EquipmentDetailPage() {
               saving={saving}
               onLaboratoryChange={loadOptions}
               onSubmit={updateEquipment}
-              onCancel={() => setEditing(false)}
+              onCancel={closeEditor}
             />
           </section>
         </div>
@@ -276,6 +282,7 @@ export function EquipmentDetailPage() {
       {confirmArchive && (
         <div className="workspace-modal-backdrop">
           <section
+            ref={archiveDialogRef}
             className="workspace-modal archive-confirmation equipment-archive-confirmation"
             role="alertdialog"
             aria-modal="true"
@@ -291,7 +298,7 @@ export function EquipmentDetailPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setConfirmArchive(false)}
+                onClick={closeArchive}
                 disabled={saving}
               >
                 Anulo
