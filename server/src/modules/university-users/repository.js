@@ -167,5 +167,164 @@ export function createUniversityUserRepository(pool) {
         };
       });
     },
+
+    async update(input) {
+      return withTransaction(pool, async (connection) => {
+        const targets = await query(
+          connection,
+          `SELECT id FROM users
+            WHERE id = ? AND university_id = ? AND deleted_at IS NULL
+            FOR UPDATE`,
+          [input.userId, input.universityId],
+        );
+        if (!targets[0]) return null;
+        const relations = await validateRelations(connection, input);
+        if (relations.invalidRoles || relations.invalidLaboratories)
+          return relations;
+        await query(
+          connection,
+          `UPDATE users SET full_name = ?, email = ?, phone = ?, job_title = ?
+            WHERE id = ? AND university_id = ?`,
+          [
+            input.fullName,
+            input.email,
+            input.phone,
+            input.jobTitle,
+            input.userId,
+            input.universityId,
+          ],
+        );
+        await query(
+          connection,
+          "DELETE FROM user_roles WHERE user_id = ? AND university_id = ?",
+          [input.userId, input.universityId],
+        );
+        await query(
+          connection,
+          "DELETE FROM user_laboratory_assignments WHERE user_id = ? AND university_id = ?",
+          [input.userId, input.universityId],
+        );
+        await insertRelations(connection, input, relations);
+        await insertAudit(
+          connection,
+          input,
+          "university.user.updated",
+          "U përditësua përdoruesi i universitetit.",
+        );
+        return { user: responseUser(input, relations.laboratories) };
+      });
+    },
+
+    async setStatus(input) {
+      return withTransaction(pool, async (connection) => {
+        const targets = await query(
+          connection,
+          `SELECT id, status FROM users
+            WHERE id = ? AND university_id = ? AND deleted_at IS NULL
+            FOR UPDATE`,
+          [input.userId, input.universityId],
+        );
+        if (!targets[0]) return null;
+        await query(
+          connection,
+          "UPDATE users SET status = ? WHERE id = ? AND university_id = ?",
+          [input.status, input.userId, input.universityId],
+        );
+        if (input.status === "inactive") {
+          await query(
+            connection,
+            `UPDATE refresh_tokens SET revoked_at = UTC_TIMESTAMP(3)
+              WHERE user_id = ? AND university_id = ? AND revoked_at IS NULL`,
+            [input.userId, input.universityId],
+          );
+        }
+        await insertAudit(
+          connection,
+          { ...input, roles: undefined, laboratoryIds: undefined },
+          input.status === "active"
+            ? "university.user.reactivated"
+            : "university.user.deactivated",
+          input.status === "active"
+            ? "U riaktivizua përdoruesi i universitetit."
+            : "U çaktivizua përdoruesi i universitetit.",
+        );
+        return { id: input.userId, status: input.status };
+      });
+    },
+  };
+}
+
+async function validateRelations(connection, input) {
+  const roles = await query(
+    connection,
+    `SELECT id, code FROM roles WHERE code IN (${input.roles.map(() => "?").join(", ")})`,
+    input.roles,
+  );
+  if (roles.length !== input.roles.length) return { invalidRoles: true };
+  let laboratories = [];
+  if (input.laboratoryIds.length) {
+    laboratories = await query(
+      connection,
+      `SELECT id FROM laboratories WHERE university_id = ?
+        AND id IN (${input.laboratoryIds.map(() => "?").join(", ")})
+        AND deleted_at IS NULL AND status <> 'archived'`,
+      [input.universityId, ...input.laboratoryIds],
+    );
+    if (laboratories.length !== input.laboratoryIds.length)
+      return { invalidLaboratories: true };
+  }
+  return { roles, laboratories };
+}
+
+async function insertRelations(connection, input, relations) {
+  for (const role of relations.roles) {
+    await query(
+      connection,
+      "INSERT INTO user_roles (university_id, user_id, role_id) VALUES (?, ?, ?)",
+      [input.universityId, input.userId, role.id],
+    );
+  }
+  for (const laboratory of relations.laboratories) {
+    await query(
+      connection,
+      "INSERT INTO user_laboratory_assignments (university_id, user_id, laboratory_id) VALUES (?, ?, ?)",
+      [input.universityId, input.userId, laboratory.id],
+    );
+  }
+}
+
+async function insertAudit(connection, input, action, description) {
+  await query(
+    connection,
+    `INSERT INTO activity_logs (university_id, user_id, action, entity_type,
+       entity_id, description, metadata_json, ip_address)
+     VALUES (?, ?, ?, 'user', ?, ?, ?, ?)`,
+    [
+      input.universityId,
+      input.actorUserId,
+      input.userId,
+      action,
+      description,
+      JSON.stringify({
+        targetUserId: input.userId,
+        roles: input.roles,
+        laboratoryIds: input.laboratoryIds,
+        status: input.status,
+      }),
+      input.ipAddress,
+    ],
+  );
+}
+
+function responseUser(input, laboratories) {
+  return {
+    id: input.userId,
+    universityId: input.universityId,
+    fullName: input.fullName,
+    email: input.email,
+    phone: input.phone,
+    jobTitle: input.jobTitle,
+    roles: input.roles,
+    laboratories: laboratories.map(({ id }) => ({ id: String(id) })),
   };
 }

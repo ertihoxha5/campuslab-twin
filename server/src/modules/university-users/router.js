@@ -22,6 +22,32 @@ export function createUniversityUserRouter({ service, authenticateTenant }) {
       data: { user, message: "Përdoruesi u krijua me sukses." },
     });
   });
+  router.put("/:userId", async (request, response) => {
+    const user = await service.update(
+      request.params.userId,
+      request.body,
+      context(request),
+    );
+    return success(response, {
+      data: { user, message: "Përdoruesi u përditësua me sukses." },
+    });
+  });
+  router.patch("/:userId/status", async (request, response) => {
+    const user = await service.setStatus(
+      request.params.userId,
+      request.body,
+      context(request),
+    );
+    return success(response, {
+      data: {
+        user,
+        message:
+          user.status === "active"
+            ? "Përdoruesi u riaktivizua."
+            : "Përdoruesi u çaktivizua.",
+      },
+    });
+  });
   return router;
 }
 

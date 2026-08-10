@@ -137,6 +137,104 @@ test("user creation rejects platform role escalation before persistence", async 
   assert.equal(persisted, false);
 });
 
+test("user updates reject role escalation and keep server tenant context", async () => {
+  let captured;
+  const service = createUniversityUserService({
+    repository: {
+      async update(input) {
+        captured = input;
+        return { user: { id: input.userId, roles: input.roles } };
+      },
+    },
+  });
+  const valid = {
+    fullName: "Ada Testuese",
+    email: "ada@example.edu",
+    roles: ["lab_manager"],
+    laboratoryIds: ["15"],
+  };
+  const user = await service.update(
+    "12",
+    { ...valid, universityId: "999" },
+    { universityId: "7", userId: "9" },
+  );
+  assert.equal(user.id, "12");
+  assert.equal(captured.universityId, "7");
+  await assert.rejects(
+    service.update(
+      "12",
+      { ...valid, roles: ["platform_admin"] },
+      { universityId: "7", userId: "9" },
+    ),
+    (error) => error.status === 422,
+  );
+});
+
+test("status changes prevent self-deactivation", async () => {
+  let calls = 0;
+  const service = createUniversityUserService({
+    repository: {
+      async setStatus(input) {
+        calls += 1;
+        return { id: input.userId, status: input.status };
+      },
+    },
+  });
+  await assert.rejects(
+    service.setStatus(
+      "9",
+      { status: "inactive" },
+      { universityId: "7", userId: "9" },
+    ),
+    (error) => error.status === 422,
+  );
+  assert.equal(calls, 0);
+  const user = await service.setStatus(
+    "12",
+    { status: "inactive" },
+    { universityId: "7", userId: "9" },
+  );
+  assert.equal(user.status, "inactive");
+});
+
+test("deactivation revokes tenant user sessions and writes audit atomically", async () => {
+  const calls = [];
+  const connection = {
+    async beginTransaction() {},
+    async commit() {},
+    async rollback() {},
+    release() {},
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      if (sql.includes("SELECT id, status FROM users"))
+        return [[{ id: 12, status: "active" }]];
+      return [{ affectedRows: 1 }];
+    },
+  };
+  const repository = createUniversityUserRepository({
+    async getConnection() {
+      return connection;
+    },
+  });
+  const result = await repository.setStatus({
+    userId: "12",
+    universityId: "7",
+    actorUserId: "9",
+    status: "inactive",
+    ipAddress: null,
+  });
+  assert.equal(result.status, "inactive");
+  const revocation = calls.find(({ sql }) =>
+    sql.includes("UPDATE refresh_tokens"),
+  );
+  assert.deepEqual(revocation.parameters, ["12", "7"]);
+  assert.ok(
+    calls.some(({ parameters }) =>
+      parameters.includes("university.user.deactivated"),
+    ),
+  );
+});
+
 test("user repository creates user, roles, assignments, and audit atomically", async () => {
   const calls = [];
   const connection = {
@@ -217,6 +315,14 @@ before(async () => {
           captured = { context };
           return { id: "12" };
         },
+        async update(_id, _input, context) {
+          captured = { context };
+          return { id: "12" };
+        },
+        async setStatus(_id, input, context) {
+          captured = { context };
+          return { id: "12", status: input.status };
+        },
       },
     }),
   );
@@ -250,4 +356,16 @@ test("university user endpoints require management permission and server tenant"
   });
   assert.equal(created.status, 201);
   assert.equal(captured.context.universityId, "7");
+  const updated = await fetch(`${baseUrl}/api/university/users/12`, {
+    method: "PUT",
+    headers: { "content-type": "application/json", "x-test-users": "true" },
+    body: "{}",
+  });
+  assert.equal(updated.status, 200);
+  const deactivated = await fetch(`${baseUrl}/api/university/users/12/status`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json", "x-test-users": "true" },
+    body: JSON.stringify({ status: "inactive" }),
+  });
+  assert.equal(deactivated.status, 200);
 });

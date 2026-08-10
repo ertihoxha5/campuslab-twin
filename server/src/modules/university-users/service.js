@@ -61,6 +61,38 @@ const createSchema = z
       });
     }
   });
+const updateSchema = z
+  .object({
+    fullName: z.string().trim().min(3).max(160),
+    email: z
+      .string()
+      .trim()
+      .email()
+      .max(190)
+      .transform((value) => value.toLowerCase()),
+    phone: optionalText(40),
+    jobTitle: optionalText(120),
+    roles: z
+      .array(z.string())
+      .min(1)
+      .max(5)
+      .transform((roles) => [...new Set(roles)]),
+    laboratoryIds: z
+      .array(z.coerce.number().int().positive().transform(String))
+      .max(100)
+      .default([])
+      .transform((ids) => [...new Set(ids)]),
+  })
+  .superRefine((value, context) => {
+    if (value.roles.some((role) => !permittedRoleCodes.has(role))) {
+      context.addIssue({
+        code: "custom",
+        path: ["roles"],
+        message: "Roli i zgjedhur nuk lejohet në universitet.",
+      });
+    }
+  });
+const statusSchema = z.object({ status: z.enum(["active", "inactive"]) });
 
 export function createUniversityUserService({
   repository,
@@ -134,7 +166,85 @@ export function createUniversityUserService({
         throw error;
       }
     },
+
+    async update(userId, input, context) {
+      if (!validId(userId)) throw userNotFound();
+      const parsed = updateSchema.safeParse(input);
+      if (!parsed.success)
+        throw validationError(
+          "Të dhënat e përdoruesit nuk janë të vlefshme.",
+          parsed.error.issues,
+        );
+      try {
+        const result = await repository.update({
+          ...parsed.data,
+          userId: String(userId),
+          universityId: context.universityId,
+          actorUserId: context.userId,
+          ipAddress: context.ipAddress,
+        });
+        return validateMutation(result);
+      } catch (error) {
+        rethrowConflict(error);
+      }
+    },
+
+    async setStatus(userId, input, context) {
+      if (!validId(userId)) throw userNotFound();
+      const parsed = statusSchema.safeParse(input);
+      if (!parsed.success)
+        throw validationError("Statusi nuk është i vlefshëm.");
+      if (
+        String(userId) === String(context.userId) &&
+        parsed.data.status === "inactive"
+      ) {
+        throw validationError("Nuk mund ta çaktivizoni llogarinë tuaj aktive.");
+      }
+      const user = await repository.setStatus({
+        userId: String(userId),
+        status: parsed.data.status,
+        universityId: context.universityId,
+        actorUserId: context.userId,
+        ipAddress: context.ipAddress,
+      });
+      if (!user) throw userNotFound();
+      return user;
+    },
   };
+}
+
+function validateMutation(result) {
+  if (!result) throw userNotFound();
+  if (result.invalidRoles)
+    throw validationError("Një ose më shumë role nuk janë të vlefshme.");
+  if (result.invalidLaboratories)
+    throw validationError(
+      "Një ose më shumë laboratorë nuk i përkasin universitetit tuaj.",
+    );
+  return result.user;
+}
+
+function rethrowConflict(error) {
+  if (error?.code === "ER_DUP_ENTRY" || error?.errno === 1062) {
+    throw new AppError({
+      status: 409,
+      code: "USER_EXISTS",
+      message: "Një përdorues me këtë email ekziston tashmë në universitet.",
+    });
+  }
+  throw error;
+}
+
+function validId(value) {
+  return /^[1-9]\d*$/.test(String(value));
+}
+
+function userNotFound() {
+  return new AppError({
+    status: 404,
+    code: "USER_NOT_FOUND",
+    message: "Përdoruesi nuk u gjet.",
+  });
 }
 
 function mapUser(user) {
