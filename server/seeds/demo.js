@@ -177,6 +177,49 @@ const universityData = [
         floor: "Kati përdhes",
         capacity: 18,
         zone: "Zona e kontrolluesve PLC",
+        zoneType: "teaching",
+        zonePosition: { x: -3.8, y: 0, z: -1.9 },
+        zoneDimensions: { width: 3.2, height: 2.6, depth: 2.4 },
+        zoneOccupancyLimit: 6,
+        zoneThresholds: { temperatureMax: 28, co2Max: 1000 },
+        additionalZones: [
+          {
+            key: "robotics",
+            name: "Qeliza e robotikës",
+            code: "UPDT-AUT-01-Z2",
+            type: "research",
+            description:
+              "Zonë e kufizuar për krahun robotik dhe testet e lëvizjes.",
+            occupancyLimit: 4,
+            position: { x: 0, y: 0, z: -1.9 },
+            dimensions: { width: 3.2, height: 2.8, depth: 2.4 },
+            thresholds: { temperatureMax: 27, occupancyMax: 4 },
+          },
+          {
+            key: "drives",
+            name: "Zona e motorëve dhe inverterëve",
+            code: "UPDT-AUT-01-Z3",
+            type: "preparation",
+            description:
+              "Stacion për motorë elektrikë, inverterë dhe matje energjie.",
+            occupancyLimit: 4,
+            position: { x: 3.8, y: 0, z: -1.9 },
+            dimensions: { width: 3.2, height: 2.6, depth: 2.4 },
+            thresholds: { temperatureMax: 30, powerMaxWatts: 2500 },
+          },
+          {
+            key: "safety",
+            name: "Zona e sigurisë",
+            code: "UPDT-AUT-01-Z4",
+            type: "safety",
+            description:
+              "Dalja emergjente, pajisjet mbrojtëse dhe paneli i alarmit.",
+            occupancyLimit: 3,
+            position: { x: 4.8, y: 0, z: 2.6 },
+            dimensions: { width: 2.2, height: 2.8, depth: 1.8 },
+            thresholds: { smokeMax: 1, occupancyMax: 3 },
+          },
+        ],
         equipment: {
           name: "Paneli trajnues PLC",
           code: "UPDT-PLC-01",
@@ -313,19 +356,48 @@ async function seedUniversity(connection, university, passwordHash, roleIds) {
     const zoneId = await insertAndGetId(
       connection,
       `INSERT INTO laboratory_zones (
-         university_id, laboratory_id, name, code, description,
-         position_json, dimensions_json
-       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         university_id, laboratory_id, name, code, zone_type, description,
+         occupancy_limit, position_json, dimensions_json,
+         environmental_thresholds_json
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         universityId,
         laboratoryId,
         laboratory.zone,
         `${laboratory.code}-Z1`,
+        laboratory.zoneType ?? "general",
         "Zonë funksionale e laboratorit demonstrues.",
-        JSON.stringify({ x: 0, y: 0, z: 0 }),
-        JSON.stringify({ width: 8, height: 3, depth: 6 }),
+        laboratory.zoneOccupancyLimit ?? laboratory.capacity,
+        JSON.stringify(laboratory.zonePosition ?? { x: 0, y: 0, z: 0 }),
+        JSON.stringify(
+          laboratory.zoneDimensions ?? { width: 8, height: 3, depth: 6 },
+        ),
+        JSON.stringify(laboratory.zoneThresholds ?? {}),
       ],
     );
+
+    for (const zone of laboratory.additionalZones ?? []) {
+      await insertAndGetId(
+        connection,
+        `INSERT INTO laboratory_zones (
+           university_id, laboratory_id, name, code, zone_type, description,
+           occupancy_limit, position_json, dimensions_json,
+           environmental_thresholds_json
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          universityId,
+          laboratoryId,
+          zone.name,
+          zone.code,
+          zone.type,
+          zone.description,
+          zone.occupancyLimit,
+          JSON.stringify(zone.position),
+          JSON.stringify(zone.dimensions),
+          JSON.stringify(zone.thresholds),
+        ],
+      );
+    }
 
     const equipmentId = await insertAndGetId(
       connection,

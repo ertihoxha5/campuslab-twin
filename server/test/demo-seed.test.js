@@ -90,6 +90,33 @@ test("demo seed creates two distinct tenant datasets with hashed passwords", asy
     new Set([1, 2, 3, 4, 5]),
   );
 
+  const zoneInserts = database.calls.filter(
+    (call) =>
+      call.type === "execute" &&
+      call.sql.includes("INSERT INTO laboratory_zones"),
+  );
+  assert.equal(zoneInserts.length, 6);
+  const showcaseZones = zoneInserts.filter((call) =>
+    String(call.parameters[3]).startsWith("UPDT-AUT-01-Z"),
+  );
+  assert.equal(showcaseZones.length, 4);
+  assert.deepEqual(
+    showcaseZones.map((call) => call.parameters[4]),
+    ["teaching", "research", "preparation", "safety"],
+  );
+  assert.ok(
+    showcaseZones.every((call) => {
+      const position = JSON.parse(call.parameters[7]);
+      const dimensions = JSON.parse(call.parameters[8]);
+      return (
+        Number.isFinite(position.x) &&
+        dimensions.width > 0 &&
+        dimensions.height > 0 &&
+        dimensions.depth > 0
+      );
+    }),
+  );
+
   assert.equal(
     database.calls.some(
       (call) => call.type === "execute" && call.sql.includes("?"),
