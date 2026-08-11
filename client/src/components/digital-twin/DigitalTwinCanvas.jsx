@@ -282,8 +282,10 @@ export function DigitalTwinCanvas({
       <div className="digital-twin-canvas" aria-label="Pamja 3D e laboratorit">
         <LoadingOverlay />
         <Canvas
+          frameloop={cameraMode === "firstPerson" ? "always" : "demand"}
           shadows={resolvedQuality === "high"}
           dpr={resolvedQuality === "high" ? [1, 1.5] : 1}
+          performance={{ min: 0.5, debounce: 300 }}
           gl={{
             antialias: resolvedQuality === "high",
             powerPreference:

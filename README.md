@@ -110,3 +110,16 @@ adapter-it `passwordResetNotifier`; konfigurimi i një ofruesi email-i mbetet
 integrim i ambientit të vendosjes dhe token-i nuk shkruhet në log apo databazë.
 
 Mos vendosni sekrete reale në skedarët `.env.example`.
+
+## Objektivi i performancës 3D
+
+Pamja Digital Twin synon të mbajë të paktën 30 FPS në një laptop me 4 bërthama,
+8 GB RAM dhe grafikë të integruar, me një model GLB deri në 15 MB, 100 pajisje,
+100 sensorë dhe 16 figura të instancuara. Matja bëhet në Chrome, në madhësinë
+1440 × 900, pas ngarkimit të plotë të modelit dhe gjatë 60 sekondave navigim.
+
+Modaliteti `Automatike` zgjedh cilësi të ulët për pajisjet me jo më shumë se
+4 bërthama, jo më shumë se 4 GB memorie të raportuar ose me reduced motion.
+Rezolucioni i renderimit kufizohet në 1.5 DPR. Pamjet statike renderohen vetëm
+kur skena ndryshon; cikli i vazhdueshëm aktivizohet vetëm në navigimin në vetën
+e parë. Nëse objektivi 30 FPS nuk arrihet, përdoret opsioni `E ulët`.

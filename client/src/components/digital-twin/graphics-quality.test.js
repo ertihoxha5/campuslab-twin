@@ -22,4 +22,14 @@ describe("resolveGraphicsQuality", () => {
       }),
     ).toBe("high");
   });
+
+  it("uses low quality when reduced motion is requested", () => {
+    expect(
+      resolveGraphicsQuality("auto", {
+        hardwareConcurrency: 12,
+        deviceMemory: 16,
+        reducedMotion: true,
+      }),
+    ).toBe("low");
+  });
 });
