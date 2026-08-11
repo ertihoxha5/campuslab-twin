@@ -46,6 +46,43 @@ describe("connectMonitoringRealtime", () => {
     });
     disconnect();
   });
+
+  it("normalizes batched readings for existing page consumers", () => {
+    const socket = createSocket();
+    io.mockReturnValue(socket);
+    const onEvent = vi.fn();
+
+    connectMonitoringRealtime({ laboratoryId: "15", onEvent });
+    const sensorBatchHandler = socket.on.mock.calls.find(
+      ([eventName]) => eventName === "sensor:readings",
+    )[1];
+    const energyBatchHandler = socket.on.mock.calls.find(
+      ([eventName]) => eventName === "energy:readings",
+    )[1];
+
+    sensorBatchHandler({
+      readings: [
+        { sensorId: "4", value: 22.5 },
+        { sensorId: "5", value: 45 },
+      ],
+    });
+    energyBatchHandler({
+      readings: [{ equipmentId: "9", powerWatts: 1200 }],
+    });
+
+    expect(onEvent).toHaveBeenNthCalledWith(1, "sensor:reading", {
+      sensorId: "4",
+      value: 22.5,
+    });
+    expect(onEvent).toHaveBeenNthCalledWith(2, "sensor:reading", {
+      sensorId: "5",
+      value: 45,
+    });
+    expect(onEvent).toHaveBeenNthCalledWith(3, "energy:reading", {
+      equipmentId: "9",
+      powerWatts: 1200,
+    });
+  });
 });
 
 describe("connectDashboardRealtime", () => {

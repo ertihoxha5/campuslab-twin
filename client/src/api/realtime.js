@@ -7,11 +7,13 @@ const realtimeUrl = (import.meta.env.VITE_API_URL ?? "").replace(
 
 export const DASHBOARD_REALTIME_EVENTS = [
   "dashboard:refresh",
+  "sensor:readings",
   "sensor:reading",
   "equipment:updated",
   "alert:created",
   "alert:updated",
   "maintenance:updated",
+  "energy:readings",
   "energy:reading",
   "occupancy:updated",
   "simulation:updated",
@@ -70,7 +72,21 @@ export function connectMonitoringRealtime({
   socket.on("disconnect", () => onConnectionChange?.("disconnected"));
   socket.on("connect_error", () => onConnectionChange?.("disconnected"));
   for (const eventName of DASHBOARD_REALTIME_EVENTS) {
-    socket.on(eventName, (payload) => onEvent?.(eventName, payload));
+    socket.on(eventName, (payload) => {
+      if (eventName === "sensor:readings") {
+        for (const reading of payload?.readings ?? []) {
+          onEvent?.("sensor:reading", reading);
+        }
+        return;
+      }
+      if (eventName === "energy:readings") {
+        for (const reading of payload?.readings ?? []) {
+          onEvent?.("energy:reading", reading);
+        }
+        return;
+      }
+      onEvent?.(eventName, payload);
+    });
   }
 
   return () => {

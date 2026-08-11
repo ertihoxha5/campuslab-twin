@@ -26,35 +26,49 @@ export function createRealtimePublisher() {
       event,
     }) {
       const reference = { universityId, laboratoryId };
-      for (const reading of readings) {
-        emitToLaboratory(reference, "sensor:reading", {
+      const sensorPayloads = readings.map((reading) => ({
+        laboratoryId: String(laboratoryId),
+        sensorId: String(reading.sensorId),
+        sensorType: reading.sensorType,
+        value: reading.value,
+        unit: reading.unit,
+        recordedAt,
+        source: "simulated",
+        simulationRunId: String(runId),
+      }));
+      if (sensorPayloads.length > 0) {
+        emitToLaboratory(reference, "sensor:readings", {
           laboratoryId: String(laboratoryId),
-          sensorId: String(reading.sensorId),
-          sensorType: reading.sensorType,
-          value: reading.value,
-          unit: reading.unit,
-          recordedAt,
-          source: "simulated",
-          simulationRunId: String(runId),
+          readings: sensorPayloads,
         });
-        if (reading.sensorType === "occupancy") {
-          emitToLaboratory(reference, "occupancy:updated", {
-            laboratoryId: String(laboratoryId),
-            value: reading.value,
-            recordedAt,
-            source: "simulated",
-          });
-        }
       }
-      for (const reading of energyReadings) {
-        emitToLaboratory(reference, "energy:reading", {
+      const occupancyReadings = sensorPayloads.filter(
+        (reading) => reading.sensorType === "occupancy",
+      );
+      if (occupancyReadings.length > 0) {
+        emitToLaboratory(reference, "occupancy:updated", {
           laboratoryId: String(laboratoryId),
-          equipmentId: String(reading.equipmentId),
-          powerWatts: reading.powerWatts,
-          energyKwh: reading.energyKwh,
+          value: occupancyReadings.reduce(
+            (total, reading) => total + Number(reading.value ?? 0),
+            0,
+          ),
           recordedAt,
           source: "simulated",
-          simulationRunId: String(runId),
+        });
+      }
+      const energyPayloads = energyReadings.map((reading) => ({
+        laboratoryId: String(laboratoryId),
+        equipmentId: String(reading.equipmentId),
+        powerWatts: reading.powerWatts,
+        energyKwh: reading.energyKwh,
+        recordedAt,
+        source: "simulated",
+        simulationRunId: String(runId),
+      }));
+      if (energyPayloads.length > 0) {
+        emitToLaboratory(reference, "energy:readings", {
+          laboratoryId: String(laboratoryId),
+          readings: energyPayloads,
         });
       }
       emitToLaboratory(reference, "simulation:updated", {
