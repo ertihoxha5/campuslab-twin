@@ -1,5 +1,9 @@
 /* eslint-disable react/no-unknown-property */
 import { Html } from "@react-three/drei";
+import {
+  localizedLabel,
+  operationalStatusLabels,
+} from "@/utils/localization.js";
 import { equipmentMarkerPosition } from "./equipment-position.js";
 
 const statusColors = {
@@ -15,7 +19,10 @@ export function EquipmentMarkers({ equipment, zones, visible, onSelect }) {
   return equipment.map((item, index) => {
     const color = statusColors[item.status] ?? statusColors.inactive;
     return (
-      <group key={item.id} position={equipmentMarkerPosition(item, zones, index)}>
+      <group
+        key={item.id}
+        position={equipmentMarkerPosition(item, zones, index)}
+      >
         <mesh
           castShadow
           rotation={[0, Math.PI / 4, 0]}
@@ -25,7 +32,11 @@ export function EquipmentMarkers({ equipment, zones, visible, onSelect }) {
           }}
         >
           <octahedronGeometry args={[0.18, 0]} />
-          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.32} />
+          <meshStandardMaterial
+            color={color}
+            emissive={color}
+            emissiveIntensity={0.32}
+          />
         </mesh>
         <Html center distanceFactor={10} position={[0, 0.38, 0]}>
           <button
@@ -34,7 +45,7 @@ export function EquipmentMarkers({ equipment, zones, visible, onSelect }) {
             onClick={() => onSelect?.(item)}
           >
             <strong>{item.name}</strong>
-            <span>{item.status}</span>
+            <span>{localizedLabel(operationalStatusLabels, item.status)}</span>
           </button>
         </Html>
       </group>

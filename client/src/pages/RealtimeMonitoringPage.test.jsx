@@ -171,6 +171,8 @@ describe("RealtimeMonitoringPage", () => {
 
     expect(screen.getByText("Lidhur drejtpërdrejt")).toBeInTheDocument();
     expect(screen.getByText(/22,5 °C/)).toBeInTheDocument();
+    expect(screen.getAllByText("Temperaturë").length).toBeGreaterThan(0);
+    expect(screen.queryByText("temperature")).not.toBeInTheDocument();
     expect(screen.getByText(/1[.,]?200 W/)).toBeInTheDocument();
     expect(screen.getByText(/Simuluar ·/)).toBeInTheDocument();
     expect(screen.getByText(/Lexim i ri i energjisë:.*vat/)).toHaveAttribute(

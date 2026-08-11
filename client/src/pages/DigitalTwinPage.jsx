@@ -27,6 +27,11 @@ import { OccupancyFigures } from "@/components/digital-twin/OccupancyFigures.jsx
 import { occupancyRepresentation } from "@/components/digital-twin/occupancy.js";
 import { AlertIndicators } from "@/components/digital-twin/AlertIndicators.jsx";
 import { resolveAlertTarget } from "@/components/digital-twin/alert-target.js";
+import {
+  localizedLabel,
+  operationalStatusLabels,
+  sensorTypeLabels,
+} from "@/utils/localization.js";
 
 export function DigitalTwinPage() {
   const [laboratories, setLaboratories] = useState([]);
@@ -115,29 +120,33 @@ export function DigitalTwinPage() {
       api.get(`/api/laboratories/${laboratoryId}/zones`),
       api.get(`/api/alerts?laboratoryId=${laboratoryId}&page=1&pageSize=100`),
     ])
-      .then(([
-        sensorResponse,
-        dashboardResponse,
-        equipmentResponse,
-        zonesResponse,
-        alertsResponse,
-      ]) => {
-        if (!active) return;
-        setSensors(sensorResponse.data.sensors ?? []);
-        setEquipment(equipmentResponse.data.equipment ?? []);
-        setZones(zonesResponse.data.zones ?? []);
-        setEquipmentAlerts(alertsResponse.data.alerts ?? []);
-        setOccupancySnapshot(
-          Number(dashboardResponse.data.summary.metrics?.currentOccupancy ?? 0),
-        );
-        setSensorReadings(
-          Object.fromEntries(
-            (dashboardResponse.data.summary.latestSensorReadings ?? []).map(
-              (reading) => [String(reading.sensorId), reading],
+      .then(
+        ([
+          sensorResponse,
+          dashboardResponse,
+          equipmentResponse,
+          zonesResponse,
+          alertsResponse,
+        ]) => {
+          if (!active) return;
+          setSensors(sensorResponse.data.sensors ?? []);
+          setEquipment(equipmentResponse.data.equipment ?? []);
+          setZones(zonesResponse.data.zones ?? []);
+          setEquipmentAlerts(alertsResponse.data.alerts ?? []);
+          setOccupancySnapshot(
+            Number(
+              dashboardResponse.data.summary.metrics?.currentOccupancy ?? 0,
             ),
-          ),
-        );
-      })
+          );
+          setSensorReadings(
+            Object.fromEntries(
+              (dashboardResponse.data.summary.latestSensorReadings ?? []).map(
+                (reading) => [String(reading.sensorId), reading],
+              ),
+            ),
+          );
+        },
+      )
       .catch((error) => {
         if (active) setMessage(error.message);
       });
@@ -158,7 +167,9 @@ export function DigitalTwinPage() {
         } else if (["alert:created", "alert:updated"].includes(eventName)) {
           setEquipmentAlerts((current) => [
             payload,
-            ...current.filter((alert) => String(alert.id) !== String(payload.id)),
+            ...current.filter(
+              (alert) => String(alert.id) !== String(payload.id),
+            ),
           ]);
         } else if (eventName === "equipment:updated") {
           setEquipment((current) =>
@@ -183,20 +194,17 @@ export function DigitalTwinPage() {
   const modelUrl = laboratoryDetail?.modelMimeType?.startsWith("model/")
     ? `/api/laboratories/${laboratoryId}/model?v=${laboratoryDetail.modelFileId}`
     : undefined;
-  const currentOccupancy = useMemo(
-    () => {
-      const occupancySensors = sensors
-        .filter((sensor) => sensor.sensorType === "occupancy")
-        .filter((sensor) => sensorReadings[String(sensor.id)] != null);
-      if (occupancySensors.length === 0) return occupancySnapshot;
-      return occupancySensors.reduce(
-          (total, sensor) =>
-            total + Number(sensorReadings[String(sensor.id)]?.value ?? 0),
-          0,
-        );
-    },
-    [occupancySnapshot, sensorReadings, sensors],
-  );
+  const currentOccupancy = useMemo(() => {
+    const occupancySensors = sensors
+      .filter((sensor) => sensor.sensorType === "occupancy")
+      .filter((sensor) => sensorReadings[String(sensor.id)] != null);
+    if (occupancySensors.length === 0) return occupancySnapshot;
+    return occupancySensors.reduce(
+      (total, sensor) =>
+        total + Number(sensorReadings[String(sensor.id)]?.value ?? 0),
+      0,
+    );
+  }, [occupancySnapshot, sensorReadings, sensors]);
   const occupancyInfo = occupancyRepresentation(currentOccupancy);
   const activeAlerts = useMemo(
     () =>
@@ -273,7 +281,10 @@ export function DigitalTwinPage() {
 
       {laboratoryId ? (
         <div className="digital-twin-stage">
-          <div className="digital-twin-camera-controls" aria-label="Mënyra e kamerës">
+          <div
+            className="digital-twin-camera-controls"
+            aria-label="Mënyra e kamerës"
+          >
             <button
               type="button"
               className={cameraMode === "overview" ? "active" : ""}
@@ -325,7 +336,10 @@ export function DigitalTwinPage() {
             <RadioTower size={16} />
             {discoverSensors ? "Fshih sensorët" : "Zbulo sensorët"}
           </button>
-          <div className="digital-twin-layer-controls" aria-label="Shtresat e Digital Twin">
+          <div
+            className="digital-twin-layer-controls"
+            aria-label="Shtresat e Digital Twin"
+          >
             <button
               type="button"
               className={showZones ? "active" : ""}
@@ -403,7 +417,10 @@ export function DigitalTwinPage() {
               />
             )}
           </DigitalTwinCanvas>
-          <div className={`digital-twin-model-state ${modelState}`} role="status">
+          <div
+            className={`digital-twin-model-state ${modelState}`}
+            role="status"
+          >
             {modelState === "loaded"
               ? `Modeli: ${laboratoryDetail.modelOriginalName}`
               : modelState === "loading"
@@ -457,31 +474,103 @@ export function DigitalTwinPage() {
           </div>
           {selectedSensor && (
             <aside className="digital-twin-sensor-detail">
-              <button type="button" onClick={() => setSelectedSensor(null)} aria-label="Mbyll sensorin">×</button>
-              <span>{selectedSensor.sensorType}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedSensor(null)}
+                aria-label="Mbyll sensorin"
+              >
+                ×
+              </button>
+              <span>
+                {localizedLabel(sensorTypeLabels, selectedSensor.sensorType)}
+              </span>
               <strong>{selectedSensor.name}</strong>
               <p>
                 {sensorReadings[String(selectedSensor.id)]
                   ? `${Number(sensorReadings[String(selectedSensor.id)].value).toLocaleString("sq-AL")} ${sensorReadings[String(selectedSensor.id)].unit ?? selectedSensor.unit}`
                   : "Në pritje të leximit të parë"}
               </p>
-              <small>Statusi: {selectedSensor.status}</small>
+              <small>
+                Statusi:{" "}
+                {localizedLabel(operationalStatusLabels, selectedSensor.status)}
+              </small>
             </aside>
           )}
           {selectedEquipment && (
             <aside className="digital-twin-equipment-detail">
-              <button type="button" onClick={() => setSelectedEquipment(null)} aria-label="Mbyll pajisjen">×</button>
+              <button
+                type="button"
+                onClick={() => setSelectedEquipment(null)}
+                aria-label="Mbyll pajisjen"
+              >
+                ×
+              </button>
               <span>{selectedEquipment.type}</span>
               <strong>{selectedEquipment.name}</strong>
               <dl>
-                <div><dt>Statusi</dt><dd>{selectedEquipment.status}</dd></div>
-                <div><dt>Shëndeti</dt><dd>{Number(selectedEquipment.healthScore).toLocaleString("sq-AL")}%</dd></div>
-                <div><dt>Fuqia nominale</dt><dd>{selectedEquipment.energyRatingWatts == null ? "—" : `${Number(selectedEquipment.energyRatingWatts).toLocaleString("sq-AL")} W`}</dd></div>
-                <div><dt>Fuqia live</dt><dd>{equipmentEnergy[String(selectedEquipment.id)] ? `${Number(equipmentEnergy[String(selectedEquipment.id)].powerWatts).toLocaleString("sq-AL")} W` : "Në pritje"}</dd></div>
-                <div><dt>Sensorë të lidhur</dt><dd>{sensors.filter((sensor) => String(sensor.equipmentId) === String(selectedEquipment.id)).length}</dd></div>
-                <div><dt>Alarme aktive</dt><dd>{equipmentAlerts.filter((alert) => String(alert.equipmentId) === String(selectedEquipment.id) && !["resolved", "closed"].includes(alert.status)).length}</dd></div>
+                <div>
+                  <dt>Statusi</dt>
+                  <dd>
+                    {localizedLabel(
+                      operationalStatusLabels,
+                      selectedEquipment.status,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Shëndeti</dt>
+                  <dd>
+                    {Number(selectedEquipment.healthScore).toLocaleString(
+                      "sq-AL",
+                    )}
+                    %
+                  </dd>
+                </div>
+                <div>
+                  <dt>Fuqia nominale</dt>
+                  <dd>
+                    {selectedEquipment.energyRatingWatts == null
+                      ? "—"
+                      : `${Number(selectedEquipment.energyRatingWatts).toLocaleString("sq-AL")} W`}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Fuqia live</dt>
+                  <dd>
+                    {equipmentEnergy[String(selectedEquipment.id)]
+                      ? `${Number(equipmentEnergy[String(selectedEquipment.id)].powerWatts).toLocaleString("sq-AL")} W`
+                      : "Në pritje"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Sensorë të lidhur</dt>
+                  <dd>
+                    {
+                      sensors.filter(
+                        (sensor) =>
+                          String(sensor.equipmentId) ===
+                          String(selectedEquipment.id),
+                      ).length
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Alarme aktive</dt>
+                  <dd>
+                    {
+                      equipmentAlerts.filter(
+                        (alert) =>
+                          String(alert.equipmentId) ===
+                            String(selectedEquipment.id) &&
+                          !["resolved", "closed"].includes(alert.status),
+                      ).length
+                    }
+                  </dd>
+                </div>
               </dl>
-              {selectedEquipment.object3dReference && <small>Objekti 3D: {selectedEquipment.object3dReference}</small>}
+              {selectedEquipment.object3dReference && (
+                <small>Objekti 3D: {selectedEquipment.object3dReference}</small>
+              )}
             </aside>
           )}
         </div>

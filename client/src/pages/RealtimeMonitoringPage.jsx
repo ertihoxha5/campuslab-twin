@@ -13,15 +13,14 @@ import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { Button } from "@/components/ui/button.jsx";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus.js";
+import {
+  localizedLabel,
+  operationalStatusLabels,
+  sensorTypeLabels,
+  sourceLabels,
+} from "@/utils/localization.js";
 
 const colors = ["#58427c", "#6c7653", "#111827", "#9c6b30", "#346c73"];
-const statusLabels = {
-  new: "I ri",
-  acknowledged: "I pranuar",
-  in_progress: "Në trajtim",
-  resolved: "I zgjidhur",
-  closed: "I mbyllur",
-};
 
 const timeLabel = (value) =>
   new Intl.DateTimeFormat("sq-AL", {
@@ -158,7 +157,7 @@ export function RealtimeMonitoringPage() {
           ]);
           setLastUpdate(payload.recordedAt);
           setAnnouncement(
-            `Lexim i ri: ${payload.sensorType}, ${Number(payload.value).toLocaleString("sq-AL")} ${payload.unit}.`,
+            `Lexim i ri: ${localizedLabel(sensorTypeLabels, payload.sensorType)}, ${Number(payload.value).toLocaleString("sq-AL")} ${payload.unit}.`,
           );
         } else if (eventName === "energy:reading") {
           setEnergy(payload);
@@ -319,7 +318,7 @@ export function RealtimeMonitoringPage() {
                       key={reading.sensorId}
                       type="monotone"
                       dataKey={`sensor_${reading.sensorId}`}
-                      name={`${reading.sensorType} (${reading.unit})`}
+                      name={`${localizedLabel(sensorTypeLabels, reading.sensorType)} (${reading.unit})`}
                       stroke={colors[index]}
                       strokeWidth={2}
                       connectNulls
@@ -352,7 +351,9 @@ export function RealtimeMonitoringPage() {
                   className={`realtime-alert ${alert.severity}`}
                 >
                   <strong>{alert.title}</strong>
-                  <span>{statusLabels[alert.status] ?? alert.status}</span>
+                  <span>
+                    {localizedLabel(operationalStatusLabels, alert.status)}
+                  </span>
                   <p>{alert.description}</p>
                 </div>
               ))}
@@ -364,12 +365,12 @@ export function RealtimeMonitoringPage() {
       <div className="realtime-sensor-grid">
         {latestReadings.map((reading) => (
           <article key={reading.sensorId}>
-            <span>{reading.sensorType}</span>
+            <span>{localizedLabel(sensorTypeLabels, reading.sensorType)}</span>
             <strong>
               {Number(reading.value).toLocaleString("sq-AL")} {reading.unit}
             </strong>
             <small>
-              {reading.source === "simulated" ? "Simuluar" : "Regjistruar"} ·{" "}
+              {localizedLabel(sourceLabels, reading.source)} ·{" "}
               {timeLabel(reading.recordedAt)}
             </small>
           </article>
