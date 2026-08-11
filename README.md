@@ -138,3 +138,8 @@ në vend që të transferojë mijëra pika në shfletues.
 
 Rezultatet dhe matrica e QA-së së CLT-17 dokumentohen te
 [`docs/clt-17-qa.md`](docs/clt-17-qa.md).
+
+## Dokumentacioni teknik
+
+- [Arkitektura dhe rrjedha multi-tenant](docs/architecture.md)
+- [Baseline-i i QA-së](docs/clt-17-qa.md)
