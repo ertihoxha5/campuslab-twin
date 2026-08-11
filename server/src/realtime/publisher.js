@@ -1,5 +1,16 @@
 import { laboratoryRoom, userRoom } from "./create-realtime-server.js";
 
+export const realtimeEvents = Object.freeze({
+  SENSOR_READINGS: "sensor:readings",
+  OCCUPANCY_UPDATED: "occupancy:updated",
+  ENERGY_READINGS: "energy:readings",
+  SIMULATION_UPDATED: "simulation:updated",
+  DASHBOARD_REFRESH: "dashboard:refresh",
+  ALERT_CREATED: "alert:created",
+  ALERT_UPDATED: "alert:updated",
+  NOTIFICATION_CREATED: "notification:created",
+});
+
 export function createRealtimePublisher() {
   let io = null;
 
@@ -37,7 +48,7 @@ export function createRealtimePublisher() {
         simulationRunId: String(runId),
       }));
       if (sensorPayloads.length > 0) {
-        emitToLaboratory(reference, "sensor:readings", {
+        emitToLaboratory(reference, realtimeEvents.SENSOR_READINGS, {
           laboratoryId: String(laboratoryId),
           readings: sensorPayloads,
         });
@@ -46,7 +57,7 @@ export function createRealtimePublisher() {
         (reading) => reading.sensorType === "occupancy",
       );
       if (occupancyReadings.length > 0) {
-        emitToLaboratory(reference, "occupancy:updated", {
+        emitToLaboratory(reference, realtimeEvents.OCCUPANCY_UPDATED, {
           laboratoryId: String(laboratoryId),
           value: occupancyReadings.reduce(
             (total, reading) => total + Number(reading.value ?? 0),
@@ -66,18 +77,18 @@ export function createRealtimePublisher() {
         simulationRunId: String(runId),
       }));
       if (energyPayloads.length > 0) {
-        emitToLaboratory(reference, "energy:readings", {
+        emitToLaboratory(reference, realtimeEvents.ENERGY_READINGS, {
           laboratoryId: String(laboratoryId),
           readings: energyPayloads,
         });
       }
-      emitToLaboratory(reference, "simulation:updated", {
+      emitToLaboratory(reference, realtimeEvents.SIMULATION_UPDATED, {
         laboratoryId: String(laboratoryId),
         simulationRunId: String(runId),
         recordedAt,
         event: event ?? null,
       });
-      emitToLaboratory(reference, "dashboard:refresh", {
+      emitToLaboratory(reference, realtimeEvents.DASHBOARD_REFRESH, {
         laboratoryId: String(laboratoryId),
         recordedAt,
         reason: "simulation_reading",
@@ -87,7 +98,9 @@ export function createRealtimePublisher() {
       const reference = { universityId, laboratoryId };
       emitToLaboratory(
         reference,
-        alert.created ? "alert:created" : "alert:updated",
+        alert.created
+          ? realtimeEvents.ALERT_CREATED
+          : realtimeEvents.ALERT_UPDATED,
         {
           id: alert.id,
           laboratoryId: String(laboratoryId),
@@ -104,13 +117,16 @@ export function createRealtimePublisher() {
       );
       if (alert.created) {
         for (const userId of alert.recipientUserIds ?? []) {
-          io?.to(userRoom(universityId, userId)).emit("notification:created", {
-            alertId: alert.id,
-            type: `alert_${alert.severity}`,
-            title: alert.title,
-            message: alert.description,
-            createdAt: recordedAt,
-          });
+          io?.to(userRoom(universityId, userId)).emit(
+            realtimeEvents.NOTIFICATION_CREATED,
+            {
+              alertId: alert.id,
+              type: `alert_${alert.severity}`,
+              title: alert.title,
+              message: alert.description,
+              createdAt: recordedAt,
+            },
+          );
         }
       }
     },
