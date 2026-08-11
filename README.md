@@ -127,3 +127,6 @@ e parë. Nëse objektivi 30 FPS nuk arrihet, përdoret opsioni `E ulët`.
 Payload-et e grafikëve të analitikës kufizohen në 400 pika. API refuzon një
 kombinim periudhe/grupimi që e tejkalon këtë kufi dhe kërkon grupim më të gjerë,
 në vend që të transferojë mijëra pika në shfletues.
+
+Rezultatet dhe matrica e QA-së së CLT-17 dokumentohen te
+[`docs/clt-17-qa.md`](docs/clt-17-qa.md).
