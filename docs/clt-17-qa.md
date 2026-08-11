@@ -6,10 +6,11 @@ Data e verifikimit: 11 gusht 2026
 
 | Shtresa  | Komanda                                         | Rezultati                           |
 | -------- | ----------------------------------------------- | ----------------------------------- |
-| Backend  | `npm test --workspace server`                   | 290/290 teste kalojnë               |
+| Backend  | `npm test --workspace server`                   | 292/292 teste kalojnë               |
 | Frontend | `npm test --workspace client -- --maxWorkers=1` | 138/138 teste kalojnë në 44 skedarë |
 | Lint     | `npm run lint`                                  | Kalon për klientin dhe serverin     |
 | Build    | `npm run build`                                 | Kalon për klientin dhe serverin     |
+| Siguria  | `npm run security:audit`                        | 0 dobësi në 716 varësi              |
 
 Testet e frontend-it ekzekutohen me një worker për një rezultat të qëndrueshëm
 në kompjuterët me më pak memorie.
@@ -22,6 +23,7 @@ në kompjuterët me më pak memorie.
   raporte, skedarë dhe Socket.IO.
 - Validimi, transaksionet, rollback-u dhe përgjigjet e sigurta të gabimeve.
 - CORS, cookies, rate limiting, kufiri i kërkesave dhe siguria e upload-eve.
+- Auditimi i varësive production/development pa dobësi të njohura.
 - Formularët kryesorë, gjendjet bosh/gabim, dialogët dhe navigimi me tastierë.
 - Përditësimet live, offline/reconnect dhe batch-et e monitorimit.
 - Dy llogari universitetesh me lexime dhe shkrime paralele pa përzierje tenant.

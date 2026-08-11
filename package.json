@@ -16,6 +16,7 @@
     "db:maintain-readings": "npm run db:maintain-readings --workspace server",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "security:audit": "npm audit --audit-level=high",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
