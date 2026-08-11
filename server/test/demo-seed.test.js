@@ -73,12 +73,22 @@ test("demo seed creates two distinct tenant datasets with hashed passwords", asy
     (call) =>
       call.type === "execute" && call.sql.includes("INSERT INTO users ("),
   );
-  assert.equal(userInserts.length, 4);
+  assert.equal(userInserts.length, 10);
 
   for (const call of userInserts) {
     assert.match(call.parameters[3], /^\$2[aby]\$/);
     assert.notEqual(call.parameters[3], "CampusLab!Test2026");
   }
+
+  const roleAssignments = database.calls.filter(
+    (call) =>
+      call.type === "execute" && call.sql.includes("INSERT INTO user_roles"),
+  );
+  assert.equal(roleAssignments.length, 10);
+  assert.deepEqual(
+    new Set(roleAssignments.map((call) => call.parameters[2])),
+    new Set([1, 2, 3, 4, 5]),
+  );
 
   assert.equal(
     database.calls.some(

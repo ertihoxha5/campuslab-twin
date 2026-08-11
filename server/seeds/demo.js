@@ -37,6 +37,27 @@ const universityData = [
         title: "Teknik laboratori",
         role: "technician",
       },
+      {
+        key: "manager",
+        name: "Drita Gashi",
+        email: "menaxher@uni-prishtina.demo",
+        title: "Menaxhere e laboratorëve",
+        role: "lab_manager",
+      },
+      {
+        key: "academic",
+        name: "Blerim Shala",
+        email: "akademik@uni-prishtina.demo",
+        title: "Personel akademik",
+        role: "academic_staff",
+      },
+      {
+        key: "observer",
+        name: "Era Kelmendi",
+        email: "vezhgues@uni-prishtina.demo",
+        title: "Vëzhguese institucionale",
+        role: "observer",
+      },
     ],
     laboratories: [
       {
@@ -123,6 +144,27 @@ const universityData = [
         email: "teknik@upt.demo",
         title: "Teknik i sistemeve",
         role: "technician",
+      },
+      {
+        key: "manager",
+        name: "Mirela Kola",
+        email: "menaxher@upt.demo",
+        title: "Menaxhere e laboratorëve",
+        role: "lab_manager",
+      },
+      {
+        key: "academic",
+        name: "Arben Leka",
+        email: "akademik@upt.demo",
+        title: "Personel akademik",
+        role: "academic_staff",
+      },
+      {
+        key: "observer",
+        name: "Ina Duka",
+        email: "vezhgues@upt.demo",
+        title: "Vëzhguese institucionale",
+        role: "observer",
       },
     ],
     laboratories: [

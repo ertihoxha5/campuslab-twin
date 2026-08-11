@@ -74,6 +74,14 @@ demonstruese janë:
 - `admin@uni-prishtina.demo` — administratori i universitetit të parë
 - `admin@upt.demo` — administratori i universitetit të dytë
 
+Secili universitet ka edhe llogari për rolet e tjera. Zëvendësoni domain-in me
+`uni-prishtina.demo` ose `upt.demo`:
+
+- `menaxher@<domain>` — menaxheri i laboratorit
+- `teknik@<domain>` — tekniku
+- `akademik@<domain>` — personeli akademik
+- `vezhgues@<domain>` — vëzhguesi
+
 Këto janë vetëm llogari zhvillimi. Ndryshoni fjalëkalimin demonstrues dhe mos e
 përdorni në prodhim.
 
