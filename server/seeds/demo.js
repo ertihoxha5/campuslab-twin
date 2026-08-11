@@ -220,6 +220,80 @@ const universityData = [
             thresholds: { smokeMax: 1, occupancyMax: 3 },
           },
         ],
+        showcaseAssets: [
+          {
+            zoneKey: "robotics",
+            equipment: {
+              name: "Krahu robotik industrial",
+              code: "UPDT-ROB-02",
+              type: "industrial_robot",
+              manufacturer: "KUKA",
+              model: "KR 6 R900",
+              serial: "UPDT-KUKA-KR6-02",
+              watts: 1200,
+              health: 94,
+              object3dReference: "equipment/robot-arm",
+            },
+            sensor: {
+              name: "Sensori i shëndetit të robotit",
+              code: "UPDT-HLT-02",
+              type: "equipment_health",
+              unit: "%",
+              warningMin: 75,
+              criticalMin: 60,
+              values: [94, 93.8, 93.6],
+              position: { x: 0, y: 1.35, z: -1.9 },
+            },
+          },
+          {
+            zoneKey: "drives",
+            equipment: {
+              name: "Inverteri i motorit elektrik",
+              code: "UPDT-VFD-03",
+              type: "variable_frequency_drive",
+              manufacturer: "Siemens",
+              model: "SINAMICS G120",
+              serial: "UPDT-SIE-G120-03",
+              watts: 2200,
+              health: 89,
+              object3dReference: "equipment/motor-drive",
+            },
+            sensor: {
+              name: "Matësi i fuqisë së inverterit",
+              code: "UPDT-PWR-03",
+              type: "power",
+              unit: "W",
+              warningMax: 1900,
+              criticalMax: 2200,
+              values: [1420, 1580, 1510],
+              position: { x: 3.8, y: 1.1, z: -1.9 },
+            },
+          },
+          {
+            zoneKey: "safety",
+            equipment: {
+              name: "Paneli i sigurisë dhe alarmit",
+              code: "UPDT-SAFE-04",
+              type: "safety_system",
+              manufacturer: "Siemens",
+              model: "Cerberus PRO",
+              serial: "UPDT-SIE-SAFE-04",
+              watts: 40,
+              health: 98,
+              object3dReference: "equipment/safety-panel",
+            },
+            sensor: {
+              name: "Detektori i tymit",
+              code: "UPDT-SMK-04",
+              type: "smoke",
+              unit: "%",
+              warningMax: 1,
+              criticalMax: 5,
+              values: [0.1, 0.1, 0.2],
+              position: { x: 4.8, y: 2.4, z: 2.6 },
+            },
+          },
+        ],
         equipment: {
           name: "Paneli trajnues PLC",
           code: "UPDT-PLC-01",
@@ -375,9 +449,10 @@ async function seedUniversity(connection, university, passwordHash, roleIds) {
         JSON.stringify(laboratory.zoneThresholds ?? {}),
       ],
     );
+    const zoneIds = new Map([["primary", zoneId]]);
 
     for (const zone of laboratory.additionalZones ?? []) {
-      await insertAndGetId(
+      const additionalZoneId = await insertAndGetId(
         connection,
         `INSERT INTO laboratory_zones (
            university_id, laboratory_id, name, code, zone_type, description,
@@ -397,6 +472,7 @@ async function seedUniversity(connection, university, passwordHash, roleIds) {
           JSON.stringify(zone.thresholds),
         ],
       );
+      zoneIds.set(zone.key, additionalZoneId);
     }
 
     const equipmentId = await insertAndGetId(
@@ -478,6 +554,90 @@ async function seedUniversity(connection, university, passwordHash, roleIds) {
         "2026-01-15 10:02:00.000",
       ],
     );
+
+    for (const asset of laboratory.showcaseAssets ?? []) {
+      const assetZoneId = zoneIds.get(asset.zoneKey);
+      const showcaseEquipmentId = await insertAndGetId(
+        connection,
+        `INSERT INTO equipment (
+           university_id, laboratory_id, zone_id, responsible_user_id,
+           name, code, type, manufacturer, model, serial_number, status,
+           energy_rating_watts, health_score, object_3d_reference
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
+        [
+          universityId,
+          laboratoryId,
+          assetZoneId,
+          userIds.get("technician"),
+          asset.equipment.name,
+          asset.equipment.code,
+          asset.equipment.type,
+          asset.equipment.manufacturer,
+          asset.equipment.model,
+          asset.equipment.serial,
+          asset.equipment.watts,
+          asset.equipment.health,
+          asset.equipment.object3dReference,
+        ],
+      );
+      const showcaseSensorId = await insertAndGetId(
+        connection,
+        `INSERT INTO sensors (
+           university_id, laboratory_id, zone_id, equipment_id, name, code,
+           sensor_type, unit, status, sampling_interval_seconds,
+           warning_min, warning_max, critical_min, critical_max,
+           position_x, position_y, position_z
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'online', 60, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          universityId,
+          laboratoryId,
+          assetZoneId,
+          showcaseEquipmentId,
+          asset.sensor.name,
+          asset.sensor.code,
+          asset.sensor.type,
+          asset.sensor.unit,
+          asset.sensor.warningMin ?? null,
+          asset.sensor.warningMax ?? null,
+          asset.sensor.criticalMin ?? null,
+          asset.sensor.criticalMax ?? null,
+          asset.sensor.position.x,
+          asset.sensor.position.y,
+          asset.sensor.position.z,
+        ],
+      );
+      for (const [readingIndex, value] of asset.sensor.values.entries()) {
+        await query(
+          connection,
+          `INSERT INTO sensor_readings (
+             university_id, laboratory_id, sensor_id, value, recorded_at,
+             source
+           ) VALUES (?, ?, ?, ?, ?, 'simulated')`,
+          [
+            universityId,
+            laboratoryId,
+            showcaseSensorId,
+            value,
+            `2026-01-15 10:0${readingIndex}:30.000`,
+          ],
+        );
+      }
+      await query(
+        connection,
+        `INSERT INTO energy_readings (
+           university_id, laboratory_id, equipment_id, power_watts,
+           energy_kwh, recorded_at, source
+         ) VALUES (?, ?, ?, ?, ?, ?, 'simulated')`,
+        [
+          universityId,
+          laboratoryId,
+          showcaseEquipmentId,
+          asset.equipment.watts * 0.68,
+          asset.equipment.watts * 0.00068,
+          "2026-01-15 10:02:30.000",
+        ],
+      );
+    }
 
     const alertId = await insertAndGetId(
       connection,

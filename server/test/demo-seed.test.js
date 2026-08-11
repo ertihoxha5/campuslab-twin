@@ -117,6 +117,46 @@ test("demo seed creates two distinct tenant datasets with hashed passwords", asy
     }),
   );
 
+  const equipmentInserts = database.calls.filter(
+    (call) =>
+      call.type === "execute" && call.sql.includes("INSERT INTO equipment"),
+  );
+  const sensorInserts = database.calls.filter(
+    (call) =>
+      call.type === "execute" && call.sql.includes("INSERT INTO sensors"),
+  );
+  assert.equal(equipmentInserts.length, 6);
+  assert.equal(sensorInserts.length, 6);
+  assert.deepEqual(
+    equipmentInserts.slice(-3).map((call) => call.parameters.at(-1)),
+    ["equipment/robot-arm", "equipment/motor-drive", "equipment/safety-panel"],
+  );
+  assert.deepEqual(
+    sensorInserts.slice(-3).map((call) => call.parameters[6]),
+    ["equipment_health", "power", "smoke"],
+  );
+  assert.ok(
+    sensorInserts
+      .slice(-3)
+      .every((call) => call.parameters.slice(-3).every(Number.isFinite)),
+  );
+  assert.equal(
+    database.calls.filter(
+      (call) =>
+        call.type === "execute" &&
+        call.sql.includes("INSERT INTO sensor_readings"),
+    ).length,
+    18,
+  );
+  assert.equal(
+    database.calls.filter(
+      (call) =>
+        call.type === "execute" &&
+        call.sql.includes("INSERT INTO energy_readings"),
+    ).length,
+    6,
+  );
+
   assert.equal(
     database.calls.some(
       (call) => call.type === "execute" && call.sql.includes("?"),
