@@ -4,7 +4,10 @@ import { createServer } from "node:http";
 import { after, before, test } from "node:test";
 import { createApp } from "../src/app.js";
 import { createAnalyticsRepository } from "../src/modules/analytics/repository.js";
-import { createAnalyticsService } from "../src/modules/analytics/service.js";
+import {
+  createAnalyticsService,
+  estimateSeriesPoints,
+} from "../src/modules/analytics/service.js";
 
 test("historical sensor analytics apply tenant, assignment, asset, metric, and date filters", async () => {
   const calls = [];
@@ -96,6 +99,43 @@ test("analytics service validates range and normalizes stored numeric results", 
       { universityId: "7", userId: "9", roles: [] },
     ),
     (error) => error.status === 422,
+  );
+});
+
+test("analytics limits chart payloads and accepts a coarser interval", async () => {
+  const calls = [];
+  const service = createAnalyticsService({
+    repository: {
+      async history(input) {
+        calls.push(input);
+        return { summary: {}, series: [], provenance: [] };
+      },
+    },
+    maximumSeriesPoints: 400,
+  });
+  const context = { universityId: "7", userId: "9", roles: [] };
+  const range = {
+    metric: "temperature",
+    startAt: "2026-07-01T00:00:00.000Z",
+    endAt: "2026-08-01T00:00:00.000Z",
+  };
+
+  await assert.rejects(
+    service.history({ ...range, interval: "hourly" }, context),
+    (error) =>
+      error.status === 422 && error.message.includes("kufirin prej 400 pikash"),
+  );
+  assert.equal(calls.length, 0);
+
+  await service.history({ ...range, interval: "daily" }, context);
+  assert.equal(calls.length, 1);
+  assert.equal(
+    estimateSeriesPoints({
+      startAt: new Date(range.startAt),
+      endAt: new Date(range.endAt),
+      interval: "daily",
+    }),
+    32,
   );
 });
 

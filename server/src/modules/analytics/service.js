@@ -14,6 +14,12 @@ const metrics = [
   "alerts",
   "maintenance",
 ];
+const intervalMilliseconds = {
+  hourly: 60 * 60 * 1000,
+  daily: 24 * 60 * 60 * 1000,
+  weekly: 7 * 24 * 60 * 60 * 1000,
+  monthly: 28 * 24 * 60 * 60 * 1000,
+};
 const filterSchema = z.object({
   metric: z.enum(metrics),
   interval: z.enum(["hourly", "daily", "weekly", "monthly"]).default("daily"),
@@ -33,7 +39,16 @@ const filterSchema = z.object({
   endAt: z.string().datetime({ offset: true }),
 });
 
-export function createAnalyticsService({ repository, maximumRangeDays = 366 }) {
+export function estimateSeriesPoints({ startAt, endAt, interval }) {
+  const rangeMs = endAt.getTime() - startAt.getTime();
+  return Math.ceil(rangeMs / intervalMilliseconds[interval]) + 1;
+}
+
+export function createAnalyticsService({
+  repository,
+  maximumRangeDays = 366,
+  maximumSeriesPoints = 400,
+}) {
   return {
     async history(input, context) {
       const parsed = filterSchema.safeParse(input);
@@ -44,6 +59,17 @@ export function createAnalyticsService({ repository, maximumRangeDays = 366 }) {
       if (rangeMs <= 0 || rangeMs > maximumRangeDays * 86_400_000) {
         throw validationError(
           "Periudha duhet të jetë pozitive dhe jo më e gjatë se 366 ditë.",
+        );
+      }
+      if (
+        estimateSeriesPoints({
+          startAt,
+          endAt,
+          interval: parsed.data.interval,
+        }) > maximumSeriesPoints
+      ) {
+        throw validationError(
+          `Grafiku tejkalon kufirin prej ${maximumSeriesPoints} pikash. Zgjidhni një periudhë më të shkurtër ose një grupim më të gjerë.`,
         );
       }
       const result = await repository.history({

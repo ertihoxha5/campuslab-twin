@@ -123,3 +123,7 @@ Modaliteti `Automatike` zgjedh cilësi të ulët për pajisjet me jo më shumë 
 Rezolucioni i renderimit kufizohet në 1.5 DPR. Pamjet statike renderohen vetëm
 kur skena ndryshon; cikli i vazhdueshëm aktivizohet vetëm në navigimin në vetën
 e parë. Nëse objektivi 30 FPS nuk arrihet, përdoret opsioni `E ulët`.
+
+Payload-et e grafikëve të analitikës kufizohen në 400 pika. API refuzon një
+kombinim periudhe/grupimi që e tejkalon këtë kufi dhe kërkon grupim më të gjerë,
+në vend që të transferojë mijëra pika në shfletues.
