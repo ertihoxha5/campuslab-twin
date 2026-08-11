@@ -26,8 +26,14 @@ në kompjuterët me më pak memorie.
 - Përditësimet live, offline/reconnect dhe batch-et e monitorimit.
 - Kufiri prej 400 pikash për grafikët dhe strategjia e performancës 3D.
 
-## Hapi i mbetur
+## Smoke flow-i HTTP
 
-Smoke flow-i i plotë duhet të ekzekutohet si një rrjedhë e vetme: regjistrim,
-miratim, hyrje e administratorit të universitetit, krijim laboratori/pajisjeje/
-sensori, simulim, alarm, Digital Twin, mirëmbajtje, skenar dhe raport.
+`server/test/end-to-end-smoke-flow.test.js` verifikon si një rrjedhë të vetme:
+regjistrimin, hyrjen dhe miratimin nga administratori i platformës, hyrjen e
+administratorit të universitetit, krijimin e laboratorit/pajisjes/sensorit,
+monitorimin e simuluar, krijimin dhe zgjidhjen e alarmit, kontratën e Digital
+Twin, planifikimin e mirëmbajtjes, nisjen e skenarit dhe gjenerimin e raportit.
+
+Testi kalon përmes route-ve reale Express, cookie-ve të ndara, middleware-it të
+autentikimit dhe kontrollit të lejeve. Shërbimet përdorin state testues në
+memorie, prandaj testi nuk ndryshon databazën lokale.
