@@ -1,5 +1,5 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { RealtimeMonitoringPage } from "./RealtimeMonitoringPage.jsx";
@@ -22,6 +22,10 @@ vi.mock("recharts", () => ({
 
 describe("RealtimeMonitoringPage", () => {
   beforeEach(() => {
+    Object.defineProperty(navigator, "onLine", {
+      configurable: true,
+      value: true,
+    });
     vi.clearAllMocks();
     api.get.mockImplementation((path) => {
       if (path.startsWith("/api/laboratories")) {
@@ -57,6 +61,13 @@ describe("RealtimeMonitoringPage", () => {
           ],
         },
       });
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(navigator, "onLine", {
+      configurable: true,
+      value: true,
     });
   });
 
@@ -97,7 +108,8 @@ describe("RealtimeMonitoringPage", () => {
 
     render(<RealtimeMonitoringPage />);
     await waitFor(() => expect(connectMonitoringRealtime).toHaveBeenCalled());
-    const { onConnectionChange } = connectMonitoringRealtime.mock.calls.at(-1)[0];
+    const { onConnectionChange } =
+      connectMonitoringRealtime.mock.calls.at(-1)[0];
     const callsBeforeReconnect = api.get.mock.calls.filter(([path]) =>
       path.startsWith("/api/dashboard/summary"),
     ).length;
@@ -117,9 +129,15 @@ describe("RealtimeMonitoringPage", () => {
   it("loads real laboratories and active alerts without invented readings", async () => {
     render(<RealtimeMonitoringPage />);
 
-    expect(await screen.findByText(/Laboratori i Automatizimit/)).toBeInTheDocument();
-    expect(await screen.findByText("Prag kritik: Temperatura")).toBeInTheDocument();
-    expect(screen.getByText("Në pritje të leximeve realtime nga simulatori.")).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Laboratori i Automatizimit/),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("Prag kritik: Temperatura"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Në pritje të leximeve realtime nga simulatori."),
+    ).toBeInTheDocument();
     expect(connectMonitoringRealtime).toHaveBeenCalledWith(
       expect.objectContaining({ laboratoryId: "15" }),
     );
@@ -128,7 +146,8 @@ describe("RealtimeMonitoringPage", () => {
   it("renders sensor and energy cards from realtime events", async () => {
     render(<RealtimeMonitoringPage />);
     await waitFor(() => expect(connectMonitoringRealtime).toHaveBeenCalled());
-    const { onEvent, onConnectionChange } = connectMonitoringRealtime.mock.calls.at(-1)[0];
+    const { onEvent, onConnectionChange } =
+      connectMonitoringRealtime.mock.calls.at(-1)[0];
 
     act(() => {
       onConnectionChange("connected");
@@ -154,5 +173,37 @@ describe("RealtimeMonitoringPage", () => {
     expect(screen.getByText(/22,5 °C/)).toBeInTheDocument();
     expect(screen.getByText(/1[.,]?200 W/)).toBeInTheDocument();
     expect(screen.getByText(/Simuluar ·/)).toBeInTheDocument();
+    expect(screen.getByText(/Lexim i ri i energjisë:.*vat/)).toHaveAttribute(
+      "aria-live",
+      "polite",
+    );
+  });
+
+  it("keeps the last data visible and announces offline and reconnect states", async () => {
+    render(<RealtimeMonitoringPage />);
+    await waitFor(() => expect(connectMonitoringRealtime).toHaveBeenCalled());
+    const { onConnectionChange } =
+      connectMonitoringRealtime.mock.calls.at(-1)[0];
+
+    act(() => onConnectionChange("disconnected"));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /po rilidhet automatikisht/i,
+    );
+    expect(screen.getByRole("status")).toHaveAttribute("aria-live", "polite");
+
+    act(() => window.dispatchEvent(new Event("offline")));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /Pajisja është offline/i,
+    );
+    expect(screen.getByRole("note")).toHaveTextContent(
+      /Të dhënat e fundit mbeten të dukshme/,
+    );
+
+    act(() => window.dispatchEvent(new Event("online")));
+    act(() => onConnectionChange("connected"));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /Lidhur drejtpërdrejt/i,
+    );
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
   });
 });
