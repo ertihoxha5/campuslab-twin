@@ -142,4 +142,5 @@ Rezultatet dhe matrica e QA-së së CLT-17 dokumentohen te
 ## Dokumentacioni teknik
 
 - [Arkitektura dhe rrjedha multi-tenant](docs/architecture.md)
+- [Matrica RBAC dhe kodet e lejeve](docs/rbac.md)
 - [Baseline-i i QA-së](docs/clt-17-qa.md)
