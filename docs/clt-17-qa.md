@@ -24,6 +24,7 @@ në kompjuterët me më pak memorie.
 - CORS, cookies, rate limiting, kufiri i kërkesave dhe siguria e upload-eve.
 - Formularët kryesorë, gjendjet bosh/gabim, dialogët dhe navigimi me tastierë.
 - Përditësimet live, offline/reconnect dhe batch-et e monitorimit.
+- Dy llogari universitetesh me lexime dhe shkrime paralele pa përzierje tenant.
 - Kufiri prej 400 pikash për grafikët dhe strategjia e performancës 3D.
 
 ## Smoke flow-i HTTP
