@@ -136,13 +136,31 @@ export async function verifyDatabase(pool, databaseName) {
        u.name,
        COUNT(DISTINCT usr.id) AS user_count,
        COUNT(DISTINCT lab.id) AS laboratory_count,
+       COUNT(DISTINCT zone.id) AS zone_count,
        COUNT(DISTINCT eq.id) AS equipment_count,
-       COUNT(DISTINCT sen.id) AS sensor_count
+       COUNT(DISTINCT sen.id) AS sensor_count,
+       COUNT(DISTINCT sr.id) AS sensor_reading_count,
+       COUNT(DISTINCT er.id) AS energy_reading_count,
+       COUNT(DISTINCT a.id) AS alert_count,
+       COUNT(DISTINCT mt.id) AS maintenance_count,
+       COUNT(DISTINCT ss.id) AS scenario_count,
+       COUNT(DISTINCT run.id) AS simulation_run_count,
+       COUNT(DISTINCT report.id) AS report_count,
+       COUNT(DISTINCT notification.id) AS notification_count
      FROM universities u
      LEFT JOIN users usr ON usr.university_id = u.id
      LEFT JOIN laboratories lab ON lab.university_id = u.id
+     LEFT JOIN laboratory_zones zone ON zone.university_id = u.id
      LEFT JOIN equipment eq ON eq.university_id = u.id
      LEFT JOIN sensors sen ON sen.university_id = u.id
+     LEFT JOIN sensor_readings sr ON sr.university_id = u.id
+     LEFT JOIN energy_readings er ON er.university_id = u.id
+     LEFT JOIN alerts a ON a.university_id = u.id
+     LEFT JOIN maintenance_tasks mt ON mt.university_id = u.id
+     LEFT JOIN simulation_scenarios ss ON ss.university_id = u.id
+     LEFT JOIN simulation_runs run ON run.university_id = u.id
+     LEFT JOIN reports report ON report.university_id = u.id
+     LEFT JOIN notifications notification ON notification.university_id = u.id
      WHERE u.official_website IN (?, ?)
      GROUP BY u.id, u.name
      ORDER BY u.id`,
@@ -155,14 +173,44 @@ export async function verifyDatabase(pool, databaseName) {
   );
 
   for (const university of universitySummary) {
+    const requiredDemoCounts = [
+      "user_count",
+      "laboratory_count",
+      "zone_count",
+      "equipment_count",
+      "sensor_count",
+      "sensor_reading_count",
+      "energy_reading_count",
+      "alert_count",
+      "maintenance_count",
+      "scenario_count",
+      "simulation_run_count",
+      "report_count",
+      "notification_count",
+    ];
     assertCondition(
-      Number(university.user_count) > 0 &&
-        Number(university.laboratory_count) > 0 &&
-        Number(university.equipment_count) > 0 &&
-        Number(university.sensor_count) > 0,
+      requiredDemoCounts.every((field) => Number(university[field]) > 0),
       `${university.name} nuk ka grupin e plotë të të dhënave demonstruese.`,
     );
   }
+
+  assertCondition(
+    universitySummary.reduce(
+      (total, university) => total + Number(university.laboratory_count),
+      0,
+    ) >= 3,
+    "Seed-i demonstrues duhet të përmbajë së paku tre laboratorë.",
+  );
+
+  const platformAdministrators = await query(
+    pool,
+    "SELECT id FROM platform_admins WHERE email = ? AND status = 'active'",
+    ["admin@campuslab.demo"],
+  );
+  assertCondition(
+    platformAdministrators.length === 1,
+    "Mungon administratori aktiv demonstrues i platformës.",
+  );
 
   const duplicateAssetCodes = await query(
     pool,

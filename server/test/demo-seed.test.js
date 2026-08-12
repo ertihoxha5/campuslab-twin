@@ -157,6 +157,28 @@ test("demo seed creates two distinct tenant datasets with hashed passwords", asy
     6,
   );
 
+  const requiredTenantInserts = [
+    ["alerts", 3],
+    ["maintenance_tasks", 3],
+    ["maintenance_updates", 3],
+    ["simulation_scenarios", 3],
+    ["simulation_runs", 3],
+    ["reports", 3],
+    ["notifications", 3],
+    ["activity_logs", 3],
+  ];
+
+  for (const [table, expectedCount] of requiredTenantInserts) {
+    assert.equal(
+      database.calls.filter(
+        (call) =>
+          call.type === "execute" && call.sql.includes(`INSERT INTO ${table}`),
+      ).length,
+      expectedCount,
+      `Seed-i duhet të krijojë ${expectedCount} rreshta në ${table}.`,
+    );
+  }
+
   assert.equal(
     database.calls.some(
       (call) => call.type === "execute" && call.sql.includes("?"),
