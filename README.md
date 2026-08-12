@@ -142,6 +142,7 @@ Rezultatet dhe matrica e QA-së së CLT-17 dokumentohen te
 ## Dokumentacioni teknik
 
 - [Arkitektura dhe rrjedha multi-tenant](docs/architecture.md)
+- [Databaza dhe ERD](docs/database.md)
 - [Matrica RBAC dhe kodet e lejeve](docs/rbac.md)
 - [Referenca REST API](docs/api.md)
 - [Referenca Socket.IO](docs/socket-io.md)
