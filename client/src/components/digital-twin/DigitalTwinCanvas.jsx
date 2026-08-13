@@ -141,7 +141,8 @@ function CameraRig({ mode, resetNonce, focusTarget }) {
   useEffect(() => {
     if (mode === "firstPerson") return;
     const preset = cameraPresets[mode] ?? cameraPresets.overview;
-    const target = mode === "focus" && focusTarget ? focusTarget : preset.target;
+    const target =
+      mode === "focus" && focusTarget ? focusTarget : preset.target;
     const position =
       mode === "focus" && focusTarget
         ? [target[0] + 4, target[1] + 2.4, target[2] + 4]
@@ -252,7 +253,9 @@ function LoadingOverlay() {
     <div className="digital-twin-loading" role="status">
       <strong>Po ngarkohet modeli 3D…</strong>
       <span>{Math.round(progress)}%</span>
-      <div><i style={{ width: `${progress}%` }} /></div>
+      <div>
+        <i style={{ width: `${progress}%` }} />
+      </div>
       {item && <small>{item.split("/").at(-1)}</small>}
     </div>
   );
@@ -274,7 +277,8 @@ export function DigitalTwinCanvas({
   const resolvedQuality = resolveGraphicsQuality(quality, {
     hardwareConcurrency: navigator.hardwareConcurrency,
     deviceMemory: navigator.deviceMemory,
-    reducedMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+    reducedMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)")
+      .matches,
   });
 
   return (
@@ -283,7 +287,7 @@ export function DigitalTwinCanvas({
         <LoadingOverlay />
         <Canvas
           frameloop={cameraMode === "firstPerson" ? "always" : "demand"}
-          shadows={resolvedQuality === "high"}
+          shadows={resolvedQuality === "high" ? "basic" : false}
           dpr={resolvedQuality === "high" ? [1, 1.5] : 1}
           performance={{ min: 0.5, debounce: 300 }}
           gl={{

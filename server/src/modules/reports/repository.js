@@ -40,13 +40,17 @@ export function createReportRepository(pool) {
         filters.push("report.report_type = ?");
         parameters.push(context.reportType);
       }
-      const offset = (context.page - 1) * context.pageSize;
+      const pageSize = Number(context.pageSize);
+      const offset = (Number(context.page) - 1) * pageSize;
+      if (!Number.isSafeInteger(pageSize) || !Number.isSafeInteger(offset)) {
+        throw new TypeError("Pagination values must be safe integers.");
+      }
       const where = `WHERE ${filters.join(" AND ")}`;
       const [reports, totals] = await Promise.all([
         query(
           pool,
-          `${reportSelect} ${where} ORDER BY report.created_at DESC, report.id DESC LIMIT ? OFFSET ?`,
-          [...parameters, context.pageSize, offset],
+          `${reportSelect} ${where} ORDER BY report.created_at DESC, report.id DESC LIMIT ${pageSize} OFFSET ${offset}`,
+          parameters,
         ),
         query(
           pool,
