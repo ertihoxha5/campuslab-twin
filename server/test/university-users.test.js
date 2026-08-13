@@ -37,6 +37,11 @@ test("university user list applies tenant, status, search, and pagination", asyn
   assert.ok(calls.every(({ parameters }) => parameters[0] === "7"));
   assert.ok(calls.every(({ parameters }) => parameters.includes("active")));
   assert.ok(calls.every(({ parameters }) => parameters.includes("%Ada%")));
+  assert.ok(
+    calls.some(({ sql }) => sql.includes("LIMIT 10 OFFSET 10")),
+    "Pagination must remain compatible with MySQL prepared statements.",
+  );
+  assert.ok(calls.every(({ parameters }) => !parameters.includes(10)));
 });
 
 test("university user service maps assignments and excludes platform roles", async () => {

@@ -33,7 +33,11 @@ export function createUniversityUserRepository(pool) {
         parameters.push(search, search, search);
       }
       const where = `WHERE ${filters.join(" AND ")}`;
-      const offset = (context.page - 1) * context.pageSize;
+      const pageSize = Number(context.pageSize);
+      const offset = (Number(context.page) - 1) * pageSize;
+      if (!Number.isSafeInteger(pageSize) || !Number.isSafeInteger(offset)) {
+        throw new TypeError("Pagination values must be safe integers.");
+      }
       const [users, totals] = await Promise.all([
         query(
           pool,
@@ -41,8 +45,8 @@ export function createUniversityUserRepository(pool) {
            GROUP BY user.id, user.university_id, user.full_name, user.email,
                     user.phone, user.job_title, user.status, user.last_login_at,
                     user.created_at
-           ORDER BY user.full_name, user.id LIMIT ? OFFSET ?`,
-          [...parameters, context.pageSize, offset],
+           ORDER BY user.full_name, user.id LIMIT ${pageSize} OFFSET ${offset}`,
+          parameters,
         ),
         query(
           pool,
