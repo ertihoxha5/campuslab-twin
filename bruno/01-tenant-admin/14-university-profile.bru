@@ -1,0 +1,21 @@
+meta {
+  name: University profile
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/api/university/profile
+  body: none
+  auth: none
+}
+
+docs {
+  Profili institucional i tenant-it të autentikuar.
+}
+
+tests {
+  test("Profili i universitetit kthehet", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

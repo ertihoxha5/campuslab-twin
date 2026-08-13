@@ -1,0 +1,21 @@
+meta {
+  name: Cross-tenant laboratory returns 404
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/laboratories/{{otherTenantLaboratoryId}}
+  body: none
+  auth: none
+}
+
+docs {
+  Ekzekutohet me sesionin e Universitetit A dhe ID reale të Universitetit B. Rezultati 404 nuk zbulon ekzistencën e burimit.
+}
+
+tests {
+  test("Burimi cross-tenant fshihet me 404", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

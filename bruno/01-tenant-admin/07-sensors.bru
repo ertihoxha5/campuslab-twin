@@ -1,0 +1,27 @@
+meta {
+  name: List sensors
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/sensors?page=1&pageSize=20&sort=name&direction=asc&laboratoryId={{laboratoryId}}
+  body: none
+  auth: none
+}
+
+docs {
+  Sensorët, pragjet, statuset dhe vendosja 3D e laboratorit aktual.
+}
+
+script:post-response {
+  const body = res.getBody();
+  const items = body.data?.sensors ?? body.data?.items ?? [];
+  if (items[0]?.id) bru.setEnvVar("sensorId", String(items[0].id));
+}
+
+tests {
+  test("Sensorët kthehen", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Auth boundary - Tenant cannot use platform API
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/platform/statistics/summary
+  body: none
+  auth: none
+}
+
+docs {
+  Për rezultat të pastër, bëni logout nga platform admin ose pastroni vetëm cookie-t e platformës; tenant cookie nuk duhet të autorizojë platform API.
+}
+
+tests {
+  test("Kufiri platform/tenant zbatohet", function () {
+    expect([401, 403]).to.include(res.getStatus());
+  });
+}

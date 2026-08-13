@@ -1,0 +1,25 @@
+meta {
+  name: Dashboard summary
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/dashboard/summary?hours=24
+  body: none
+  auth: none
+}
+
+docs {
+  Kthen KPI-të, energjinë, alarmet, mirëmbajtjen dhe provenance vetëm për tenantin aktual.
+}
+
+tests {
+  test("Dashboard-i kthehet", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.summary.metrics).to.be.an("object");
+  });
+  test("Burimi i simulimit dokumentohet", function () {
+    expect(res.getBody().data.summary).to.have.property("containsSimulatedData");
+  });
+}

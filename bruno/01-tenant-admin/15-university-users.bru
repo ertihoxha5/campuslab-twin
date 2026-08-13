@@ -1,0 +1,21 @@
+meta {
+  name: University users
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/api/university/users?page=1&pageSize=20
+  body: none
+  auth: none
+}
+
+docs {
+  Lista e përdoruesve të universitetit; kërkon university.users.manage.
+}
+
+tests {
+  test("Administratori sheh përdoruesit tenant", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

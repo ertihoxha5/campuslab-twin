@@ -1,0 +1,21 @@
+meta {
+  name: Personal account
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/api/account
+  body: none
+  auth: none
+}
+
+docs {
+  Profili personal është i qasshëm për çdo rol tenant të autentikuar.
+}
+
+tests {
+  test("Llogaria personale kthehet", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

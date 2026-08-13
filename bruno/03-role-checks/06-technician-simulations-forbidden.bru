@@ -1,0 +1,21 @@
+meta {
+  name: Technician - Simulations forbidden
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/simulator/laboratories/{{laboratoryId}}/status
+  body: none
+  auth: none
+}
+
+docs {
+  Kontroll negativ: tekniku nuk ka simulations.run.
+}
+
+tests {
+  test("Tekniku nuk ekzekuton simulime", function () {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

@@ -1,0 +1,17 @@
+meta {
+  name: Academic - Monitoring allowed
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/dashboard/summary?hours=24
+  body: none
+  auth: none
+}
+
+tests {
+  test("Personeli akademik sheh monitorimin", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

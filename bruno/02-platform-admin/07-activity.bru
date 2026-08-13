@@ -1,0 +1,17 @@
+meta {
+  name: Platform activity
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/platform/activity?page=1&pageSize=20
+  body: none
+  auth: none
+}
+
+tests {
+  test("Historiku i platformës kthehet", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

@@ -1,0 +1,32 @@
+meta {
+  name: List laboratories
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/laboratories?page=1&pageSize=20&sort=name&direction=asc
+  body: none
+  auth: none
+}
+
+docs {
+  Listë tenant-scoped me kërkim, filtrim, renditje dhe pagination.
+}
+
+script:post-response {
+  const body = res.getBody();
+  const items = body.data?.laboratories ?? body.data?.items ?? [];
+  if (items[0]?.id) bru.setEnvVar("laboratoryId", String(items[0].id));
+}
+
+tests {
+  test("Lista e laboratorëve kthehet", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Lista nuk është bosh pas seed-it", function () {
+    const body = res.getBody();
+    const items = body.data?.laboratories ?? body.data?.items ?? [];
+    expect(items.length).to.be.greaterThan(0);
+  });
+}

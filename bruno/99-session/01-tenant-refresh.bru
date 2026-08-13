@@ -1,0 +1,21 @@
+meta {
+  name: Refresh tenant session
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/refresh
+  body: none
+  auth: none
+}
+
+docs {
+  Rrotullon refresh token-in. Replay i cookie-t të vjetër duhet të refuzohet.
+}
+
+tests {
+  test("Refresh-i kalon me cookie valide", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

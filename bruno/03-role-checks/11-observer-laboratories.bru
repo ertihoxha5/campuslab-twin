@@ -1,0 +1,17 @@
+meta {
+  name: Observer - Read laboratories
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/laboratories?page=1&pageSize=20
+  body: none
+  auth: none
+}
+
+tests {
+  test("Vëzhguesi lexon laboratorët e lejuar", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

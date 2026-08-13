@@ -1,0 +1,17 @@
+meta {
+  name: Technician - Assigned maintenance
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/maintenance?page=1&pageSize=20
+  body: none
+  auth: none
+}
+
+tests {
+  test("Tekniku sheh mirëmbajtjen e caktuar", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

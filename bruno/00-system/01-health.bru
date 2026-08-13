@@ -1,0 +1,24 @@
+meta {
+  name: Health check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/health
+  body: none
+  auth: none
+}
+
+docs {
+  Verifikon që API-ja është aktive para testeve të tjera.
+}
+
+tests {
+  test("API përgjigjet me 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Shërbimi është healthy", function () {
+    expect(res.getBody().data.status).to.equal("healthy");
+  });
+}

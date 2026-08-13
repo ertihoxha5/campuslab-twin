@@ -1,0 +1,22 @@
+meta {
+  name: Login - Observer
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  { "email": "{{observerEmail}}", "password": "{{demoPassword}}" }
+}
+
+tests {
+  test("Vëzhguesi kyçet", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.user.roles).to.include("observer");
+  });
+}

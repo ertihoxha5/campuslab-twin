@@ -1,0 +1,27 @@
+meta {
+  name: List maintenance
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/maintenance?page=1&pageSize=20&laboratoryId={{laboratoryId}}
+  body: none
+  auth: none
+}
+
+docs {
+  Detyrat e mirëmbajtjes sipas rolit dhe laboratorit të caktuar.
+}
+
+script:post-response {
+  const body = res.getBody();
+  const items = body.data?.tasks ?? body.data?.maintenance ?? body.data?.items ?? [];
+  if (items[0]?.id) bru.setEnvVar("maintenanceTaskId", String(items[0].id));
+}
+
+tests {
+  test("Mirëmbajtja kthehet", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

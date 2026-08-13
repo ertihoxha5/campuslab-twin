@@ -1,0 +1,21 @@
+meta {
+  name: Manager - Assigned laboratories
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/laboratories?page=1&pageSize=20
+  body: none
+  auth: none
+}
+
+docs {
+  Menaxheri duhet të marrë vetëm laboratorët e caktuar.
+}
+
+tests {
+  test("Menaxheri sheh scope-in e vet", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

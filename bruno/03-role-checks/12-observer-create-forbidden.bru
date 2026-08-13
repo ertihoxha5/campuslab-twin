@@ -1,0 +1,25 @@
+meta {
+  name: Observer - Create laboratory forbidden
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/laboratories
+  body: json
+  auth: none
+}
+
+body:json {
+  { "name": "Nuk duhet të krijohet", "code": "DENIED-01" }
+}
+
+docs {
+  Kontroll negativ i sigurt: authorization ndalon request-in para validimit/persistimit.
+}
+
+tests {
+  test("Vëzhguesi nuk krijon laborator", function () {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

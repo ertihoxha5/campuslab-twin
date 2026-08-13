@@ -1,0 +1,21 @@
+meta {
+  name: Registration requests
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/platform/registration-requests?page=1&pageSize=50&status=pending
+  body: none
+  auth: none
+}
+
+docs {
+  Kërkesat pending për miratim/refuzim. Decision endpoint është mutating dhe nuk ekzekutohet në smoke suite.
+}
+
+tests {
+  test("Lista e kërkesave kthehet", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

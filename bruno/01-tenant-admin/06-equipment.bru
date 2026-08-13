@@ -1,0 +1,27 @@
+meta {
+  name: List equipment
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/equipment?page=1&pageSize=20&sort=name&direction=asc&laboratoryId={{laboratoryId}}
+  body: none
+  auth: none
+}
+
+docs {
+  Pajisjet e laboratorit aktual, gjithmonë të filtruara nga tenant-i dhe scope-i i përdoruesit.
+}
+
+script:post-response {
+  const body = res.getBody();
+  const items = body.data?.equipment ?? body.data?.items ?? [];
+  if (items[0]?.id) bru.setEnvVar("equipmentId", String(items[0].id));
+}
+
+tests {
+  test("Pajisjet kthehen", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

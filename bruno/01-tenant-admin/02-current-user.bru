@@ -1,0 +1,24 @@
+meta {
+  name: Current tenant user
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/auth/me
+  body: none
+  auth: none
+}
+
+docs {
+  Lexon identitetin, universitetin, rolet dhe permissions nga sesioni i verifikuar.
+}
+
+tests {
+  test("Sesioni tenant është aktiv", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("Roli university_admin është aktiv", function () {
+    expect(res.getBody().data.user.roles).to.include("university_admin");
+  });
+}

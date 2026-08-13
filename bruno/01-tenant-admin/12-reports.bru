@@ -1,0 +1,27 @@
+meta {
+  name: List reports
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/reports?page=1&pageSize=20&laboratoryId={{laboratoryId}}
+  body: none
+  auth: none
+}
+
+docs {
+  Historiku i raporteve tenant-scoped. Shkarkimi kërkon të njëjtin kontroll pronësie.
+}
+
+script:post-response {
+  const body = res.getBody();
+  const items = body.data?.reports ?? body.data?.items ?? [];
+  if (items[0]?.id) bru.setEnvVar("reportId", String(items[0].id));
+}
+
+tests {
+  test("Raportet kthehen", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

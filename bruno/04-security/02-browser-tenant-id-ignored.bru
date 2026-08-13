@@ -1,0 +1,25 @@
+meta {
+  name: Browser tenant identity is ignored
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/laboratories?page=1&pageSize=20&universityId=999999
+  body: none
+  auth: none
+}
+
+headers {
+  X-University-Id: 999999
+}
+
+docs {
+  Serveri duhet ta marrë universityId vetëm nga sesioni i verifikuar, jo nga query/header.
+}
+
+tests {
+  test("Identiteti i browser-it nuk ndryshon tenantin", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Platform universities
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/platform/universities?page=1&pageSize=50
+  body: none
+  auth: none
+}
+
+docs {
+  Universitetet dhe statuset e tyre. Suspend/reactivate nuk ekzekutohet automatikisht.
+}
+
+tests {
+  test("Universitetet kthehen", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Academic - Asset options forbidden
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/equipment/options
+  body: none
+  auth: none
+}
+
+docs {
+  Kontroll negativ: personeli akademik nuk menaxhon pajisje.
+}
+
+tests {
+  test("Personeli akademik nuk menaxhon asete", function () {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

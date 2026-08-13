@@ -1,0 +1,21 @@
+meta {
+  name: Platform statistics
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/platform/statistics/summary
+  body: none
+  auth: none
+}
+
+docs {
+  Statistika agregate të platformës pa ekspozuar detaje private tenant.
+}
+
+tests {
+  test("Statistikat kthehen", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

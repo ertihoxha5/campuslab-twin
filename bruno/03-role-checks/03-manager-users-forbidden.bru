@@ -1,0 +1,21 @@
+meta {
+  name: Manager - Users forbidden
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/university/users?page=1&pageSize=20
+  body: none
+  auth: none
+}
+
+docs {
+  Kontroll negativ: lab_manager nuk ka university.users.manage.
+}
+
+tests {
+  test("Menaxheri nuk menaxhon përdorues", function () {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

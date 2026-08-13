@@ -19,6 +19,13 @@ universiteti; `Platform` nënkupton sesion të administratorit të platformës.
 Parametrat `:id` nuk autorizojnë vetë burimin: serveri kontrollon gjithmonë
 tenant-in, permission-in dhe, kur kërkohet, caktimin në laborator.
 
+## Bruno collection
+
+Collection-i i ekzekutueshëm gjendet te [`bruno/`](../bruno/README.md). Ai
+përmban environment lokal, cookie-based login, teste për endpoint-et kryesore,
+kontrolle pozitive/negative për rolet dhe testin `404` të izolimit cross-tenant.
+Hapni dosjen `bruno/` në Bruno Desktop dhe zgjidhni environment-in `local`.
+
 ## Sistem dhe regjistrim publik
 
 | Metoda | Endpoint-i                             | Qasja  | Qëllimi                                       |

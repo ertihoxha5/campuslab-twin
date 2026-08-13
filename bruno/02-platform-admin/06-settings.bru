@@ -1,0 +1,17 @@
+meta {
+  name: Platform settings
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/platform/settings
+  body: none
+  auth: none
+}
+
+tests {
+  test("Cilësimet e platformës kthehen", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

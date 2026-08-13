@@ -1,0 +1,29 @@
+meta {
+  name: Login - Platform Admin
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/platform/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{platformAdminEmail}}",
+    "password": "{{demoPassword}}",
+    "rememberMe": true
+  }
+}
+
+docs {
+  Krijon sesionin e veçantë të administratorit të platformës.
+}
+
+tests {
+  test("Login-i platform kalon", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

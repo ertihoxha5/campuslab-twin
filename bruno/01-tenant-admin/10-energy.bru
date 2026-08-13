@@ -1,0 +1,22 @@
+meta {
+  name: Energy overview
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/energy/overview?laboratoryId={{laboratoryId}}&range=daily
+  body: none
+  auth: none
+}
+
+docs {
+  Konsumi, kostoja, krahasimi, peak usage dhe provenance për laboratorin aktual.
+}
+
+tests {
+  test("Energjia kthehet", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.equal(true);
+  });
+}

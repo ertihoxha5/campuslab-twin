@@ -1,0 +1,21 @@
+meta {
+  name: Analytics history
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/analytics/history?laboratoryId={{laboratoryId}}&metric=temperature&hours=24&intervalMinutes=60
+  body: none
+  auth: none
+}
+
+docs {
+  Seri historike e agreguar. API kufizon payload-in e grafikëve në maksimum 400 pika.
+}
+
+tests {
+  test("Analitika kthehet", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

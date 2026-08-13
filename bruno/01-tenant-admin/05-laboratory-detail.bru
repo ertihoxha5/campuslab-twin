@@ -1,0 +1,22 @@
+meta {
+  name: Laboratory detail
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/laboratories/{{laboratoryId}}
+  body: none
+  auth: none
+}
+
+docs {
+  Detajet, metadata e modelit dhe marrëdhëniet e laboratorit të zgjedhur.
+}
+
+tests {
+  test("Detaji tenant-owned kthehet", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(String(res.getBody().data.laboratory.id)).to.equal(String(bru.getEnvVar("laboratoryId")));
+  });
+}

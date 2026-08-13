@@ -146,6 +146,7 @@ Rezultatet dhe matrica e QA-së së CLT-17 dokumentohen te
 - [Databaza dhe ERD](docs/database.md)
 - [Matrica RBAC dhe kodet e lejeve](docs/rbac.md)
 - [Referenca REST API](docs/api.md)
+- [Testimi i API-së me Bruno](bruno/README.md)
 - [Referenca Socket.IO](docs/socket-io.md)
 - [Simulimi, formula e shëndetit dhe raportimi](docs/simulation-and-reporting.md)
 - [Skenari i demonstrimit dhe kufizimet](docs/demo-and-limitations.md)

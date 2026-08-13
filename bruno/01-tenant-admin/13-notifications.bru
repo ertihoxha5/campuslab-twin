@@ -1,0 +1,27 @@
+meta {
+  name: List notifications
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/api/notifications?page=1&pageSize=20
+  body: none
+  auth: none
+}
+
+docs {
+  Njoftimet personale të përdoruesit të kyçur.
+}
+
+script:post-response {
+  const body = res.getBody();
+  const items = body.data?.notifications ?? body.data?.items ?? [];
+  if (items[0]?.id) bru.setEnvVar("notificationId", String(items[0].id));
+}
+
+tests {
+  test("Njoftimet kthehen", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
