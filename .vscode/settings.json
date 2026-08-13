@@ -1,0 +1,6 @@
+{
+  "mssql.intelliSense.enableErrorChecking": false,
+  "files.associations": {
+    "*.sql": "plaintext"
+  }
+}

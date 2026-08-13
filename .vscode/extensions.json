@@ -1,0 +1,4 @@
+{
+  "recommendations": ["cweijan.vscode-mysql-client2"],
+  "unwantedRecommendations": ["ms-mssql.mssql"]
+}
