@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { FlaskConical, Menu, Moon, Sun, X } from "lucide-react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink } from"react-router-dom";
 import { Button } from "@/components/ui/button.jsx";
 
-const navigation = [
+const navigation = [ 
   { to: "/", label: "Kryefaqja", end: true },
   { to: "/rreth-nesh", label: "Rreth nesh" },
   { to: "/funksionalitetet", label: "Platforma" },

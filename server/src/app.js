@@ -1,4 +1,5 @@
 import cookieParser from "cookie-parser";
+import compression from "compression";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
@@ -67,12 +68,14 @@ export function createApp({
   platformSettingsService,
   platformActivityService,
   secureCookies = process.env.NODE_ENV === "production",
+  compressionThreshold = 1024,
 } = {}) {
   const app = express();
 
   app.disable("x-powered-by");
   app.use(createRequestLogger({ enabled: logging }));
   app.use(helmet());
+  app.use(compression({ threshold: compressionThreshold }));
   app.use(
     cors({
       origin: clientOrigin,

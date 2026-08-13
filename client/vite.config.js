@@ -11,6 +11,33 @@ export default defineConfig({
       "@": path.resolve(path.dirname(fileURLToPath(import.meta.url)), "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (
+            id.includes("/three/") ||
+            id.includes("@react-three") ||
+            id.includes("postprocessing")
+          ) {
+            return "vendor-3d";
+          }
+          if (id.includes("recharts") || id.includes("/d3-")) {
+            return "vendor-charts";
+          }
+          if (
+            id.includes("/react/") ||
+            id.includes("react-dom") ||
+            id.includes("react-router")
+          ) {
+            return "vendor-react";
+          }
+          return undefined;
+        },
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: "./src/test/setup.js",

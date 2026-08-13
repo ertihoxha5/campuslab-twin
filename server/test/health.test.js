@@ -6,7 +6,11 @@ let server;
 let baseUrl;
 
 before(async () => {
-  server = createApp({ logging: false, rateLimitEnabled: false }).listen(0);
+  server = createApp({
+    logging: false,
+    rateLimitEnabled: false,
+    compressionThreshold: 0,
+  }).listen(0);
   await new Promise((resolve) => server.once("listening", resolve));
   const address = server.address();
   baseUrl = `http://127.0.0.1:${address.port}`;
@@ -23,6 +27,8 @@ test("GET /api/health returns the service status", async () => {
   const body = await response.json();
 
   assert.equal(response.status, 200);
+  assert.equal(response.headers.get("content-encoding"), "gzip");
+  assert.match(response.headers.get("vary"), /Accept-Encoding/i);
   assert.equal(body.success, true);
   assert.equal(body.data.status, "healthy");
 });
