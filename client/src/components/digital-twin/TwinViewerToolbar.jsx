@@ -1,0 +1,15 @@
+import { Boxes, Box, Eye, Focus, Footprints, GitBranch, Map, RotateCcw, ScanLine } from "lucide-react";
+
+const cameraButtons = [["overview",Eye,"Përgjithshme"],["top",Map,"Nga lart"],["focus",Focus,"Fokus"],["walk",Footprints,"Ecje"]];
+
+export function TwinViewerToolbar({ cameraMode,onCameraMode,onReset,layers,onToggle }) {
+  return <div className="twin-viewer-toolbar" aria-label="Kontrollet e Digital Twin">
+    <div className="twin-camera-modes">{cameraButtons.map(([mode,Icon,label])=><button key={mode} type="button" className={cameraMode===mode?"active":""} onClick={()=>onCameraMode(mode)} aria-pressed={cameraMode===mode}><Icon size={15}/><span>{label}</span></button>)}<button type="button" onClick={onReset} title="Rikthe kamerën"><RotateCcw size={15}/></button></div>
+    <div className="twin-layer-modes">
+      <button type="button" className={layers.sensors?"active":""} onClick={()=>onToggle("sensors")}><ScanLine size={15}/><span>Sensorët</span></button>
+      <button type="button" className={layers.equipment?"active":""} onClick={()=>onToggle("equipment")}><Box size={15}/><span>Pajisjet</span></button>
+      <button type="button" className={layers.zones?"active":""} onClick={()=>onToggle("zones")}><Boxes size={15}/><span>Zonat</span></button>
+      <button type="button" className={layers.dataFlow?"active":""} onClick={()=>onToggle("dataFlow")}><GitBranch size={15}/><span>Rrjedha</span></button>
+    </div>
+  </div>;
+}

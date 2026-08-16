@@ -1,318 +1,54 @@
 /* eslint-disable react/no-unknown-property */
-import { Component, Suspense, useEffect, useRef } from "react";
-import {
-  Bounds,
-  OrbitControls,
-  PerspectiveCamera,
-  PointerLockControls,
-  useProgress,
-} from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Vector3 } from "three";
-import { DefaultLaboratoryScene } from "./DefaultLaboratoryScene.jsx";
-import {
-  FIRST_PERSON_START,
-  resolveFirstPersonMove,
-} from "./first-person-movement.js";
-import { ProtectedLaboratoryModel } from "./ProtectedLaboratoryModel.jsx";
+import { ContactShadows, Html, PerspectiveCamera } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { Component, Suspense } from "react";
+import { ACESFilmicToneMapping, SRGBColorSpace } from "three";
+import { IoTDevices } from "./IoTDevices.jsx";
+import { LaboratoryArchitecture } from "./LaboratoryArchitecture.jsx";
+import { LaboratoryAssets } from "./LaboratoryAssets.jsx";
+import { OccupancyAgents } from "./OccupancyAgents.jsx";
+import { TwinCameraController } from "./TwinCameraController.jsx";
+import { TwinDataFlows } from "./TwinDataFlows.jsx";
+import { TWIN_ZONES } from "./twin-config.js";
 import { supportsWebGL } from "./webgl.js";
-import { resolveGraphicsQuality } from "./graphics-quality.js";
 
-class ModelErrorBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { failed: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  componentDidCatch() {
-    this.props.onError?.();
-  }
-
-  render() {
-    if (this.state.failed) return <DefaultLaboratoryScene />;
-    return this.props.children;
-  }
+class TwinBoundary extends Component {
+  constructor(props) { super(props); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
-function LaboratoryContent({
-  modelUrl,
-  equipment,
-  onEquipmentSelect,
-  onModelLoaded,
-  onModelError,
-  children,
-}) {
-  if (!modelUrl) {
-    return (
-      <>
-        <DefaultLaboratoryScene />
-        {children}
-      </>
-    );
-  }
-
-  return (
-    <ModelErrorBoundary onError={onModelError}>
-      <Suspense fallback={<DefaultLaboratoryScene />}>
-        <ProtectedLaboratoryModel
-          url={modelUrl}
-          equipment={equipment}
-          onEquipmentSelect={onEquipmentSelect}
-          onLoaded={onModelLoaded}
-        />
-        {children}
-      </Suspense>
-    </ModelErrorBoundary>
-  );
+function ZoneLabels({ visible }) {
+  if (!visible) return null;
+  return <group>{TWIN_ZONES.map((zone) => <Html key={zone.id} center distanceFactor={18} position={[zone.center[0], 2.35, zone.center[1]]}><div className="twin-zone-label"><strong>{zone.name}</strong><span>{zone.code}</span></div></Html>)}</group>;
 }
 
-const cameraPresets = {
-  overview: { position: [10, 7.5, 11], target: [0, 1.2, 0] },
-  top: { position: [0, 15, 0.01], target: [0, 0, 0] },
-  focus: { position: [5.2, 3.3, 5.6], target: [0, 1.15, 0] },
-};
-
-function FirstPersonController({ resetNonce }) {
-  const camera = useThree((state) => state.camera);
-  const pressedKeys = useRef(new Set());
-  const forward = useRef(new Vector3());
-  const right = useRef(new Vector3());
-
-  useEffect(() => {
-    camera.position.set(
-      FIRST_PERSON_START.x,
-      FIRST_PERSON_START.y,
-      FIRST_PERSON_START.z,
-    );
-    camera.lookAt(0, FIRST_PERSON_START.y, 0);
-  }, [camera, resetNonce]);
-
-  useEffect(() => {
-    const onKeyDown = (event) => pressedKeys.current.add(event.code);
-    const onKeyUp = (event) => pressedKeys.current.delete(event.code);
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-    };
-  }, []);
-
-  useFrame((_state, frameDelta) => {
-    const keys = pressedKeys.current;
-    if (!["KeyW", "KeyA", "KeyS", "KeyD"].some((key) => keys.has(key))) return;
-    const distance = Math.min(frameDelta, 0.05) * 3.2;
-    camera.getWorldDirection(forward.current);
-    forward.current.y = 0;
-    forward.current.normalize();
-    right.current.crossVectors(forward.current, camera.up).normalize();
-    const movement = { x: 0, z: 0 };
-    if (keys.has("KeyW")) {
-      movement.x += forward.current.x * distance;
-      movement.z += forward.current.z * distance;
-    }
-    if (keys.has("KeyS")) {
-      movement.x -= forward.current.x * distance;
-      movement.z -= forward.current.z * distance;
-    }
-    if (keys.has("KeyD")) {
-      movement.x += right.current.x * distance;
-      movement.z += right.current.z * distance;
-    }
-    if (keys.has("KeyA")) {
-      movement.x -= right.current.x * distance;
-      movement.z -= right.current.z * distance;
-    }
-    const next = resolveFirstPersonMove(camera.position, movement);
-    camera.position.set(next.x, next.y, next.z);
-  });
-
-  return <PointerLockControls makeDefault />;
+function Scene({ assets, sensors, selection, onSelect, layers, cameraMode, resetNonce }) {
+  const alarmAsset = assets.find((asset) => asset.status === "alarm");
+  const occupancy = sensors.find((sensor) => sensor.type === "occupancy")?.value ?? 0;
+  return <>
+    <color attach="background" args={["#171D26"]} />
+    <fog attach="fog" args={["#171D26", 30, 52]} />
+    <ambientLight intensity={.46} />
+    <hemisphereLight args={["#DCE9F2", "#49505A", 1.15]} />
+    <directionalLight castShadow intensity={2.35} position={[-9, 15, 12]} shadow-mapSize={[1024, 1024]} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={14} shadow-camera-bottom={-14} shadow-bias={-.00015} />
+    <PerspectiveCamera makeDefault position={[15.5, 17, 17.5]} fov={42} near={.1} far={80} />
+    <LaboratoryArchitecture visibleZones={layers.zones} alarmZoneId={alarmAsset?.zoneId} />
+    <Suspense fallback={<Html center><div className="twin-model-loading">Po ngarkohen pajisjet 3D…</div></Html>}>
+      <LaboratoryAssets assets={assets} visible={layers.equipment} selectedId={selection?.kind === "asset" ? selection.item.id : null} onSelect={(item) => onSelect({ kind: "asset", item })} />
+    </Suspense>
+    <IoTDevices sensors={sensors} visible={layers.sensors} showLabels={layers.sensorLabels} selectedId={selection?.kind === "sensor" ? selection.item.id : null} onSelect={(item) => onSelect({ kind: "sensor", item })} />
+    <TwinDataFlows sensors={sensors} assets={assets} visible={layers.dataFlow} />
+    <OccupancyAgents count={occupancy} />
+    <ZoneLabels visible={layers.zones} />
+    <ContactShadows position={[0, .025, 0]} opacity={.28} scale={24} blur={2.4} far={8} resolution={512} />
+    <TwinCameraController mode={cameraMode} focusPosition={selection?.item?.position} resetNonce={resetNonce} />
+  </>;
 }
 
-function CameraRig({ mode, resetNonce, focusTarget }) {
-  const controls = useRef(null);
-  const camera = useThree((state) => state.camera);
+function Fallback() { return <div className="twin-canvas-fallback" role="alert"><strong>Pamja 3D nuk mund të hapet</strong><p>Aktivizo WebGL dhe përshpejtimin grafik në shfletues.</p></div>; }
 
-  useEffect(() => {
-    if (mode === "firstPerson") return;
-    const preset = cameraPresets[mode] ?? cameraPresets.overview;
-    const target =
-      mode === "focus" && focusTarget ? focusTarget : preset.target;
-    const position =
-      mode === "focus" && focusTarget
-        ? [target[0] + 4, target[1] + 2.4, target[2] + 4]
-        : preset.position;
-    camera.position.set(...position);
-    camera.lookAt(...target);
-    camera.updateProjectionMatrix();
-    controls.current?.target.set(...target);
-    controls.current?.update();
-  }, [camera, focusTarget, mode]);
-
-  if (mode === "firstPerson") {
-    return <FirstPersonController resetNonce={resetNonce} />;
-  }
-
-  return (
-    <OrbitControls
-      ref={controls}
-      makeDefault
-      target={
-        mode === "focus" && focusTarget
-          ? focusTarget
-          : (cameraPresets[mode]?.target ?? cameraPresets.overview.target)
-      }
-      minDistance={3}
-      maxDistance={26}
-      maxPolarAngle={Math.PI / 2.04}
-      enableDamping
-    />
-  );
-}
-
-function Scene({
-  modelUrl,
-  onModelLoaded,
-  onModelError,
-  cameraMode,
-  firstPersonReset,
-  focusTarget,
-  quality,
-  equipment,
-  onEquipmentSelect,
-  children,
-}) {
-  return (
-    <>
-      <color attach="background" args={["#ecebef"]} />
-      <ambientLight intensity={1.2} />
-      <directionalLight
-        castShadow={quality === "high"}
-        intensity={2.2}
-        position={[4, 8, 5]}
-        shadow-mapSize={quality === "high" ? [1024, 1024] : [512, 512]}
-      />
-      <PerspectiveCamera makeDefault position={[10, 8, 12]} fov={48} />
-      <Bounds clip margin={1.18}>
-        <LaboratoryContent
-          modelUrl={modelUrl}
-          onModelLoaded={onModelLoaded}
-          onModelError={onModelError}
-          equipment={equipment}
-          onEquipmentSelect={onEquipmentSelect}
-        >
-          {children}
-        </LaboratoryContent>
-      </Bounds>
-      <CameraRig
-        mode={cameraMode}
-        resetNonce={firstPersonReset}
-        focusTarget={focusTarget}
-      />
-    </>
-  );
-}
-
-class CanvasErrorBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { failed: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  render() {
-    if (this.state.failed) return this.props.fallback;
-    return this.props.children;
-  }
-}
-
-function WebGLFallback() {
-  return (
-    <div className="digital-twin-fallback" role="alert">
-      <strong>Pamja 3D nuk mund të hapet</strong>
-      <p>
-        Aktivizo përshpejtimin grafik në shfletues ose provo një pajisje që
-        mbështet WebGL 2.
-      </p>
-    </div>
-  );
-}
-
-function LoadingOverlay() {
-  const { active, progress, item } = useProgress();
-  if (!active) return null;
-  return (
-    <div className="digital-twin-loading" role="status">
-      <strong>Po ngarkohet modeli 3D…</strong>
-      <span>{Math.round(progress)}%</span>
-      <div>
-        <i style={{ width: `${progress}%` }} />
-      </div>
-      {item && <small>{item.split("/").at(-1)}</small>}
-    </div>
-  );
-}
-
-export function DigitalTwinCanvas({
-  modelUrl,
-  onModelLoaded,
-  onModelError,
-  cameraMode = "overview",
-  firstPersonReset = 0,
-  focusTarget,
-  quality = "auto",
-  equipment = [],
-  onEquipmentSelect,
-  children,
-}) {
-  if (!supportsWebGL()) return <WebGLFallback />;
-  const resolvedQuality = resolveGraphicsQuality(quality, {
-    hardwareConcurrency: navigator.hardwareConcurrency,
-    deviceMemory: navigator.deviceMemory,
-    reducedMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)")
-      .matches,
-  });
-
-  return (
-    <CanvasErrorBoundary fallback={<WebGLFallback />}>
-      <div className="digital-twin-canvas" aria-label="Pamja 3D e laboratorit">
-        <LoadingOverlay />
-        <Canvas
-          frameloop={cameraMode === "firstPerson" ? "always" : "demand"}
-          shadows={resolvedQuality === "high" ? "basic" : false}
-          dpr={resolvedQuality === "high" ? [1, 1.5] : 1}
-          performance={{ min: 0.5, debounce: 300 }}
-          gl={{
-            antialias: resolvedQuality === "high",
-            powerPreference:
-              resolvedQuality === "high" ? "high-performance" : "low-power",
-          }}
-        >
-          <Suspense fallback={null}>
-            <Scene
-              modelUrl={modelUrl}
-              onModelLoaded={onModelLoaded}
-              onModelError={onModelError}
-              cameraMode={cameraMode}
-              firstPersonReset={firstPersonReset}
-              focusTarget={focusTarget}
-              quality={resolvedQuality}
-              equipment={equipment}
-              onEquipmentSelect={onEquipmentSelect}
-            >
-              {children}
-            </Scene>
-          </Suspense>
-        </Canvas>
-      </div>
-    </CanvasErrorBoundary>
-  );
+export function DigitalTwinCanvas(props) {
+  if (!supportsWebGL()) return <Fallback />;
+  return <TwinBoundary fallback={<Fallback />}><div className="twin-canvas-shell" aria-label="Laboratori operacional 3D"><Canvas shadows dpr={[1, 1.5]} frameloop="always" performance={{ min: .55, debounce: 250 }} gl={{ antialias: true, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, outputColorSpace: SRGBColorSpace }} onPointerMissed={() => props.onSelect(null)}><Scene {...props} /></Canvas></div></TwinBoundary>;
 }
