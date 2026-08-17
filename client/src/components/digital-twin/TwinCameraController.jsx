@@ -18,7 +18,8 @@ export function TwinCameraController({ mode, focusPosition, resetNonce }) {
     const preset = CAMERA_PRESETS[mode] ?? CAMERA_PRESETS.overview;
     const endPosition = mode === "focus" && focusPosition ? new Vector3(...focusPosition).add(new Vector3(4.2, 3.5, 4.4)) : new Vector3(...preset.position);
     transition.current = { from: camera.position.clone(), to: endPosition, elapsed: 0, duration: .72 };
-    camera.fov = preset.fov;
+    if (camera.isPerspectiveCamera) camera.fov = preset.fov;
+    if (camera.isOrthographicCamera) camera.zoom = mode === "focus" ? 86 : mode === "top" ? 49 : 54;
     camera.updateProjectionMatrix();
   }, [camera, focusPosition, mode, resetNonce]);
 
