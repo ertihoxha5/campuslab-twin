@@ -29,6 +29,7 @@ import { createUniversityUserRouter } from "./modules/university-users/router.js
 import { createUniversityProfileRouter } from "./modules/university-profile/router.js";
 import { createUniversitySettingsRouter } from "./modules/university-settings/router.js";
 import { createAccountRouter } from "./modules/account/router.js";
+import { createDigitalTwinRouter } from "./modules/digital-twin/router.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
 import { success } from "./utils/api-response.js";
 
@@ -61,6 +62,7 @@ export function createApp({
   universityLogoService,
   universitySettingsService,
   accountService,
+  digitalTwinService,
   platformRegistrationService,
   platformAuthentication,
   platformUniversityService,
@@ -211,6 +213,14 @@ export function createApp({
         authenticateTenant: tenantAuthentication,
       }),
     );
+  }
+
+  if (digitalTwinService && tenantAuthentication) {
+    app.use("/api/digital-twin", createDigitalTwinRouter({
+      service: digitalTwinService,
+      authenticateTenant: tenantAuthentication,
+      laboratoryAccessRepository,
+    }));
   }
 
   if (maintenanceService && tenantAuthentication) {

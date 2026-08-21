@@ -9,6 +9,10 @@ export const realtimeEvents = Object.freeze({
   ALERT_CREATED: "alert:created",
   ALERT_UPDATED: "alert:updated",
   NOTIFICATION_CREATED: "notification:created",
+  TWIN_ASSET_CREATED: "twin:asset-created",
+  TWIN_ASSET_UPDATED: "twin:asset-updated",
+  TWIN_ASSET_DELETED: "twin:asset-deleted",
+  TWIN_MESSAGE_CREATED: "twin:message-created",
 });
 
 export function createRealtimePublisher() {
@@ -129,6 +133,14 @@ export function createRealtimePublisher() {
           );
         }
       }
+    },
+    publishTwinEvent({ universityId, laboratoryId, eventName, payload }) {
+      if (!Object.values(realtimeEvents).includes(eventName)) return false;
+      return emitToLaboratory(
+        { universityId, laboratoryId },
+        eventName,
+        { ...payload, laboratoryId: String(laboratoryId) },
+      );
     },
   };
 }

@@ -18,6 +18,10 @@ export const DASHBOARD_REALTIME_EVENTS = [
   "occupancy:updated",
   "simulation:updated",
   "notification:created",
+  "twin:asset-created",
+  "twin:asset-updated",
+  "twin:asset-deleted",
+  "twin:message-created",
 ];
 
 export function connectDashboardRealtime({

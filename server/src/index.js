@@ -74,6 +74,8 @@ import { createUniversitySettingsRepository } from "./modules/university-setting
 import { createUniversitySettingsService } from "./modules/university-settings/service.js";
 import { createAccountRepository } from "./modules/account/repository.js";
 import { createAccountService } from "./modules/account/service.js";
+import { createDigitalTwinRepository } from "./modules/digital-twin/repository.js";
+import { createDigitalTwinService } from "./modules/digital-twin/service.js";
 
 loadEnvironmentFile();
 
@@ -175,6 +177,10 @@ const alertService = createAlertService({
   repository: createAlertRepository(databasePool),
   realtimePublisher,
 });
+const digitalTwinService = createDigitalTwinService({
+  repository: createDigitalTwinRepository(databasePool),
+  realtimePublisher,
+});
 const maintenanceRepository = createMaintenanceRepository(databasePool);
 const maintenanceService = createMaintenanceService({
   repository: maintenanceRepository,
@@ -242,6 +248,7 @@ const app = createApp({
   sensorService,
   simulatorService,
   alertService,
+  digitalTwinService,
   maintenanceService,
   maintenanceEvidenceService,
   energyService,
