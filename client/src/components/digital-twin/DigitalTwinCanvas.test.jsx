@@ -7,6 +7,7 @@ vi.mock("@react-three/drei", () => ({ ContactShadows: () => null, Html: ({ child
 vi.mock("./LaboratoryArchitecture.jsx", () => ({ LaboratoryArchitecture: () => null }));
 vi.mock("./LaboratoryAssets.jsx", () => ({ LaboratoryAssets: () => null }));
 vi.mock("./IoTDevices.jsx", () => ({ IoTDevices: () => null }));
+vi.mock("./SecurityCameras.jsx", () => ({ SecurityCameras: () => null }));
 vi.mock("./TwinDataFlows.jsx", () => ({ TwinDataFlows: () => null }));
 vi.mock("./TwinCameraController.jsx", () => ({ TwinCameraController: () => null }));
 
