@@ -1,4 +1,4 @@
-import { Boxes, Box, Eye, Focus, Footprints, GitBranch, Map, RotateCcw, ScanLine } from "lucide-react";
+import { Boxes, Box, Camera, Eye, Focus, Footprints, GitBranch, Map, RotateCcw, ScanLine } from "lucide-react";
 
 const cameraButtons = [["overview",Eye,"Përgjithshme"],["top",Map,"Nga lart"],["focus",Focus,"Fokus"],["walk",Footprints,"Ecje"]];
 
@@ -10,6 +10,7 @@ export function TwinViewerToolbar({ cameraMode,onCameraMode,onReset,layers,onTog
       <button type="button" className={layers.equipment?"active":""} onClick={()=>onToggle("equipment")}><Box size={15}/><span>Pajisjet</span></button>
       <button type="button" className={layers.zones?"active":""} onClick={()=>onToggle("zones")}><Boxes size={15}/><span>Zonat</span></button>
       <button type="button" className={layers.dataFlow?"active":""} onClick={()=>onToggle("dataFlow")}><GitBranch size={15}/><span>Rrjedha</span></button>
+      <button type="button" className={layers.cameras?"active":""} onClick={()=>onToggle("cameras")}><Camera size={15}/><span>Kamerat</span></button>
     </div>
   </div>;
 }

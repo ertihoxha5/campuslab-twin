@@ -1,0 +1,12 @@
+import { useCallback, useEffect, useState } from "react";
+import { api } from "@/api/client.js";
+
+export function useTwinOperations({laboratoryId,alerts,setAlerts}){
+  const [events,setEvents]=useState([]);const [messages,setMessages]=useState([]);const [placements,setPlacements]=useState([]);const [channel,setChannel]=useState("laboratory");const [loading,setLoading]=useState(false);const [error,setError]=useState("");
+  const load=useCallback(async()=>{if(!laboratoryId)return;setLoading(true);setError("");try{const [assetResponse,eventResponse,messageResponse]=await Promise.all([api.get(`/api/digital-twin/${laboratoryId}/assets`),api.get(`/api/digital-twin/${laboratoryId}/events?limit=100`),api.get(`/api/digital-twin/${laboratoryId}/messages?channel=${channel}`)]);setPlacements(assetResponse.data.assets??[]);setEvents(eventResponse.data.events??[]);setMessages(messageResponse.data.messages??[]);}catch(requestError){setError(requestError.message);}finally{setLoading(false);}},[channel,laboratoryId]);
+  useEffect(()=>{load();},[load]);
+  const onRealtime=useCallback((eventName,payload)=>{if(eventName==="twin:asset-created")setPlacements(current=>[...current.filter(item=>item.id!==payload.id),payload]);if(eventName==="twin:asset-updated")setPlacements(current=>current.map(item=>item.id===payload.id?payload:item));if(eventName==="twin:asset-deleted")setPlacements(current=>current.filter(item=>item.id!==payload.id));if(eventName==="twin:message-created"&&payload.channel===channel)setMessages(current=>current.some(item=>item.id===payload.id)?current:[...current,payload]);if(eventName.startsWith("twin:")||eventName.startsWith("alert:"))api.get(`/api/digital-twin/${laboratoryId}/events?limit=100`).then(response=>setEvents(response.data.events??[])).catch(()=>{});},[channel,laboratoryId]);
+  async function sendMessage(messageText){const response=await api.post(`/api/digital-twin/${laboratoryId}/messages`,{channel,messageText});setMessages(current=>current.some(item=>item.id===response.data.message.id)?current:[...current,response.data.message]);}
+  async function acknowledgeAlert(alert){const response=await api.patch(`/api/alerts/${alert.id}/status`,{status:"acknowledged",notes:"Alarmi u pranua nga paneli Digital Twin."});setAlerts(current=>current.map(item=>String(item.id)===String(alert.id)?{...item,...response.data.alert}:item));}
+  return{events,messages,placements,channel,setChannel,loading,error,onRealtime,sendMessage,acknowledgeAlert,reload:load,alerts};
+}
