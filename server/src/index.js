@@ -40,6 +40,9 @@ import { createLaboratoryModelService } from "./modules/laboratories/model-servi
 import { createLaboratoryModelStorage } from "./storage/laboratory-model-storage.js";
 import { createEquipmentRepository } from "./modules/equipment/repository.js";
 import { createEquipmentService } from "./modules/equipment/service.js";
+import { createEquipmentAssetRepository } from "./modules/equipment-assets/repository.js";
+import { createEquipmentAssetService } from "./modules/equipment-assets/service.js";
+import { createEquipmentAssetStorage } from "./storage/equipment-asset-storage.js";
 import { createSensorRepository } from "./modules/sensors/repository.js";
 import { createSensorService } from "./modules/sensors/service.js";
 import { createSimulatorRepository } from "./modules/simulator/repository.js";
@@ -149,6 +152,10 @@ const laboratoryModelService = createLaboratoryModelService({
 const equipmentService = createEquipmentService({
   repository: createEquipmentRepository(databasePool),
 });
+const equipmentAssetService = createEquipmentAssetService({
+  repository: createEquipmentAssetRepository(databasePool),
+  storage: createEquipmentAssetStorage(),
+});
 const sensorService = createSensorService({
   repository: createSensorRepository(databasePool),
 });
@@ -245,6 +252,7 @@ const app = createApp({
   laboratoryModelService,
   laboratoryAccessRepository,
   equipmentService,
+  equipmentAssetService,
   sensorService,
   simulatorService,
   alertService,

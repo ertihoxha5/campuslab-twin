@@ -18,6 +18,7 @@ import { createNotificationRouter } from "./modules/notifications/router.js";
 import { createDashboardRouter } from "./modules/dashboard/router.js";
 import { createLaboratoryRouter } from "./modules/laboratories/router.js";
 import { createEquipmentRouter } from "./modules/equipment/router.js";
+import { createEquipmentAssetRouter } from "./modules/equipment-assets/router.js";
 import { createSensorRouter } from "./modules/sensors/router.js";
 import { createSimulatorRouter } from "./modules/simulator/router.js";
 import { createAlertRouter } from "./modules/alerts/router.js";
@@ -49,6 +50,7 @@ export function createApp({
   laboratoryModelService,
   laboratoryAccessRepository,
   equipmentService,
+  equipmentAssetService,
   sensorService,
   simulatorService,
   alertService,
@@ -180,6 +182,16 @@ export function createApp({
       "/api/equipment",
       createEquipmentRouter({
         service: equipmentService,
+        authenticateTenant: tenantAuthentication,
+      }),
+    );
+  }
+
+  if (equipmentAssetService && tenantAuthentication) {
+    app.use(
+      "/api/equipment/:equipmentId/visual-assets",
+      createEquipmentAssetRouter({
+        service: equipmentAssetService,
         authenticateTenant: tenantAuthentication,
       }),
     );
