@@ -7,6 +7,7 @@ import { IoTDevices } from "./IoTDevices.jsx";
 import { LaboratoryArchitecture } from "./LaboratoryArchitecture.jsx";
 import { LaboratoryAssets } from "./LaboratoryAssets.jsx";
 import { SecurityCameras } from "./SecurityCameras.jsx";
+import { PlacedAssets, PlacementScene } from "./PlacementScene.jsx";
 import { TwinCameraController } from "./TwinCameraController.jsx";
 import { TwinDataFlows } from "./TwinDataFlows.jsx";
 import { TWIN_ZONES } from "./twin-config.js";
@@ -23,7 +24,7 @@ function ZoneLabels({ visible }) {
   return <group>{TWIN_ZONES.map((zone) => <Html key={zone.id} center distanceFactor={18} position={[zone.center[0], 2.35, zone.center[1]]}><div className="twin-zone-label"><strong>{zone.name}</strong><span>{zone.code}</span></div></Html>)}</group>;
 }
 
-function Scene({ assets, sensors, selection, onSelect, layers, cameraMode, resetNonce, ceilingMode }) {
+function Scene({ assets, sensors, placements = [], placement, selection, onSelect, layers, cameraMode, resetNonce, ceilingMode }) {
   const alarmAsset = assets.find((asset) => asset.status === "alarm");
   return <>
     <color attach="background" args={["#171D26"]} />
@@ -38,6 +39,8 @@ function Scene({ assets, sensors, selection, onSelect, layers, cameraMode, reset
     </Suspense>
     <IoTDevices sensors={sensors} visible={layers.sensors} showLabels={layers.sensorLabels} selectedId={selection?.kind === "sensor" ? selection.item.id : null} onSelect={(item) => onSelect({ kind: "sensor", item })} />
     <SecurityCameras visible={layers.cameras} onSelect={(item)=>onSelect({kind:"camera",item})}/>
+    <PlacedAssets items={placements} visible={layers.equipment||layers.sensors} selectedId={selection?.kind==="placement"?selection.item.id:null} onSelect={(item)=>onSelect({kind:"placement",item})}/>
+    {placement&&<PlacementScene placement={placement}/>}
     <TwinDataFlows sensors={sensors} assets={assets} visible={layers.dataFlow} />
     <ZoneLabels visible={layers.zones} />
     <ContactShadows position={[0, .025, 0]} opacity={.34} scale={23} blur={2.1} far={7} resolution={512} />
