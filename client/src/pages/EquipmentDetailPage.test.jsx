@@ -137,7 +137,8 @@ describe("EquipmentDetailPage", () => {
     expect(
       screen.queryByRole("button", { name: "Arkivo" }),
     ).not.toBeInTheDocument();
-    expect(api.get).toHaveBeenCalledTimes(1);
+    expect(api.get).toHaveBeenCalledTimes(2);
+    expect(api.get).toHaveBeenCalledWith("/api/equipment/21/visual-assets");
   });
 });
 

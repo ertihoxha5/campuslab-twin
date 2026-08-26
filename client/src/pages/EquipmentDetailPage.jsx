@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { EquipmentForm } from "@/components/EquipmentForm.jsx";
+import { EquipmentVisualAssets } from "@/components/EquipmentVisualAssets.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
@@ -242,6 +243,8 @@ export function EquipmentDetailPage() {
           />
         </DetailPanel>
       </div>
+
+      <EquipmentVisualAssets equipmentId={equipmentId} canManage={canManage} />
 
       {editing && (
         <div className="workspace-modal-backdrop">

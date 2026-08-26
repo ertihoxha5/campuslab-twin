@@ -146,16 +146,13 @@ export function EquipmentForm({
             />
           }
         />
-        <Field
-          className="equipment-form-wide"
-          label="Referenca e objektit 3D"
-          input={
-            <input
-              {...register("object3dReference")}
-              placeholder="p.sh. robot-industrial.glb"
-            />
-          }
-        />
+        <div className="equipment-form-wide equipment-digital-twin-note">
+          <strong>Aseti vizual / Modeli Digital Twin</strong>
+          <span>
+            Modelin GLB/GLTF, imazhin ose asetin e integruar mund ta shtoni pas
+            ruajtjes së pajisjes, nga faqja e detajeve.
+          </span>
+        </div>
       </div>
       <footer>
         <Button type="button" variant="outline" onClick={onCancel}>

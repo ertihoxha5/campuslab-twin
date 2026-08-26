@@ -1,0 +1,10 @@
+/* eslint-disable react/no-unknown-property */
+import { Suspense,useEffect,useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { Bounds,Environment,Html,OrbitControls,useGLTF } from "@react-three/drei";
+import { Box,Image as ImageIcon,RotateCcw } from "lucide-react";
+
+function Model({url}){const{scene}=useGLTF(url);return <primitive object={scene.clone(true)}/>;}
+function ModelPreview({url}){const[src,setSrc]=useState("");useEffect(()=>{let active=true,objectUrl="";fetch(url,{credentials:"include"}).then(response=>{if(!response.ok)throw new Error();return response.blob();}).then(blob=>{if(active){objectUrl=URL.createObjectURL(blob);setSrc(objectUrl);}}).catch(()=>setSrc("error"));return()=>{active=false;if(objectUrl)URL.revokeObjectURL(objectUrl);};},[url]);if(src==="error")return <PreviewMessage text="Modeli 3D nuk mund të hapej."/>;if(!src)return <PreviewMessage text="Po ngarkohet modeli 3D…"/>;return <Canvas camera={{position:[2.8,2,3.2],fov:42}} dpr={[1,1.5]}><ambientLight intensity={1.4}/><directionalLight position={[3,5,4]} intensity={2}/><Suspense fallback={<Html center>Po ngarkohet…</Html>}><Bounds fit clip observe margin={1.25}><Model url={src}/></Bounds><Environment preset="studio"/></Suspense><OrbitControls makeDefault enablePan={false}/></Canvas>;}
+function PreviewMessage({text}){return <div className="asset-preview-message"><Box size={22}/><span>{text}</span></div>;}
+export function AssetPreview({asset,compact=false}){if(!asset)return <PreviewMessage text="Nuk ka aset vizual."/>;if(asset.assetKind==="image")return <div className="asset-image-preview"><img src={asset.downloadUrl} alt={asset.displayName}/></div>;if(asset.assetKind==="model_3d")return <div className={`asset-model-preview ${compact?"compact":""}`}><ModelPreview url={asset.downloadUrl}/><span><RotateCcw size={13}/> Rrotullo dhe zmadho</span></div>;return <div className="asset-built-in-preview"><ImageIcon size={30}/><strong>{asset.displayName}</strong><span>Aset i integruar · {asset.builtInKey}</span></div>;}
