@@ -24,7 +24,7 @@ function ZoneLabels({ visible }) {
   return <group>{TWIN_ZONES.map((zone) => <Html key={zone.id} center distanceFactor={18} position={[zone.center[0], 2.35, zone.center[1]]}><div className="twin-zone-label"><strong>{zone.name}</strong><span>{zone.code}</span></div></Html>)}</group>;
 }
 
-function Scene({ assets, sensors, placements = [], placement, selection, onSelect, layers, cameraMode, resetNonce, ceilingMode }) {
+function Scene({ assets, sensors, placements = [], placement, selection, onSelect, onTransformEnd, transformMode, layers, cameraMode, resetNonce, ceilingMode }) {
   const alarmAsset = assets.find((asset) => asset.status === "alarm");
   return <>
     <color attach="background" args={["#171D26"]} />
@@ -39,7 +39,7 @@ function Scene({ assets, sensors, placements = [], placement, selection, onSelec
     </Suspense>
     <IoTDevices sensors={sensors} visible={layers.sensors} showLabels={layers.sensorLabels} selectedId={selection?.kind === "sensor" ? selection.item.id : null} onSelect={(item) => onSelect({ kind: "sensor", item })} />
     <SecurityCameras visible={layers.cameras} onSelect={(item)=>onSelect({kind:"camera",item})}/>
-    <PlacedAssets items={placements} visible={layers.equipment||layers.sensors} selectedId={selection?.kind==="placement"?selection.item.id:null} onSelect={(item)=>onSelect({kind:"placement",item})}/>
+    <Suspense fallback={null}><PlacedAssets items={placements} visible={layers.equipment||layers.sensors} selectedId={selection?.kind==="placement"?selection.item.id:null} transformMode={transformMode} onTransformEnd={onTransformEnd} onSelect={(item)=>onSelect({kind:"placement",item})}/></Suspense>
     {placement&&<PlacementScene placement={placement}/>}
     <TwinDataFlows sensors={sensors} assets={assets} visible={layers.dataFlow} />
     <ZoneLabels visible={layers.zones} />
