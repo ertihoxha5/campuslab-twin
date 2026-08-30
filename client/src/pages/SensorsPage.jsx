@@ -13,6 +13,10 @@ import {
 import { api } from "@/api/client.js";
 import { SensorForm } from "@/components/SensorForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
+import { EmptyState } from "@/components/ui/EmptyState.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
+import { StatusBadge } from "@/components/ui/StatusBadge.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 import { sensorTypes } from "@/validation/sensor.js";
 import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
@@ -23,6 +27,8 @@ const statusLabels = {
   calibration: "Në kalibrim",
   inactive: "Joaktiv",
 };
+
+const statusTones = { online: "success", offline: "danger", calibration: "warning", inactive: "neutral" };
 
 const emptyOptions = { laboratories: [], zones: [], equipment: [] };
 
@@ -115,31 +121,28 @@ export function SensorsPage() {
 
   return (
     <section className="sensors-page">
-      <div className="laboratories-heading">
-        <div className="workspace-page-heading">
-          <p className="eyebrow">Matjet laboratorike</p>
-          <h1>Sensorët</h1>
-          <p>
-            Menaxhoni burimet e matjeve dhe vendosjen e tyre në laboratorët
-            virtualë.
-          </p>
-        </div>
-        <div className="laboratories-heading-actions">
+      <PageHeader
+        eyebrow="Matjet laboratorike"
+        title="Sensorët"
+        description="Menaxhoni burimet e matjeve dhe vendosjen e tyre në laboratorët virtualë."
+        meta={pagination && <StatusBadge tone="info" dot={false}>{pagination.total ?? sensors.length} sensorë gjithsej</StatusBadge>}
+        actions={<>
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => loadSensors()}
             disabled={loading}
           >
-            <RefreshCw size={16} /> Rifresko
+            <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko
           </Button>
           {canManage && (
-            <Button type="button" onClick={() => setShowForm(true)}>
+            <Button type="button" size="sm" onClick={() => setShowForm(true)}>
               <Plus size={17} /> Sensor i ri
             </Button>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
       <div className="laboratory-filters sensor-filters">
         <form onSubmit={submitSearch}>
@@ -194,7 +197,7 @@ export function SensorsPage() {
       </div>
 
       {message.text && (
-        <p className={`form-message ${message.type}`} role="status">
+        <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>
           {message.text}
         </p>
       )}
@@ -202,25 +205,13 @@ export function SensorsPage() {
       {loading ? (
         <div className="equipment-card-grid" aria-label="Po ngarkohen sensorët">
           {Array.from({ length: 3 }, (_, index) => (
-            <div className="laboratory-card-skeleton" key={index} />
+            <LoadingSkeleton rows={5} key={index} />
           ))}
         </div>
       ) : sensors.length === 0 ? (
-        <div className="workspace-onboarding">
-          <span>
-            <RadioTower size={25} />
-          </span>
-          <div>
-            <h2>Nuk u gjet asnjë sensor</h2>
-            <p>
-              {submittedSearch || status || sensorType
-                ? "Ndryshoni kërkimin ose filtrat."
-                : canManage
-                  ? "Shtoni sensorin e parë të një laboratori."
-                  : "Nuk ka sensorë në laboratorët që ju janë caktuar."}
-            </p>
-          </div>
-        </div>
+        <EmptyState icon={RadioTower} title="Nuk u gjet asnjë sensor"
+          description={submittedSearch || status || sensorType ? "Ndryshoni kërkimin ose filtrat." : canManage ? "Shtoni sensorin e parë të një laboratori." : "Nuk ka sensorë në laboratorët që ju janë caktuar."}
+          action={canManage && !submittedSearch && !status && !sensorType ? <Button type="button" size="sm" onClick={() => setShowForm(true)}><Plus size={15} /> Sensor i ri</Button> : null} />
       ) : (
         <>
           <div className="equipment-card-grid">
@@ -228,9 +219,7 @@ export function SensorsPage() {
               <article className="equipment-card sensor-card" key={sensor.id}>
                 <header>
                   <span className="laboratory-code">{sensor.code}</span>
-                  <span className={`status-badge status-${sensor.status}`}>
-                    {statusLabels[sensor.status]}
-                  </span>
+                  <StatusBadge tone={statusTones[sensor.status]}>{statusLabels[sensor.status] ?? sensor.status}</StatusBadge>
                 </header>
                 <h2>{sensor.name}</h2>
                 <p>

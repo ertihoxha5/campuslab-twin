@@ -13,6 +13,10 @@ import {
 import { api } from "@/api/client.js";
 import { EquipmentForm } from "@/components/EquipmentForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
+import { EmptyState } from "@/components/ui/EmptyState.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
+import { StatusBadge } from "@/components/ui/StatusBadge.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
@@ -22,6 +26,8 @@ const statusLabels = {
   fault: "Me defekt",
   maintenance: "Në mirëmbajtje",
 };
+
+const statusTones = { active: "success", inactive: "neutral", fault: "danger", maintenance: "warning" };
 
 const emptyOptions = { laboratories: [], zones: [], users: [] };
 
@@ -120,31 +126,28 @@ export function EquipmentPage() {
 
   return (
     <section className="equipment-page">
-      <div className="laboratories-heading">
-        <div className="workspace-page-heading">
-          <p className="eyebrow">Asetet laboratorike</p>
-          <h1>Pajisjet</h1>
-          <p>
-            Shikoni gjendjen, shëndetin dhe vendosjen e pajisjeve në laboratorët
-            tuaj.
-          </p>
-        </div>
-        <div className="laboratories-heading-actions">
+      <PageHeader
+        eyebrow="Asetet laboratorike"
+        title="Pajisjet"
+        description="Shikoni gjendjen, shëndetin dhe vendosjen e pajisjeve në laboratorët tuaj."
+        meta={pagination && <StatusBadge tone="info" dot={false}>{pagination.total ?? equipment.length} pajisje gjithsej</StatusBadge>}
+        actions={<>
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => loadEquipment()}
             disabled={loading}
           >
-            <RefreshCw size={16} /> Rifresko
+            <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko
           </Button>
           {canManage && (
-            <Button type="button" onClick={openForm}>
+            <Button type="button" size="sm" onClick={openForm}>
               <Plus size={17} /> Pajisje e re
             </Button>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
       <div className="laboratory-filters">
         <form onSubmit={submitSearch}>
@@ -196,7 +199,7 @@ export function EquipmentPage() {
       </div>
 
       {message.text && (
-        <p className={`form-message ${message.type}`} role="status">
+        <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>
           {message.text}
         </p>
       )}
@@ -204,25 +207,13 @@ export function EquipmentPage() {
       {loading ? (
         <div className="equipment-card-grid" aria-label="Po ngarkohen pajisjet">
           {Array.from({ length: 3 }, (_, index) => (
-            <div className="laboratory-card-skeleton" key={index} />
+            <LoadingSkeleton rows={5} key={index} />
           ))}
         </div>
       ) : equipment.length === 0 ? (
-        <div className="workspace-onboarding">
-          <span>
-            <Cpu size={25} />
-          </span>
-          <div>
-            <h2>Nuk u gjet asnjë pajisje</h2>
-            <p>
-              {submittedSearch || status
-                ? "Ndryshoni kërkimin ose filtrin e statusit."
-                : canManage
-                  ? "Shtoni pajisjen e parë të një laboratori."
-                  : "Nuk ka pajisje në laboratorët që ju janë caktuar."}
-            </p>
-          </div>
-        </div>
+        <EmptyState icon={Cpu} title="Nuk u gjet asnjë pajisje"
+          description={submittedSearch || status ? "Ndryshoni kërkimin ose filtrin e statusit." : canManage ? "Shtoni pajisjen e parë të një laboratori." : "Nuk ka pajisje në laboratorët që ju janë caktuar."}
+          action={canManage && !submittedSearch && !status ? <Button type="button" size="sm" onClick={openForm}><Plus size={15} /> Pajisje e re</Button> : null} />
       ) : (
         <>
           <div className="equipment-card-grid">
@@ -230,9 +221,7 @@ export function EquipmentPage() {
               <article className="equipment-card" key={item.id}>
                 <header>
                   <span className="laboratory-code">{item.code}</span>
-                  <span className={`status-badge status-${item.status}`}>
-                    {statusLabels[item.status]}
-                  </span>
+                  <StatusBadge tone={statusTones[item.status]}>{statusLabels[item.status] ?? item.status}</StatusBadge>
                 </header>
                 <h2>{item.name}</h2>
                 <p>

@@ -12,6 +12,10 @@ import {
 import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { Button } from "@/components/ui/button.jsx";
+import { EmptyState } from "@/components/ui/EmptyState.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
+import { StatusBadge } from "@/components/ui/StatusBadge.jsx";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus.js";
 import {
   localizedLabel,
@@ -182,27 +186,31 @@ export function RealtimeMonitoringPage() {
     () => latestReadings.slice(0, colors.length),
     [latestReadings],
   );
+  const liveState = !networkOnline
+    ? { tone: "danger", label: "Pajisja është offline" }
+    : connection === "connected"
+      ? { tone: "success", label: "Lidhur drejtpërdrejt" }
+      : connection === "connecting"
+        ? { tone: "warning", label: "Po lidhet" }
+        : { tone: "danger", label: "Po rilidhet automatikisht" };
 
   return (
     <section className="workspace-overview realtime-monitoring-page">
-      <div className="dashboard-heading">
-        <div className="workspace-page-heading">
-          <p className="eyebrow">Operacionet live</p>
-          <h1>Monitorimi në kohë reale</h1>
-          <p>
-            Leximet dhe alarmet e laboratorit të zgjedhur, pa të dhëna të
-            sajuara.
-          </p>
-        </div>
-        <Button
+      <PageHeader
+        eyebrow="Operacionet live"
+        title="Monitorimi në kohë reale"
+        description="Leximet, energjia dhe alarmet e laboratorit të zgjedhur, të përditësuara nga kanali realtime."
+        meta={<StatusBadge tone={liveState.tone}>{liveState.label}</StatusBadge>}
+        actions={<Button
           type="button"
           variant="outline"
+          size="sm"
           onClick={loadSnapshot}
           disabled={!laboratoryId}
         >
-          <RefreshCw size={16} /> Rifresko gjendjen
-        </Button>
-      </div>
+          <RefreshCw size={15} /> Rifresko gjendjen
+        </Button>}
+      />
 
       <div className="realtime-toolbar">
         <label>
@@ -221,21 +229,6 @@ export function RealtimeMonitoringPage() {
             ))}
           </select>
         </label>
-        <span
-          className={`realtime-status ${networkOnline ? connection : "disconnected"}`}
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <i aria-hidden="true" />
-          {!networkOnline
-            ? "Pajisja është offline"
-            : connection === "connected"
-              ? "Lidhur drejtpërdrejt"
-              : connection === "connecting"
-                ? "Po lidhet"
-                : "Lidhja u ndërpre — po rilidhet automatikisht"}
-        </span>
         <span className="realtime-last-update">
           {lastUpdate
             ? `Leximi i fundit: ${timeLabel(lastUpdate)}`
@@ -301,10 +294,8 @@ export function RealtimeMonitoringPage() {
             <p>Ruhet vetëm gjatë këtij sesioni.</p>
           </div>
           {chartData.length === 0 ? (
-            <div className="realtime-empty">
-              <Activity size={24} />
-              <p>Në pritje të leximeve realtime nga simulatori.</p>
-            </div>
+            <EmptyState compact icon={Activity} title="Në pritje të telemetrisë"
+              description="Grafiku plotësohet sapo të mbërrijë leximi i parë realtime." />
           ) : (
             <div className="realtime-chart">
               <ResponsiveContainer width="100%" height="100%">
@@ -337,12 +328,9 @@ export function RealtimeMonitoringPage() {
             <p>Renditur sipas rëndësisë.</p>
           </div>
           {loading ? (
-            <p>Po ngarkohen…</p>
+            <LoadingSkeleton rows={4} aria-label="Po ngarkohen alarmet" />
           ) : alerts.length === 0 ? (
-            <div className="realtime-empty">
-              <CircleAlert size={24} />
-              <p>Nuk ka alarme aktive për këtë laborator.</p>
-            </div>
+            <EmptyState compact icon={CircleAlert} title="Nuk ka alarme aktive" description="Ky laborator nuk ka alarme të hapura aktualisht." />
           ) : (
             <div className="realtime-alert-list">
               {alerts.map((alert) => (

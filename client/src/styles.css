@@ -3217,6 +3217,11 @@ a {
   background: var(--background);
 }
 
+.equipment-page > .ui-page-header + .laboratory-filters,
+.sensors-page > .ui-page-header + .laboratory-filters {
+  margin-top: 0;
+}
+
 .laboratory-filters form {
   display: flex;
   min-width: 260px;
@@ -3473,6 +3478,19 @@ a {
   background: var(--background);
 }
 
+.equipment-card {
+  display: flex;
+  min-height: 270px;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.equipment-card:hover {
+  border-color: color-mix(in srgb, var(--grape) 24%, var(--border));
+  transform: translateY(-1px);
+}
+
 .equipment-card > header {
   display: flex;
   align-items: center;
@@ -3530,6 +3548,11 @@ a {
   font-size: 0.75rem;
   font-weight: 750;
   text-decoration: none;
+}
+
+.equipment-card .equipment-card-link {
+  margin-top: auto;
+  padding-top: 1rem;
 }
 
 .equipment-card-link:hover {
