@@ -3448,11 +3448,15 @@ a {
 
 .laboratory-detail-tabs {
   display: flex;
+  width: fit-content;
+  max-width: 100%;
   gap: 0.25rem;
-  margin-top: 1.35rem;
-  padding-bottom: 0.1rem;
+  margin-top: 0.25rem;
+  padding: 0.25rem;
   overflow-x: auto;
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--background);
 }
 
 .equipment-card-grid {
@@ -3851,7 +3855,7 @@ a {
 .laboratory-detail-tabs button {
   padding: 0.7rem 0.85rem;
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--muted);
   font: inherit;
@@ -3866,7 +3870,7 @@ a {
 }
 
 .laboratory-detail-tabs button[aria-selected="true"] {
-  border-bottom-color: var(--grape);
+  background: var(--grape-soft);
   color: var(--grape);
 }
 
@@ -3907,9 +3911,56 @@ a {
   gap: 0.7rem;
   padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: 0.8rem;
+  border-radius: var(--radius-md);
   background: var(--background);
   color: var(--grape);
+  box-shadow: var(--shadow-sm);
+}
+
+.laboratory-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.laboratory-quick-actions a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--background);
+  color: var(--grape);
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.laboratory-quick-actions a:hover {
+  border-color: color-mix(in srgb, var(--grape) 28%, var(--border));
+  background: var(--grape-soft);
+}
+
+.laboratory-quick-actions a > span {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.laboratory-quick-actions strong {
+  color: var(--text);
+  font-size: 0.76rem;
+}
+
+.laboratory-quick-actions small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.65rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .laboratory-detail-stats span,
@@ -3941,8 +3992,9 @@ a {
 .laboratory-detail-panel {
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 1rem;
+  border-radius: var(--radius-md);
   background: var(--background);
+  box-shadow: var(--shadow-sm);
 }
 
 .laboratory-detail-panel > header {
@@ -4434,6 +4486,9 @@ a {
 }
 
 @media (max-width: 680px) {
+  .laboratory-quick-actions {
+    grid-template-columns: 1fr;
+  }
   .laboratories-heading,
   .laboratory-detail-heading,
   .equipment-detail-heading,

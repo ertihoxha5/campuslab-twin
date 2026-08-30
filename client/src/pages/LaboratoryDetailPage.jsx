@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Boxes,
   Cpu,
+  ExternalLink,
   MapPin,
   Pencil,
   Plus,
@@ -19,6 +20,10 @@ import { LaboratoryLayoutPreview } from "@/components/LaboratoryLayoutPreview.js
 import { LaboratoryModelPanel } from "@/components/LaboratoryModelPanel.jsx";
 import { LaboratoryZoneForm } from "@/components/LaboratoryZoneForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
+import { EmptyState } from "@/components/ui/EmptyState.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
+import { StatusBadge } from "@/components/ui/StatusBadge.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
@@ -27,6 +32,8 @@ const statusLabels = {
   inactive: "Joaktiv",
   maintenance: "Në mirëmbajtje",
 };
+
+const statusTones = { active: "success", inactive: "neutral", maintenance: "warning" };
 
 export function LaboratoryDetailPage() {
   const { laboratoryId } = useParams();
@@ -244,18 +251,17 @@ export function LaboratoryDetailPage() {
   }
 
   if (loading && !laboratory) {
-    return <p className="workspace-loading">Po ngarkohet laboratori…</p>;
+    return <LoadingSkeleton rows={7} aria-label="Po ngarkohet laboratori" />;
   }
 
   if (!laboratory) {
     return (
-      <section className="workspace-empty-state">
-        <h1>Laboratori nuk mund të shfaqet</h1>
-        <p role="alert">{message.text || "Laboratori i kërkuar nuk u gjet."}</p>
-        <Button asChild variant="outline">
-          <Link to="/aplikacioni/laboratoret">Kthehu te laboratorët</Link>
-        </Button>
-      </section>
+      <EmptyState
+        icon={Archive}
+        title="Laboratori nuk mund të shfaqet"
+        description={message.text || "Laboratori i kërkuar nuk u gjet ose nuk është i qasshëm për rolin tuaj."}
+        action={<Button asChild variant="outline"><Link to="/aplikacioni/laboratoret">Kthehu te laboratorët</Link></Button>}
+      />
     );
   }
 
@@ -264,36 +270,31 @@ export function LaboratoryDetailPage() {
       <Link className="workspace-back-link" to="/aplikacioni/laboratoret">
         <ArrowLeft size={16} /> Laboratorët
       </Link>
-      <div className="laboratory-detail-heading">
-        <div>
-          <div className="laboratory-detail-meta">
-            <span className="laboratory-code">{laboratory.code}</span>
-            <span className={`status-badge status-${laboratory.status}`}>
-              {statusLabels[laboratory.status]}
-            </span>
-          </div>
-          <h1>{laboratory.name}</h1>
-          <p>{laboratory.faculty}</p>
-        </div>
-        <div className="laboratories-heading-actions">
+      <PageHeader
+        eyebrow={`${laboratory.code} · ${laboratory.faculty}`}
+        title={laboratory.name}
+        description={`${laboratory.building}, kati ${laboratory.floor} · Kapaciteti ${laboratory.capacity} persona`}
+        meta={<StatusBadge tone={statusTones[laboratory.status]}>{statusLabels[laboratory.status] ?? laboratory.status}</StatusBadge>}
+        actions={<>
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => loadDetail()}
             disabled={loading}
           >
-            <RefreshCw size={16} /> Rifresko
+            <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko
           </Button>
           {canManage && (
-            <Button type="button" onClick={() => setEditing(true)}>
+            <Button type="button" size="sm" onClick={() => setEditing(true)}>
               <Pencil size={16} /> Ndrysho
             </Button>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
       {message.text && (
-        <p className={`form-message ${message.type}`} role="status">
+        <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>
           {message.text}
         </p>
       )}
@@ -321,28 +322,19 @@ export function LaboratoryDetailPage() {
       </nav>
 
       {activeTab === "summary" && (
-        <div className="laboratory-detail-stats">
-          <DetailStat
-            icon={MapPin}
-            label="Vendndodhja"
-            value={`${laboratory.building}, kati ${laboratory.floor}`}
-          />
-          <DetailStat
-            icon={Users}
-            label="Kapaciteti"
-            value={`${laboratory.capacity} persona`}
-          />
-          <DetailStat
-            icon={Boxes}
-            label="Zonat"
-            value={String(laboratory.zoneCount ?? zones.length)}
-          />
-          <DetailStat
-            icon={Cpu}
-            label="Pajisje / Sensorë"
-            value={`${laboratory.equipmentCount ?? 0} / ${laboratory.sensorCount ?? 0}`}
-          />
-        </div>
+        <>
+          <div className="laboratory-detail-stats">
+            <DetailStat icon={MapPin} label="Vendndodhja" value={`${laboratory.building}, kati ${laboratory.floor}`} />
+            <DetailStat icon={Users} label="Kapaciteti" value={`${laboratory.capacity} persona`} />
+            <DetailStat icon={Boxes} label="Zonat" value={String(laboratory.zoneCount ?? zones.length)} />
+            <DetailStat icon={Cpu} label="Pajisje / Sensorë" value={`${laboratory.equipmentCount ?? 0} / ${laboratory.sensorCount ?? 0}`} />
+          </div>
+          <nav className="laboratory-quick-actions" aria-label="Veprime të shpejta për laboratorin">
+            <Link to="/aplikacioni/digital-twin"><Boxes size={17} /><span><strong>Digital Twin</strong><small>Hap skenën operative 3D</small></span><ExternalLink size={14} /></Link>
+            <Link to="/aplikacioni/pajisjet"><Cpu size={17} /><span><strong>Pajisjet</strong><small>Shiko asetet laboratorike</small></span><ExternalLink size={14} /></Link>
+            <Link to="/aplikacioni/sensoret"><RefreshCw size={17} /><span><strong>Sensorët</strong><small>Kontrollo telemetrinë</small></span><ExternalLink size={14} /></Link>
+          </nav>
+        </>
       )}
 
       <div className="laboratory-detail-grid" data-active-tab={activeTab}>
