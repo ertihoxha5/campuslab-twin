@@ -1,33 +1,25 @@
 import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Building2, FlaskConical, ShieldCheck, UserRound } from "lucide-react";
+import { Link } from "react-router-dom";
 import { api } from "@/api/client.js";
+import { AuthPageShell } from "@/components/AuthPageShell.jsx";
 import { Button } from "@/components/ui/button.jsx";
-import {
-  prepareRegistrationData,
-  validateRegistrationForm,
-} from "@/pages/registration-form-data.js";
+import { prepareRegistrationData, validateRegistrationForm } from "@/pages/registration-form-data.js";
+
+const initialState = { loading: false, message: "", error: false, details: null };
 
 export function RegisterPage() {
   const formRef = useRef(null);
   const [logoPreview, setLogoPreview] = useState("");
-  const [state, setState] = useState({
-    loading: false,
-    message: "",
-    error: false,
-    details: null,
-  });
+  const [state, setState] = useState(initialState);
 
-  useEffect(
-    () => () => {
-      if (logoPreview) URL.revokeObjectURL(logoPreview);
-    },
-    [logoPreview],
-  );
+  useEffect(() => () => { if (logoPreview) URL.revokeObjectURL(logoPreview); }, [logoPreview]);
 
   function updateLogoPreview(event) {
     const file = event.target.files?.[0];
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoPreview(file ? URL.createObjectURL(file) : "");
-    setState({ loading: false, message: "", error: false, details: null });
+    setState(initialState);
   }
 
   function fillTestUniversity() {
@@ -48,7 +40,6 @@ export function RegisterPage() {
       password: "TestCampusLab!2026",
       confirmPassword: "TestCampusLab!2026",
     };
-
     for (const [name, value] of Object.entries(values)) {
       const field = form.elements.namedItem(name);
       if (field) field.value = value;
@@ -57,7 +48,7 @@ export function RegisterPage() {
     form.elements.namedItem("logo").value = "";
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoPreview("");
-    setState({ loading: false, message: "", error: false, details: null });
+    setState(initialState);
   }
 
   async function submit(event) {
@@ -65,180 +56,81 @@ export function RegisterPage() {
     const form = event.currentTarget;
     const clientError = validateRegistrationForm(form);
     if (clientError) {
-      setState({
-        loading: false,
-        message: clientError,
-        error: true,
-        details: null,
-      });
+      setState({ loading: false, message: clientError, error: true, details: null });
       return;
     }
-
     setState({ loading: true, message: "", error: false, details: null });
-    const data = prepareRegistrationData(form);
-
     try {
-      const result = await api.post(
-        "/api/public/university-registrations",
-        data,
-      );
+      const result = await api.post("/api/public/university-registrations", prepareRegistrationData(form));
       form.reset();
       if (logoPreview) URL.revokeObjectURL(logoPreview);
       setLogoPreview("");
-      setState({
-        loading: false,
-        message: result.data.message,
-        error: false,
-        details: null,
-      });
+      setState({ loading: false, message: result.data.message, error: false, details: null });
     } catch (error) {
-      setState({
-        loading: false,
-        message: error.message,
-        error: true,
-        details: error.details ?? null,
-      });
+      setState({ loading: false, message: error.message, error: true, details: error.details ?? null });
     }
   }
 
   return (
-    <section className="form-page">
-      <div className="form-shell">
-        <p className="eyebrow">Regjistrimi institucional</p>
-        <h1>Regjistro Universitetin</h1>
-        <p>
-          Kërkesa juaj do të ruhet në pritje për shqyrtim. Për testim mund të
-          përdorni një faqe dhe email me të njëjtin domain <code>.test</code>.
-        </p>
-        <div className="test-form-action">
-          <Button type="button" variant="outline" onClick={fillTestUniversity}>
-            Plotëso universitet testues
-          </Button>
-          <span>Nuk kërkon domain real dhe nuk dërgon logo.</span>
-        </div>
-        <form ref={formRef} className="registration-form" onSubmit={submit}>
-          <label className="wide">
-            Emri i universitetit
-            <input name="universityName" required minLength="3" />
-          </label>
-          <label>
-            Shkurtesa
-            <input name="acronym" required minLength="2" />
-          </label>
-          <label>
-            Lloji i institucionit
-            <select name="institutionType" required>
-              <option value="">Zgjidhni</option>
-              <option value="public">Publik</option>
-              <option value="private">Privat</option>
-            </select>
-          </label>
-          <label>
-            Qyteti
-            <input name="city" required />
-          </label>
-          <label>
-            Adresa
-            <input name="address" required />
-          </label>
-          <label className="wide">
-            Faqja zyrtare
-            <input
-              name="officialWebsite"
-              type="url"
-              placeholder="https://universiteti.edu"
-              required
-            />
-          </label>
-          <label className="wide">
-            Përshkrimi
-            <textarea name="description" rows="4" />
-          </label>
-          <label>
-            Emri i përfaqësuesit
-            <input name="representativeName" required />
-          </label>
-          <label>
-            Email-i institucional
-            <input name="representativeEmail" type="email" required />
-          </label>
-          <label>
-            Telefoni
-            <input name="representativePhone" type="tel" />
-          </label>
-          <label>
-            Logoja
-            <input
-              name="logo"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              aria-describedby="logo-help"
-              onChange={updateLogoPreview}
-            />
-            <span id="logo-help" className="field-help">
-              Opsionale · JPG, PNG ose WebP · maksimumi 2 MB
-            </span>
-          </label>
-          {logoPreview && (
-            <div className="logo-preview" aria-live="polite">
-              <img src={logoPreview} alt="Pamja paraprake e logos" />
-              <span>Pamja paraprake</span>
-            </div>
-          )}
-          <label>
-            Fjalëkalimi
-            <input
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              minLength="12"
-              aria-describedby="password-help"
-              required
-            />
-            <span id="password-help" className="field-help">
-              Të paktën 12 karaktere, me shkronjë të madhe, të vogël, numër dhe
-              simbol.
-            </span>
-          </label>
-          <label>
-            Konfirmo fjalëkalimin
-            <input
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              minLength="12"
-              required
-            />
-          </label>
-          <label className="check-field wide">
-            <input name="acceptsTerms" type="checkbox" required /> Pranoj
-            kushtet e përdorimit.
-          </label>
-          {state.message && (
-            <div className="wide" role="status">
-              <p
-                className={`form-message ${state.error ? "error" : "success"}`}
-              >
-                {state.message}
-              </p>
-              {state.details && (
-                <ul className="form-error-list">
-                  {Object.values(state.details)
-                    .flat()
-                    .map((detail) => (
-                      <li key={detail}>{detail}</li>
-                    ))}
-                </ul>
-              )}
-            </div>
-          )}
-          <div className="wide">
-            <Button type="submit" size="lg" disabled={state.loading}>
-              {state.loading ? "Po dërgohet…" : "Dërgo kërkesën"}
-            </Button>
-          </div>
-        </form>
+    <AuthPageShell
+      eyebrow="Regjistrimi institucional"
+      title="Regjistro universitetin"
+      description="Plotësoni të dhënat institucionale. Kërkesa shqyrtohet nga administratori i platformës para aktivizimit."
+      asideTitle="Niseni me të dhëna reale ose testuese."
+      asideItems={["Universitetet testuese pranohen me domain .test", "Të dhënat verifikohen para aktivizimit", "Administratori krijohet pas aprovimit"]}
+    >
+      <div className="registration-test-callout">
+        <FlaskConical size={19} />
+        <div><strong>Po testoni sistemin?</strong><p>Gjeneroni automatikisht një universitet të vlefshëm me domain të rezervuar.</p></div>
+        <Button type="button" variant="outline" size="sm" onClick={fillTestUniversity}>Plotëso testin</Button>
       </div>
-    </section>
+
+      <form ref={formRef} className="registration-form auth-registration-form" onSubmit={submit}>
+        <fieldset>
+          <legend><Building2 size={17} /> Institucioni</legend>
+          <div className="registration-fields">
+            <label className="wide">Emri i universitetit<input name="universityName" required minLength="3" /></label>
+            <label>Shkurtesa<input name="acronym" required minLength="2" /></label>
+            <label>Lloji i institucionit<select name="institutionType" required><option value="">Zgjidhni</option><option value="public">Publik</option><option value="private">Privat</option></select></label>
+            <label>Qyteti<input name="city" required /></label>
+            <label>Adresa<input name="address" required /></label>
+            <label className="wide">Faqja zyrtare<input name="officialWebsite" type="url" placeholder="https://universiteti.edu" required /></label>
+            <label className="wide">Përshkrimi<textarea name="description" rows="3" /></label>
+            <label>Logoja<input name="logo" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="logo-help" onChange={updateLogoPreview} /><span id="logo-help" className="field-help">Opsionale · JPG, PNG ose WebP · maksimumi 2 MB</span></label>
+            {logoPreview && <div className="logo-preview"><img src={logoPreview} alt="Pamja paraprake e logos" /><span>Pamja paraprake</span></div>}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend><UserRound size={17} /> Përfaqësuesi</legend>
+          <div className="registration-fields">
+            <label>Emri i përfaqësuesit<input name="representativeName" required /></label>
+            <label>Email-i institucional<input name="representativeEmail" type="email" required /></label>
+            <label>Telefoni<input name="representativePhone" type="tel" /></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend><ShieldCheck size={17} /> Siguria</legend>
+          <div className="registration-fields">
+            <label>Fjalëkalimi<input name="password" type="password" autoComplete="new-password" minLength="12" aria-describedby="password-help" required /><span id="password-help" className="field-help">Të paktën 12 karaktere me shkronjë të madhe, të vogël, numër dhe simbol.</span></label>
+            <label>Konfirmo fjalëkalimin<input name="confirmPassword" type="password" autoComplete="new-password" minLength="12" required /></label>
+            <label className="auth-checkbox wide"><input name="acceptsTerms" type="checkbox" required /> Pranoj kushtet e përdorimit dhe përpunimin e të dhënave të kërkesës.</label>
+          </div>
+        </fieldset>
+
+        {state.message && (
+          <div role={state.error ? "alert" : "status"}>
+            <p className={`form-message ${state.error ? "error" : "success"}`}>{state.message}</p>
+            {state.details && <ul className="form-error-list">{Object.values(state.details).flat().map((detail) => <li key={detail}>{detail}</li>)}</ul>}
+          </div>
+        )}
+        <div className="registration-submit">
+          <p>Duke dërguar kërkesën, nuk aktivizohet automatikisht universiteti.</p>
+          <Button type="submit" size="lg" disabled={state.loading}>{state.loading ? "Duke dërguar…" : "Dërgo kërkesën"}<ArrowRight size={18} /></Button>
+        </div>
+      </form>
+      <p className="auth-footnote">Keni llogari aktive? <Link to="/kycu">Kthehuni te kyçja</Link></p>
+    </AuthPageShell>
   );
 }
