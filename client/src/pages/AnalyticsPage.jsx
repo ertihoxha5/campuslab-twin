@@ -18,6 +18,8 @@ import {
 } from "recharts";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
 
 const metricOptions = [
   ["temperature", "Temperatura", "°C", "sensor"],
@@ -168,19 +170,9 @@ export function AnalyticsPage() {
 
   return (
     <section className="analytics-page">
-      <div className="laboratories-heading">
-        <div className="workspace-page-heading">
-          <p className="eyebrow">Evidencë historike</p>
-          <h1>Analitika</h1>
-          <p>
-            Analizoni readings dhe ngjarjet e ruajtura me filtra të qartë dhe
-            burim të gjurmueshëm.
-          </p>
-        </div>
-        <Button variant="outline" onClick={loadAnalytics} disabled={loading}>
-          <RefreshCw size={16} /> Rifresko
-        </Button>
-      </div>
+      <PageHeader eyebrow="Evidencë historike" title="Analitika"
+        description="Analizoni matjet dhe ngjarjet e ruajtura me filtra të qartë dhe burim të gjurmueshëm."
+        actions={<Button variant="outline" size="sm" onClick={loadAnalytics} disabled={loading}><RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko</Button>} />
       <div className="analytics-filters">
         <label>
           <span>Metrika</span>
@@ -272,9 +264,7 @@ export function AnalyticsPage() {
         </p>
       )}
       {loading && !analytics ? (
-        <div className="maintenance-loading">
-          Po përpunohen të dhënat historike…
-        </div>
+        <LoadingSkeleton rows={8} aria-label="Po përpunohen të dhënat historike" />
       ) : (
         analytics && (
           <>

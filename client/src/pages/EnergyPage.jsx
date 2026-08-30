@@ -3,6 +3,8 @@ import { Activity, Coins, Gauge, RefreshCw, Save, TrendingDown, TrendingUp, Zap 
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 
 const intervalLabels = { hourly: "24 orët", daily: "30 ditët", weekly: "12 javët", monthly: "12 muajt" };
@@ -69,10 +71,12 @@ export function EnergyPage() {
   const currency = summary?.currencyCode ?? tariff.currencyCode;
 
   return <section className="energy-page">
-    <div className="laboratories-heading"><div className="workspace-page-heading"><p className="eyebrow">Analitika operative</p><h1>Konsumi i energjisë</h1><p>Monitoroni fuqinë, koston dhe burimin e çdo totali të paraqitur.</p></div><Button variant="outline" onClick={() => loadOverview()} disabled={loading}><RefreshCw size={16} /> Rifresko</Button></div>
+    <PageHeader eyebrow="Analitika operative" title="Konsumi i energjisë"
+      description="Monitoroni fuqinë, koston dhe burimin e çdo totali të paraqitur."
+      actions={<Button variant="outline" size="sm" onClick={() => loadOverview()} disabled={loading}><RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko</Button>} />
     <div className="energy-toolbar"><label><span>Periudha</span><select value={interval} onChange={(event) => setInterval(event.target.value)}>{Object.entries(intervalLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label><span>Laboratori</span><select value={laboratoryId} onChange={(event) => setLaboratoryId(event.target.value)}><option value="">I gjithë universiteti</option>{laboratories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>
-    {message.text && <p className={`form-message ${message.type}`} role="status">{message.text}</p>}
-    {loading && !overview ? <div className="maintenance-loading">Po ngarkohen të dhënat e energjisë…</div> : overview && <>
+    {message.text && <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>{message.text}</p>}
+    {loading && !overview ? <LoadingSkeleton rows={7} aria-label="Po ngarkohen të dhënat e energjisë" /> : overview && <>
       <div className="energy-metrics">
         <article><span><Zap size={18} /></span><div><p>Fuqia aktuale</p><strong>{number(overview.current.powerWatts / 1000)} kW</strong><small>{overview.current.recordedAt ? "Leximi më i fundit" : "Pa lexim aktual"}</small></div></article>
         <article><span><Activity size={18} /></span><div><p>Energjia totale</p><strong>{number(summary.totalEnergyKwh)} kWh</strong><small>{intervalLabels[interval]}</small></div></article>

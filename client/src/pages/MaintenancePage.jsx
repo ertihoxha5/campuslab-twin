@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { EmptyState } from "@/components/ui/EmptyState.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
+import { StatusBadge } from "@/components/ui/StatusBadge.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
@@ -23,6 +27,7 @@ const statusLabels = {
   completed: "Përfunduar",
   cancelled: "Anuluar",
 };
+const statusTones = { planned: "info", in_progress: "warning", waiting: "warning", completed: "success", cancelled: "neutral" };
 const priorityLabels = {
   low: "E ulët",
   medium: "Mesatare",
@@ -249,27 +254,27 @@ export function MaintenancePage() {
 
   return (
     <section className="maintenance-page">
-      <div className="laboratories-heading">
-        <div className="workspace-page-heading">
-          <p className="eyebrow">Operacionet teknike</p>
-          <h1>Mirëmbajtja</h1>
-          <p>Planifikoni punën, ndiqni afatet dhe ruani historikun teknik.</p>
-        </div>
-        <div className="laboratories-heading-actions">
+      <PageHeader
+        eyebrow="Operacionet teknike"
+        title="Mirëmbajtja"
+        description="Planifikoni punën, ndiqni afatet dhe ruani historikun teknik të pajisjeve."
+        meta={pagination && <StatusBadge tone="info" dot={false}>{pagination.total ?? tasks.length} detyra gjithsej</StatusBadge>}
+        actions={<>
           <Button
             variant="outline"
+            size="sm"
             onClick={() => loadTasks()}
             disabled={loading}
           >
-            <RefreshCw size={16} /> Rifresko
+            <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko
           </Button>
           {canManage && (
-            <Button onClick={openCreate}>
+            <Button size="sm" onClick={openCreate}>
               <Plus size={17} /> Detyrë e re
             </Button>
           )}
-        </div>
-      </div>
+        </>}
+      />
       <div className="laboratory-filters maintenance-filters">
         <form
           onSubmit={(event) => {
@@ -305,22 +310,16 @@ export function MaintenancePage() {
         </label>
       </div>
       {message.text && (
-        <p className={`form-message ${message.type}`} role="status">
+        <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>
           {message.text}
         </p>
       )}
       {loading ? (
-        <div className="maintenance-loading">Po ngarkohen detyrat…</div>
+        <LoadingSkeleton rows={7} aria-label="Po ngarkohen detyrat" />
       ) : tasks.length === 0 ? (
-        <div className="workspace-onboarding">
-          <span>
-            <Wrench size={25} />
-          </span>
-          <div>
-            <h2>Nuk ka detyra mirëmbajtjeje</h2>
-            <p>Krijoni detyrën e parë ose ndryshoni filtrat.</p>
-          </div>
-        </div>
+        <EmptyState icon={Wrench} title="Nuk ka detyra mirëmbajtjeje"
+          description="Krijoni detyrën e parë ose ndryshoni filtrat aktualë."
+          action={canManage && !submittedSearch && !status ? <Button size="sm" onClick={openCreate}><Plus size={15} /> Detyrë e re</Button> : null} />
       ) : (
         <div className="maintenance-list">
           {tasks.map((task) => (
@@ -335,9 +334,7 @@ export function MaintenancePage() {
                   >
                     {priorityLabels[task.priority]}
                   </span>
-                  <span className={`status-badge status-${task.status}`}>
-                    {statusLabels[task.status]}
-                  </span>
+                  <StatusBadge tone={statusTones[task.status]}>{statusLabels[task.status] ?? task.status}</StatusBadge>
                   {task.overdue ? (
                     <span className="maintenance-overdue">Afati ka kaluar</span>
                   ) : null}

@@ -9,6 +9,10 @@ import {
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { EmptyState } from "@/components/ui/EmptyState.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
+import { StatusBadge } from "@/components/ui/StatusBadge.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 
 const reportTypes = {
@@ -122,25 +126,20 @@ export function ReportsPage() {
 
   return (
     <section className="reports-page">
-      <div className="laboratories-heading reports-heading">
-        <div className="workspace-page-heading">
-          <p className="eyebrow">Dokumentim i gjurmueshëm</p>
-          <h1>Raportet</h1>
-          <p>
-            Gjeneroni dhe shkarkoni raporte të autorizuara të universitetit.
-          </p>
-        </div>
-        <div className="reports-heading-actions">
-          <Button variant="outline" onClick={() => window.print()}>
+      <PageHeader eyebrow="Dokumentim i gjurmueshëm" title="Raportet"
+        description="Gjeneroni dhe shkarkoni raporte të autorizuara të universitetit."
+        meta={<StatusBadge tone="info" dot={false}>{reports.length} raporte</StatusBadge>}
+        actions={<>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
             <Printer size={16} /> Printo listën
           </Button>
-          <Button variant="outline" onClick={loadReports} disabled={loading}>
-            <RefreshCw size={16} /> Rifresko
+          <Button variant="outline" size="sm" onClick={loadReports} disabled={loading}>
+            <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko
           </Button>
-        </div>
-      </div>
+        </>}
+      />
       {message.text && (
-        <p className={`form-message ${message.type}`} role="status">
+        <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>
           {message.text}
         </p>
       )}
@@ -302,7 +301,7 @@ export function ReportsPage() {
           <FileText size={18} />
         </header>
         {loading ? (
-          <p className="reports-empty">Po ngarkohen raportet…</p>
+          <LoadingSkeleton rows={6} aria-label="Po ngarkohen raportet" />
         ) : reports.length ? (
           <div className="reports-list">
             {reports.map((report) => (
@@ -365,9 +364,8 @@ export function ReportsPage() {
             ))}
           </div>
         ) : (
-          <p className="reports-empty">
-            Nuk ka raporte për filtrat e zgjedhur.
-          </p>
+          <EmptyState compact icon={FileText} title="Nuk ka raporte"
+            description="Nuk u gjetën raporte për filtrat e zgjedhur." />
         )}
       </article>
     </section>

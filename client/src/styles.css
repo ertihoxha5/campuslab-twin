@@ -31,6 +31,7 @@
 
 /* Historical analytics */
 .analytics-page { display: grid; gap: 1.2rem; }
+.analytics-page > .ui-page-header { margin-bottom: 0; }
 .analytics-filters { display: grid; grid-template-columns: repeat(6, minmax(130px, 1fr)); gap: .7rem; padding: 1rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--background); }
 .analytics-filters label { display: grid; gap: .35rem; }
 .analytics-filters label span { color: var(--muted); font-size: .7rem; font-weight: 750; }
@@ -109,6 +110,7 @@
 
 /* Tenant reports */
 .reports-page { display: grid; gap: 1rem; }
+.reports-page > .ui-page-header { margin-bottom: .5rem; }
 .reports-heading-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
 .reports-panel { min-width: 0; padding: 1rem; border: 1px solid var(--border); border-radius: .9rem; background: var(--background); }
 .reports-panel > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
@@ -3218,7 +3220,8 @@ a {
 }
 
 .equipment-page > .ui-page-header + .laboratory-filters,
-.sensors-page > .ui-page-header + .laboratory-filters {
+.sensors-page > .ui-page-header + .laboratory-filters,
+.maintenance-page > .ui-page-header + .laboratory-filters {
   margin-top: 0;
 }
 
@@ -6481,6 +6484,7 @@ a {
   border-radius: 0.85rem;
   background: var(--background);
 }
+.energy-page > .ui-page-header + .energy-toolbar { margin-top: 0; }
 .energy-toolbar label {
   display: grid;
   min-width: 210px;
