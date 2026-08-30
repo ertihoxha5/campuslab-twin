@@ -155,6 +155,18 @@ Eventi dërgohet vetëm në dhomën e laboratorit përkatës.
 Dërgohet vetëm te dhomat personale të marrësve dhe vetëm kur alarmi krijohet,
 jo në çdo përditësim të tij.
 
+## Eventet operative të Digital Twin
+
+Ndryshimet e editorit 3D publikohen vetëm në dhomën tenant të laboratorit:
+
+- `twin:asset-created` — një aset u vendos në skenë; payload-i përmban rekordin e plotë të vendosjes.
+- `twin:asset-updated` — pozicioni, rotacioni, shkalla, zona ose statusi i një aseti u ndryshua.
+- `twin:asset-deleted` — aseti u hoq; payload-i përmban identifikuesin e tij.
+- `twin:message-created` — u ruajt një mesazh i ri në kanalin e laboratorit, teknik ose të administratorëve.
+
+Klienti duhet të aplikojë eventin vetëm mbi laboratorin aktiv dhe të përdorë
+REST snapshot-in si burim autoritativ pas rilidhjes.
+
 ## Rilidhja
 
 Socket.IO tenton rilidhjen automatikisht. Pas eventit `connect`, klienti kërkon

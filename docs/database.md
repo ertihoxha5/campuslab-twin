@@ -132,6 +132,10 @@ mesataren, numrin e mostrave, intervalin dhe burimin.
 - `activity_logs`
 - `stored_files`
 - `university_preferences`
+- `digital_twin_assets`
+- `digital_twin_events`
+- `digital_twin_messages`
+- `equipment_visual_assets`
 
 ## Migrimet
 
