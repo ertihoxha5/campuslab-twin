@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, CheckCheck, X } from "lucide-react";
+import { Bell, CheckCheck, Inbox, X } from "lucide-react";
 import { api } from "@/api/client.js";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
 
-const formatDate = (value) =>
-  new Intl.DateTimeFormat("sq-AL", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+const formatDate = (value) => new Intl.DateTimeFormat("sq-AL", {
+  dateStyle: "medium",
+  timeStyle: "short",
+}).format(new Date(value));
 
 export function NotificationMenu() {
   const panelRef = useRef(null);
+  const closeButtonRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -18,11 +19,17 @@ export function NotificationMenu() {
 
   useEffect(() => {
     if (!open) return undefined;
-    function closeOnOutsideClick(event) {
-      if (!panelRef.current?.contains(event.target)) setOpen(false);
+    closeButtonRef.current?.focus();
+    function closeOnInteraction(event) {
+      if (event.type === "keydown" && event.key === "Escape") setOpen(false);
+      if (event.type === "mousedown" && !panelRef.current?.contains(event.target)) setOpen(false);
     }
-    document.addEventListener("mousedown", closeOnOutsideClick);
-    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("mousedown", closeOnInteraction);
+    document.addEventListener("keydown", closeOnInteraction);
+    return () => {
+      document.removeEventListener("mousedown", closeOnInteraction);
+      document.removeEventListener("keydown", closeOnInteraction);
+    };
   }, [open]);
 
   async function loadNotifications() {
@@ -49,13 +56,8 @@ export function NotificationMenu() {
     if (notification.readAt) return;
     try {
       await api.patch(`/api/notifications/${notification.id}/read`, {});
-      setNotifications((items) =>
-        items.map((item) =>
-          item.id === notification.id
-            ? { ...item, readAt: new Date().toISOString() }
-            : item,
-        ),
-      );
+      const readAt = new Date().toISOString();
+      setNotifications((items) => items.map((item) => item.id === notification.id ? { ...item, readAt } : item));
       setUnreadCount((count) => Math.max(0, count - 1));
     } catch (error) {
       setMessage(error.message);
@@ -66,9 +68,7 @@ export function NotificationMenu() {
     try {
       await api.patch("/api/notifications/read-all", {});
       const readAt = new Date().toISOString();
-      setNotifications((items) =>
-        items.map((item) => ({ ...item, readAt: item.readAt ?? readAt })),
-      );
+      setNotifications((items) => items.map((item) => ({ ...item, readAt: item.readAt ?? readAt })));
       setUnreadCount(0);
     } catch (error) {
       setMessage(error.message);
@@ -77,72 +77,35 @@ export function NotificationMenu() {
 
   return (
     <div className="notification-menu" ref={panelRef}>
-      <button
-        type="button"
-        className="notification-button"
-        aria-label="Njoftimet"
-        aria-expanded={open}
-        onClick={toggleMenu}
-      >
-        <Bell size={19} />
-        {unreadCount > 0 && (
-          <span className="notification-count">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
+      <button type="button" className="notification-button" aria-label="Njoftimet" aria-expanded={open}
+        aria-controls="university-notification-panel" onClick={toggleMenu}>
+        <Bell size={18} aria-hidden="true" />
+        {unreadCount > 0 && <span className="notification-count">{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
       {open && (
-        <div className="notification-panel">
-          <div className="notification-panel-heading">
-            <div>
-              <strong>Njoftimet</strong>
-              <small>{unreadCount} të palexuara</small>
-            </div>
-            <button
-              type="button"
-              aria-label="Mbyll njoftimet"
-              onClick={() => setOpen(false)}
-            >
-              <X size={17} />
-            </button>
-          </div>
+        <section className="notification-panel" id="university-notification-panel" aria-label="Njoftimet e universitetit">
+          <header className="notification-panel-heading">
+            <div><strong>Njoftimet</strong><small>{unreadCount} të palexuara</small></div>
+            <button ref={closeButtonRef} type="button" aria-label="Mbyll njoftimet" onClick={() => setOpen(false)}><X size={17} /></button>
+          </header>
           {unreadCount > 0 && (
-            <button
-              type="button"
-              className="mark-all-read"
-              onClick={markAllRead}
-            >
-              <CheckCheck size={16} /> Shënoji të gjitha si të lexuara
+            <button type="button" className="mark-all-read" onClick={markAllRead}>
+              <CheckCheck size={15} /> Shënoji të gjitha si të lexuara
             </button>
           )}
-          {message && (
-            <p className="notification-message" role="alert">
-              {message}
-            </p>
-          )}
+          {message && <p className="notification-message" role="alert">{message}</p>}
           <div className="notification-list" aria-busy={loading}>
-            {loading ? (
-              <p>Po ngarkohen njoftimet…</p>
-            ) : notifications.length === 0 ? (
-              <p>Nuk keni njoftime.</p>
-            ) : (
-              notifications.map((notification) => (
-                <button
-                  key={notification.id}
-                  type="button"
-                  className={notification.readAt ? "" : "is-unread"}
-                  onClick={() => markRead(notification)}
-                >
-                  <span>
-                    <strong>{notification.title}</strong>
-                    <small>{formatDate(notification.createdAt)}</small>
-                  </span>
-                  <p>{notification.message}</p>
-                </button>
-              ))
-            )}
+            {loading ? <LoadingSkeleton rows={4} aria-label="Po ngarkohen njoftimet" /> : notifications.length === 0 ? (
+              <div className="notification-empty"><Inbox size={21} /><strong>Nuk ka njoftime</strong><p>Njoftimet e reja operative do të shfaqen këtu.</p></div>
+            ) : notifications.map((notification) => (
+              <button key={notification.id} type="button" className={notification.readAt ? "" : "is-unread"}
+                onClick={() => markRead(notification)}>
+                <span><strong>{notification.title}</strong><small>{formatDate(notification.createdAt)}</small></span>
+                <p>{notification.message}</p>
+              </button>
+            ))}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
