@@ -23,6 +23,9 @@ import {
 } from "recharts";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
+import { StatusBadge } from "@/components/ui/StatusBadge.jsx";
 
 const scenarioLabels = {
   temperature_rise: "Rritje e temperaturës",
@@ -42,6 +45,7 @@ const statusLabels = {
   stopped: "I ndalur",
   failed: "Dështoi",
 };
+const statusTones = { queued: "info", running: "success", paused: "warning", completed: "success", stopped: "neutral", failed: "danger" };
 const eventLabels = {
   started: "Simulimi u nis",
   paused: "Simulimi u pezullua",
@@ -204,23 +208,18 @@ export function SimulationsPage() {
 
   return (
     <section className="simulations-page">
-      <div className="laboratories-heading">
-        <div className="workspace-page-heading">
-          <p className="eyebrow">Eksperimente të kontrolluara</p>
-          <h1>Simulimet</h1>
-          <p>
-            Parashikoni ndikimin, ekzekutoni skenarin dhe ruani evidencën pa
-            ndryshuar baseline-in.
-          </p>
-        </div>
-        <Button
+      <PageHeader eyebrow="Eksperimente të kontrolluara" title="Simulimet"
+        description="Parashikoni ndikimin, ekzekutoni skenarin dhe ruani evidencën pa ndryshuar baseline-in."
+        meta={run && <StatusBadge tone={statusTones[run.status]}>{statusLabels[run.status] ?? run.status}</StatusBadge>}
+        actions={<Button
           variant="outline"
+          size="sm"
           onClick={loadWorkspace}
           disabled={loading || !laboratoryId}
         >
-          <RefreshCw size={16} /> Rifresko
-        </Button>
-      </div>
+          <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko
+        </Button>}
+      />
       <div className="simulation-lab-picker">
         <label>
           <span>Laboratori</span>
@@ -235,23 +234,15 @@ export function SimulationsPage() {
             ))}
           </select>
         </label>
-        {run && (
-          <div className={`simulation-status ${run.status}`}>
-            <span>Status i fundit</span>
-            <strong>{statusLabels[run.status] ?? run.status}</strong>
-            <small>{run.scenarioName ?? "Pa skenar"}</small>
-          </div>
-        )}
+        {run && <div className={`simulation-status ${run.status}`}><span>Skenari i fundit</span><strong>{run.scenarioName ?? "Pa skenar"}</strong></div>}
       </div>
       {message.text && (
-        <p className={`form-message ${message.type}`} role="status">
+        <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>
           {message.text}
         </p>
       )}
       {loading && !scenarios.length ? (
-        <div className="maintenance-loading">
-          Po ngarkohet hapësira e simulimit…
-        </div>
+        <LoadingSkeleton rows={8} aria-label="Po ngarkohet hapësira e simulimit" />
       ) : !laboratoryId ? (
         <Empty
           title="Nuk ka laborator aktiv"

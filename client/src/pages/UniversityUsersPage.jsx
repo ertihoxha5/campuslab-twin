@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { EmptyState } from "@/components/ui/EmptyState.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
+import { StatusBadge } from "@/components/ui/StatusBadge.jsx";
 import { useAccessibleDialog } from "@/hooks/useAccessibleDialog.js";
 
 const statusLabels = {
@@ -20,6 +24,7 @@ const statusLabels = {
   inactive: "Joaktiv",
   invited: "I ftuar",
 };
+const statusTones = { active: "success", inactive: "neutral", invited: "info" };
 const roleLabels = {
   university_admin: "Administrator universiteti",
   lab_manager: "Menaxher laboratori",
@@ -164,25 +169,23 @@ export function UniversityUsersPage() {
 
   return (
     <section className="university-users-page">
-      <div className="laboratories-heading">
-        <div className="workspace-page-heading">
-          <p className="eyebrow">Ekipi i universitetit</p>
-          <h1>Përdoruesit</h1>
-          <p>Menaxhoni profilet, rolet dhe qasjen në laboratorë.</p>
-        </div>
-        <div className="laboratories-heading-actions">
+      <PageHeader eyebrow="Ekipi i universitetit" title="Përdoruesit"
+        description="Menaxhoni profilet, rolet dhe qasjen në laboratorë."
+        meta={<StatusBadge tone="info" dot={false}>{users.length} përdorues</StatusBadge>}
+        actions={<>
           <Button
             variant="outline"
+            size="sm"
             onClick={() => loadUsers()}
             disabled={loading}
           >
-            <RefreshCw size={16} /> Rifresko
+            <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko
           </Button>
-          <Button onClick={openCreate}>
+          <Button size="sm" onClick={openCreate}>
             <Plus size={17} /> Përdorues i ri
           </Button>
-        </div>
-      </div>
+        </>}
+      />
       <div className="university-user-filters">
         <form onSubmit={submitSearch}>
           <Search size={17} />
@@ -208,12 +211,12 @@ export function UniversityUsersPage() {
         </label>
       </div>
       {message.text && (
-        <p className={`form-message ${message.type}`} role="status">
+        <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>
           {message.text}
         </p>
       )}
       {loading ? (
-        <div className="maintenance-loading">Po ngarkohen përdoruesit…</div>
+        <LoadingSkeleton rows={7} aria-label="Po ngarkohen përdoruesit" />
       ) : users.length ? (
         <div className="university-users-list">
           {users.map((user) => (
@@ -246,9 +249,7 @@ export function UniversityUsersPage() {
                     "Pa caktim"}
                 </strong>
               </div>
-              <span className={`status-badge status-${user.status}`}>
-                {statusLabels[user.status]}
-              </span>
+              <StatusBadge tone={statusTones[user.status]}>{statusLabels[user.status] ?? user.status}</StatusBadge>
               <div className="university-user-actions">
                 <Button
                   size="sm"
@@ -282,15 +283,9 @@ export function UniversityUsersPage() {
           ))}
         </div>
       ) : (
-        <div className="workspace-onboarding">
-          <span>
-            <ShieldCheck size={25} />
-          </span>
-          <div>
-            <h2>Nuk u gjet asnjë përdorues</h2>
-            <p>Ndryshoni filtrat ose krijoni përdoruesin e parë.</p>
-          </div>
-        </div>
+        <EmptyState icon={ShieldCheck} title="Nuk u gjet asnjë përdorues"
+          description="Ndryshoni filtrat ose krijoni përdoruesin e parë të ekipit."
+          action={!submittedSearch && !status ? <Button size="sm" onClick={openCreate}><Plus size={15} /> Përdorues i ri</Button> : null} />
       )}
       {showForm && (
         <div className="workspace-modal-backdrop" role="presentation">

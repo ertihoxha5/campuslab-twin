@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 
 const emptyProfile = {
@@ -189,18 +191,15 @@ export function UniversitySettingsPage() {
 
   return (
     <section className="university-settings-page">
-      <div className="workspace-page-heading">
-        <p className="eyebrow">Identiteti institucional</p>
-        <h1>Cilësimet e universitetit</h1>
-        <p>Përditësoni profilin dhe branding-un që shfaqet në workspace.</p>
-      </div>
+      <PageHeader eyebrow="Identiteti institucional" title="Cilësimet e universitetit"
+        description="Përditësoni profilin, preferencat operative dhe identitetin që shfaqet në workspace." />
       {message.text && (
-        <p className={`form-message ${message.type}`} role="status">
+        <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>
           {message.text}
         </p>
       )}
       {loading ? (
-        <div className="maintenance-loading">Po ngarkohet profili…</div>
+        <LoadingSkeleton rows={8} aria-label="Po ngarkohet profili i universitetit" />
       ) : (
         <div className="university-settings-layout">
           <aside className="university-branding-card">

@@ -3,6 +3,8 @@ import { KeyRound, Save, ShieldCheck, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api/client.js";
 import { Button } from "@/components/ui/button.jsx";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
+import { PageHeader } from "@/components/ui/PageHeader.jsx";
 import { useAuthStore } from "@/stores/auth-store.js";
 
 const emptyAccount = { fullName: "", email: "", phone: "", jobTitle: "" };
@@ -84,18 +86,15 @@ export function AccountSettingsPage() {
 
   return (
     <section className="account-settings-page">
-      <div className="workspace-page-heading">
-        <p className="eyebrow">Llogaria ime</p>
-        <h1>Profili dhe siguria</h1>
-        <p>Menaxhoni të dhënat personale dhe kredencialet e hyrjes.</p>
-      </div>
+      <PageHeader eyebrow="Llogaria ime" title="Profili dhe siguria"
+        description="Menaxhoni të dhënat personale dhe kredencialet e hyrjes." />
       {message.text && (
-        <p className={`form-message ${message.type}`} role="status">
+        <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>
           {message.text}
         </p>
       )}
       {loading ? (
-        <div className="maintenance-loading">Po ngarkohet llogaria…</div>
+        <LoadingSkeleton rows={7} aria-label="Po ngarkohet llogaria" />
       ) : (
         <div className="account-settings-grid">
           <form className="account-settings-card" onSubmit={saveProfile}>
