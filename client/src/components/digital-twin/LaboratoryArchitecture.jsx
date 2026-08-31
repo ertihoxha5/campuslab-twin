@@ -38,8 +38,20 @@ function Floor({zone,visibleZones,alarm}) {
   const [width,depth]=zone.size;
   return <group position={[zone.center[0],0,zone.center[1]]}><mesh receiveShadow position={[0,.012,0]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[Math.max(.1,width-.08),Math.max(.1,depth-.08)]}/><meshPhysicalMaterial color="#AEB4B5" roughness={.46} clearcoat={.13}/></mesh><mesh position={[0,.018,0]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[Math.max(.1,width-.18),Math.max(.1,depth-.18)]}/><meshStandardMaterial color={alarm?TWIN_COLORS.danger:zone.color} transparent opacity={alarm?.2:(visibleZones?.07:.012)} roughness={.82}/></mesh></group>;
 }
+function Door({axis,fixed,middle,height=2.15}) {
+  const rotation=axis==="x"?0:Math.PI/2;
+  const position=axis==="x"?[middle,height/2,fixed]:[fixed,height/2,middle];
+  return <group position={position} rotation={[0,rotation,0]}><mesh castShadow position={[-.43,0,.08]} rotation={[0,-.42,0]}><boxGeometry args={[.86,height,.075]}/><meshStandardMaterial color="#7A583D" roughness={.6}/></mesh><mesh position={[-.74,.05,.02]}><sphereGeometry args={[.035,12,8]}/><meshStandardMaterial color="#C8A85B" metalness={.8} roughness={.25}/></mesh></group>;
+}
+function WallWithDoor({edge,height,color}) {
+  const length=edge.end-edge.start;const opening=Math.min(.95,Math.max(.72,length*.25));const middle=(edge.start+edge.end)/2;const segment=(length-opening)/2;
+  if(segment<.35) { const position=edge.axis==="x"?[middle,height/2,edge.fixed]:[edge.fixed,height/2,middle];const size=edge.axis==="x"?[length,height,WALL]:[WALL,height,length];return <Wall position={position} size={size} color={color}/>; }
+  const first=(edge.start+middle-opening/2)/2;const second=(middle+opening/2+edge.end)/2;
+  const firstPosition=edge.axis==="x"?[first,height/2,edge.fixed]:[edge.fixed,height/2,first];const secondPosition=edge.axis==="x"?[second,height/2,edge.fixed]:[edge.fixed,height/2,second];const size=edge.axis==="x"?[segment,height,WALL]:[WALL,height,segment];
+  return <group><Wall position={firstPosition} size={size} color={color}/><Wall position={secondPosition} size={size} color={color}/><Wall position={edge.axis==="x"?[middle,height-.18,edge.fixed]:[edge.fixed,height-.18,middle]} size={edge.axis==="x"?[opening,.36,WALL]:[WALL,.36,opening]} color={color}/><Door axis={edge.axis} fixed={edge.fixed} middle={middle}/></group>;
+}
 function Partitions({plan}) {
-  return <group>{plan.edges.map((edge)=>{const length=edge.end-edge.start;const middle=(edge.start+edge.end)/2;const position=edge.axis==="x"?[middle,plan.height/2,edge.fixed]:[edge.fixed,plan.height/2,middle];const size=edge.axis==="x"?[length,plan.height,WALL]:[WALL,plan.height,length];return <Wall key={edge.key} position={position} size={size} color="#CFD1CF"/>;})}</group>;
+  return <group>{plan.edges.map((edge)=><WallWithDoor key={edge.key} edge={edge} height={plan.height} color="#CFD1CF"/>)}</group>;
 }
 function Envelope({plan,walkMode}) {
   const frontHeight=walkMode?plan.height:.34;

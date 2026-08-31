@@ -38,6 +38,7 @@ export function DigitalTwinPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(true);
   const [ceilingMode, setCeilingMode] = useState("cutaway");
+  const [greenMode, setGreenMode] = useState(false);
   const [transformMode, setTransformMode] = useState("translate");
 
   const operations = useTwinOperations({ laboratoryId, alerts, setAlerts });
@@ -113,14 +114,14 @@ export function DigitalTwinPage() {
     <div className="twin-workspace">
       <TwinTelemetryHeader telemetry={telemetry}/>
       <div className={`twin-viewer ${selection ? "has-selection" : ""}`}>
-        <TwinViewerToolbar cameraMode={cameraMode} onCameraMode={(mode) => { if (mode !== "focus" || selection) setCameraMode(mode); }} onReset={resetCamera} layers={layers} onToggle={toggleLayer} ceilingMode={ceilingMode} onCeilingMode={() => setCeilingMode((current) => current === "cutaway" ? "transparent" : current === "transparent" ? "closed" : "cutaway")}/>
+        <TwinViewerToolbar cameraMode={cameraMode} onCameraMode={(mode) => { if (mode !== "focus" || selection) setCameraMode(mode); }} onReset={resetCamera} layers={layers} onToggle={toggleLayer} ceilingMode={ceilingMode} onCeilingMode={() => setCeilingMode((current) => current === "cutaway" ? "transparent" : current === "transparent" ? "closed" : "cutaway")} greenMode={greenMode} onGreenMode={() => { setGreenMode((current) => !current); setLayers((current) => ({...current,sensors:true,cameras:true,sensorLabels:true})); }}/>
         <TwinOperationsPanel operations={operations} openTab={operationsTab} onOpen={openOperations} onClose={() => setOperationsTab(null)}/>
         <button type="button" className={`twin-dashboard-toggle ${dashboardOpen ? "active" : ""}`} onClick={() => { setOperationsTab(null); setSelectionKey(null); setEditorOpen(false); setDashboardOpen((current) => !current); }}><LayoutDashboard size={16}/><span>Dashboard</span></button>
         {canPlace && <button type="button" className={`twin-editor-toggle ${editorOpen ? "active" : ""}`} onClick={() => { setOperationsTab(null); setSelectionKey(null); setDashboardOpen(false); setEditorOpen((current) => !current); }}><FolderTree size={16}/><span>Objektet</span></button>}
         {canPlace && !placement.open && <button type="button" className="twin-add-asset" onClick={() => placement.begin()}>+ Shto pajisje</button>}
         {editorOpen && <SceneEditorPanel operations={operations} selection={selection} onSelect={selectObject} onAdd={placement.begin} canManage={canPlace} transformMode={transformMode} onTransformMode={setTransformMode} onReset={resetSelected} onDuplicate={duplicateSelected} onDelete={deleteSelected}/>}
         {dashboardOpen && <TwinLaboratoryDashboard laboratory={activeLaboratory} zones={scene.zones} assets={scene.assets} sensors={scene.sensors} onClose={() => setDashboardOpen(false)} onSelect={selectObject}/>}
-        <DigitalTwinCanvas zones={scene.zones} assets={scene.assets} sensors={scene.sensors} placements={operations.placements} placement={placement} selection={selection} onSelect={selectObject} onTransformEnd={(item, changes) => operations.updatePlacement(item, changes)} transformMode={selection?.kind === "placement" && canPlace ? transformMode : null} layers={layers} cameraMode={cameraMode} resetNonce={resetNonce} ceilingMode={ceilingMode}/>
+        <DigitalTwinCanvas zones={scene.zones} assets={scene.assets} sensors={scene.sensors} placements={operations.placements} placement={placement} selection={selection} onSelect={selectObject} onTransformEnd={(item, changes) => operations.updatePlacement(item, changes)} transformMode={selection?.kind === "placement" && canPlace ? transformMode : null} layers={layers} cameraMode={cameraMode} resetNonce={resetNonce} ceilingMode={ceilingMode} greenMode={greenMode}/>
         <AssetPlacementPanel placement={placement}/>
         <TwinSelectionPanel selection={selection} history={selection ? twin.histories[selection.item.id] ?? [] : []} onClose={() => setSelectionKey(null)} onFocus={() => setCameraMode("focus")}/>
         {cameraMode === "walk" && <div className="twin-walk-help">Kliko skenën · W A S D për lëvizje · Esc për dalje</div>}

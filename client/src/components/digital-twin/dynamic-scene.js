@@ -3,6 +3,7 @@ const zoneColors = ["#6D4FA3", "#6E7A4F", "#3E8794", "#8B7047", "#A04B4B", "#5F6
 const assetTypeAliases = [
   [/(robot|krahu)/i, "robot"],
   [/(network.?rack|server|rack)/i, "network-rack"],
+  [/(rrjet|network|server)/i, "network-rack"],
   [/(storage.?rack|raft|shelf)/i, "storage-rack"],
   [/(workstation|stacion|computer|kompjuter)/i, "workstation"],
   [/(display|ekran|monitor)/i, "display"],
@@ -17,7 +18,8 @@ export function buildDynamicScene({ zones = [], equipment = [], sensors = [], re
   const activeAlerts = alerts.filter((alert) => !["resolved", "closed"].includes(alert.status));
   const assets = equipment.map((item, index) => {
     const zone = zoneById.get(String(item.zoneId)) ?? normalizedZones[index % Math.max(normalizedZones.length, 1)];
-    const position = positionInZone(zone, index, equipment.filter((candidate) => String(candidate.zoneId) === String(item.zoneId)).findIndex((candidate) => String(candidate.id) === String(item.id)));
+    const type = normalizeAssetType(`${item.type ?? ""} ${item.name ?? ""} ${item.code ?? ""}`);
+    const position = type === "robot" && zone ? [zone.center[0], 0, zone.center[1]] : positionInZone(zone, index, equipment.filter((candidate) => String(candidate.zoneId) === String(item.zoneId)).findIndex((candidate) => String(candidate.id) === String(item.id)));
     const alert = activeAlerts.find((candidate) => String(candidate.equipmentId) === String(item.id));
     const energyReading = energy[String(item.id)];
     return {
@@ -28,7 +30,7 @@ export function buildDynamicScene({ zones = [], equipment = [], sensors = [], re
       code: item.code,
       zoneId: zone?.id ?? null,
       zoneName: zone?.name ?? "Pa zonë",
-      type: normalizeAssetType(item.type ?? item.name),
+      type,
       position,
       energyWatts: Number(energyReading?.powerWatts ?? item.energyRatingWatts ?? 0),
       temperature: null,
@@ -98,9 +100,15 @@ function positionInZone(zone, globalIndex, localIndex) {
   const column = index % columns;
   const row = Math.floor(index / columns);
   const spacingX = Math.min(1.8, zone.size[0] / Math.max(columns, 1));
+  const marginX = Math.min(.75, zone.size[0] * .22);
+  const marginZ = Math.min(.75, zone.size[1] * .22);
+  const minX = zone.center[0] - zone.size[0] / 2 + marginX;
+  const maxX = zone.center[0] + zone.size[0] / 2 - marginX;
+  const minZ = zone.center[1] - zone.size[1] / 2 + marginZ;
+  const maxZ = zone.center[1] + zone.size[1] / 2 - marginZ;
   const x = zone.center[0] - zone.size[0] / 2 + .9 + column * spacingX;
   const z = zone.center[1] - zone.size[1] / 2 + 1 + row * 1.7;
-  return [Number.isFinite(x) ? x : globalIndex, 0, Math.min(z, zone.center[1] + zone.size[1] / 2 - .8)];
+  return [Number.isFinite(x) ? Math.max(minX, Math.min(maxX, x)) : globalIndex, 0, Math.max(minZ, Math.min(maxZ, z))];
 }
 
 function sensorPosition(zone, index) {
