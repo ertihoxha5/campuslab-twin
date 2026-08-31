@@ -1,5 +1,8 @@
 export async function query(executor, sql, parameters = []) {
-  const [rows] = await executor.execute(sql, parameters);
+  const normalizedParameters = parameters.map((value) =>
+    value === undefined ? null : value,
+  );
+  const [rows] = await executor.execute(sql, normalizedParameters);
   return rows;
 }
 

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Box, FolderTree } from "lucide-react";
+import { AlertTriangle, Box, FolderTree, LayoutDashboard } from "lucide-react";
 import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { AssetPlacementPanel } from "@/components/digital-twin/AssetPlacementPanel.jsx";
 import { DigitalTwinCanvas } from "@/components/digital-twin/DigitalTwinCanvas.jsx";
+import { buildDynamicScene } from "@/components/digital-twin/dynamic-scene.js";
 import { TwinOperationsPanel } from "@/components/digital-twin/TwinOperationsPanel.jsx";
+import { TwinLaboratoryDashboard } from "@/components/digital-twin/TwinLaboratoryDashboard.jsx";
 import { SECURITY_CAMERAS } from "@/components/digital-twin/security-camera-records.js";
 import { SceneEditorPanel } from "@/components/digital-twin/SceneEditorPanel.jsx";
 import { TwinSelectionPanel } from "@/components/digital-twin/TwinSelectionPanel.jsx";
@@ -22,6 +24,7 @@ export function DigitalTwinPage() {
   const [laboratoryId, setLaboratoryId] = useState("");
   const [apiSensors, setApiSensors] = useState([]);
   const [apiEquipment, setApiEquipment] = useState([]);
+  const [laboratoryZones, setLaboratoryZones] = useState([]);
   const [apiReadings, setApiReadings] = useState({});
   const [apiEnergy, setApiEnergy] = useState({});
   const [alerts, setAlerts] = useState([]);
@@ -33,6 +36,7 @@ export function DigitalTwinPage() {
   const [error, setError] = useState("");
   const [operationsTab, setOperationsTab] = useState(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [dashboardOpen, setDashboardOpen] = useState(true);
   const [ceilingMode, setCeilingMode] = useState("cutaway");
   const [transformMode, setTransformMode] = useState("translate");
 
@@ -53,17 +57,19 @@ export function DigitalTwinPage() {
   useEffect(() => {
     if (!laboratoryId) return undefined;
     let active = true;
-    setError(""); setSelectionKey(null); setCameraMode("overview"); setOperationsTab(null); setEditorOpen(false);
+    setError(""); setSelectionKey(null); setCameraMode("overview"); setOperationsTab(null); setEditorOpen(false); setDashboardOpen(true);
     Promise.all([
       api.get(`/api/sensors?laboratoryId=${laboratoryId}&page=1&pageSize=100&sort=name&direction=asc`),
       api.get(`/api/equipment?laboratoryId=${laboratoryId}&page=1&pageSize=100&sort=name&direction=asc`),
       api.get(`/api/dashboard/summary?laboratoryId=${laboratoryId}&hours=24`),
       api.get(`/api/alerts?laboratoryId=${laboratoryId}&page=1&pageSize=100`),
-    ]).then(([sensorResponse, equipmentResponse, dashboardResponse, alertResponse]) => {
+      api.get(`/api/laboratories/${laboratoryId}/zones`),
+    ]).then(([sensorResponse, equipmentResponse, dashboardResponse, alertResponse, zonesResponse]) => {
       if (!active) return;
       setApiSensors(sensorResponse.data.sensors ?? []);
       setApiEquipment(equipmentResponse.data.equipment ?? []);
       setAlerts(alertResponse.data.alerts ?? []);
+      setLaboratoryZones(zonesResponse.data.zones ?? []);
       setApiReadings(Object.fromEntries((dashboardResponse.data.summary.latestSensorReadings ?? []).map((reading) => [String(reading.sensorId), reading])));
     }).catch((requestError) => { if (active) setError(requestError.message); });
     const disconnect = connectMonitoringRealtime({
@@ -80,16 +86,18 @@ export function DigitalTwinPage() {
   }, [laboratoryId, onRealtime]);
 
   const twin = useTwinSimulation({ apiEquipment, apiSensors, apiReadings, apiEnergy, alerts });
+  const scene = useMemo(() => buildDynamicScene({ zones: laboratoryZones, equipment: apiEquipment, sensors: apiSensors, readings: apiReadings, energy: apiEnergy, alerts }), [alerts, apiEnergy, apiEquipment, apiReadings, apiSensors, laboratoryZones]);
+  const activeLaboratory = laboratories.find((laboratory) => String(laboratory.id) === String(laboratoryId));
   const selection = useMemo(() => {
     if (!selectionKey) return null;
-    const collection = selectionKey.kind === "sensor" ? twin.sensors : selectionKey.kind === "camera" ? SECURITY_CAMERAS : selectionKey.kind === "placement" ? operations.placements : twin.assets;
+    const collection = selectionKey.kind === "sensor" ? scene.sensors : selectionKey.kind === "camera" ? SECURITY_CAMERAS : selectionKey.kind === "placement" ? operations.placements : scene.assets;
     const item = collection.find((candidate) => String(candidate.id) === String(selectionKey.id));
     return item ? { kind: selectionKey.kind, item: { ...item, type: item.type ?? item.assetType, energyWatts: item.energyWatts ?? 0, maintenance: item.maintenance ?? item.status, lastUpdate: item.lastUpdate ?? item.updatedAt ?? new Date().toISOString() } } : null;
-  }, [operations.placements, selectionKey, twin.assets, twin.sensors]);
-  const telemetry = useMemo(() => ({ now: twin.now, occupancy: twin.occupancy, temperature: twin.sensors.find((sensor) => sensor.type === "temperature")?.value ?? 22.4, humidity: twin.sensors.find((sensor) => sensor.type === "humidity")?.value ?? 48, energyWatts: twin.assets.reduce((sum, asset) => sum + asset.energyWatts, 0), alerts: alerts.filter((alert) => !["resolved", "closed"].includes(alert.status)).length }), [alerts, twin]);
+  }, [operations.placements, scene.assets, scene.sensors, selectionKey]);
+  const telemetry = useMemo(() => ({ now: twin.now, occupancy: scene.sensors.find((sensor) => sensor.type === "occupancy")?.value ?? twin.occupancy, temperature: scene.sensors.find((sensor) => sensor.type === "temperature")?.value ?? 22.4, humidity: scene.sensors.find((sensor) => sensor.type === "humidity")?.value ?? 48, energyWatts: scene.assets.reduce((sum, asset) => sum + asset.energyWatts, 0), alerts: alerts.filter((alert) => !["resolved", "closed"].includes(alert.status)).length }), [alerts, scene.assets, scene.sensors, twin.now, twin.occupancy]);
 
-  function selectObject(next) { if (!placement.open) { setOperationsTab(null); setEditorOpen(false); setSelectionKey(next ? { kind: next.kind, id: next.item.id } : null); } }
-  function openOperations(tab) { setSelectionKey(null); setEditorOpen(false); setOperationsTab(tab); }
+  function selectObject(next) { if (!placement.open) { setOperationsTab(null); setEditorOpen(false); setDashboardOpen(false); setSelectionKey(next ? { kind: next.kind, id: next.item.id } : null); } }
+  function openOperations(tab) { setSelectionKey(null); setEditorOpen(false); setDashboardOpen(false); setOperationsTab(tab); }
   function toggleLayer(name) { setLayers((current) => ({ ...current, [name]: !current[name] })); }
   function resetCamera() { setCameraMode("overview"); setResetNonce((value) => value + 1); }
   async function resetSelected() { if (selection?.kind === "placement") await operations.updatePlacement(selection.item, { rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }); }
@@ -107,10 +115,12 @@ export function DigitalTwinPage() {
       <div className={`twin-viewer ${selection ? "has-selection" : ""}`}>
         <TwinViewerToolbar cameraMode={cameraMode} onCameraMode={(mode) => { if (mode !== "focus" || selection) setCameraMode(mode); }} onReset={resetCamera} layers={layers} onToggle={toggleLayer} ceilingMode={ceilingMode} onCeilingMode={() => setCeilingMode((current) => current === "cutaway" ? "transparent" : current === "transparent" ? "closed" : "cutaway")}/>
         <TwinOperationsPanel operations={operations} openTab={operationsTab} onOpen={openOperations} onClose={() => setOperationsTab(null)}/>
-        {canPlace && <button type="button" className={`twin-editor-toggle ${editorOpen ? "active" : ""}`} onClick={() => { setOperationsTab(null); setSelectionKey(null); setEditorOpen((current) => !current); }}><FolderTree size={16}/><span>Objektet</span></button>}
+        <button type="button" className={`twin-dashboard-toggle ${dashboardOpen ? "active" : ""}`} onClick={() => { setOperationsTab(null); setSelectionKey(null); setEditorOpen(false); setDashboardOpen((current) => !current); }}><LayoutDashboard size={16}/><span>Dashboard</span></button>
+        {canPlace && <button type="button" className={`twin-editor-toggle ${editorOpen ? "active" : ""}`} onClick={() => { setOperationsTab(null); setSelectionKey(null); setDashboardOpen(false); setEditorOpen((current) => !current); }}><FolderTree size={16}/><span>Objektet</span></button>}
         {canPlace && !placement.open && <button type="button" className="twin-add-asset" onClick={() => placement.begin()}>+ Shto pajisje</button>}
         {editorOpen && <SceneEditorPanel operations={operations} selection={selection} onSelect={selectObject} onAdd={placement.begin} canManage={canPlace} transformMode={transformMode} onTransformMode={setTransformMode} onReset={resetSelected} onDuplicate={duplicateSelected} onDelete={deleteSelected}/>}
-        <DigitalTwinCanvas assets={twin.assets} sensors={twin.sensors} placements={operations.placements} placement={placement} selection={selection} onSelect={selectObject} onTransformEnd={(item, changes) => operations.updatePlacement(item, changes)} transformMode={selection?.kind === "placement" && canPlace ? transformMode : null} layers={layers} cameraMode={cameraMode} resetNonce={resetNonce} ceilingMode={ceilingMode}/>
+        {dashboardOpen && <TwinLaboratoryDashboard laboratory={activeLaboratory} zones={scene.zones} assets={scene.assets} sensors={scene.sensors} onClose={() => setDashboardOpen(false)} onSelect={selectObject}/>}
+        <DigitalTwinCanvas zones={scene.zones} assets={scene.assets} sensors={scene.sensors} placements={operations.placements} placement={placement} selection={selection} onSelect={selectObject} onTransformEnd={(item, changes) => operations.updatePlacement(item, changes)} transformMode={selection?.kind === "placement" && canPlace ? transformMode : null} layers={layers} cameraMode={cameraMode} resetNonce={resetNonce} ceilingMode={ceilingMode}/>
         <AssetPlacementPanel placement={placement}/>
         <TwinSelectionPanel selection={selection} history={selection ? twin.histories[selection.item.id] ?? [] : []} onClose={() => setSelectionKey(null)} onFocus={() => setCameraMode("focus")}/>
         {cameraMode === "walk" && <div className="twin-walk-help">Kliko skenën · W A S D për lëvizje · Esc për dalje</div>}

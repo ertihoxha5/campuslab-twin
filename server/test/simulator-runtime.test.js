@@ -28,8 +28,10 @@ const runtime = {
 test("coordinator persists simulated sensor and per-equipment energy readings", async () => {
   const persisted = [];
   const published = [];
+  const loadedReferences = [];
   const repository = {
-    async loadRuntime() {
+    async loadRuntime(reference) {
+      loadedReferences.push(reference);
       return structuredClone(runtime);
     },
     async persistStep(step) {
@@ -57,6 +59,11 @@ test("coordinator persists simulated sensor and per-equipment energy readings", 
   });
 
   assert.equal(saved, true);
+  assert.deepEqual(loadedReferences.at(-1), {
+    universityId: "7",
+    laboratoryId: "15",
+    runId: "51",
+  });
   assert.equal(persisted.length, 1);
   assert.equal(persisted[0].readings.length, 2);
   assert.ok(

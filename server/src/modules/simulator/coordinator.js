@@ -26,7 +26,11 @@ export function createSimulationCoordinator({
       1,
       Number(runtime.input.samplingIntervalSeconds) || 60,
     );
-    const process = { reference: runtime, executing: false, timer: null };
+    const process = {
+      reference: runtimeReference(runtime),
+      executing: false,
+      timer: null,
+    };
     process.timer = setIntervalFunction(() => {
       void execute(process);
     }, intervalSeconds * millisecondsPerSecond);
@@ -127,7 +131,11 @@ export function createSimulationCoordinator({
     async runOnce(reference) {
       const runtime = await repository.loadRuntime(reference);
       if (!runtime || runtime.status !== "running") return false;
-      return execute({ reference: runtime, executing: false, timer: null });
+      return execute({
+        reference: runtimeReference(runtime),
+        executing: false,
+        timer: null,
+      });
     },
     async restore() {
       const runs = await repository.recoverableRuns();
@@ -140,6 +148,14 @@ export function createSimulationCoordinator({
     activeCount() {
       return processes.size;
     },
+  };
+}
+
+function runtimeReference(runtime) {
+  return {
+    universityId: runtime.universityId,
+    laboratoryId: runtime.laboratoryId,
+    runId: runtime.id,
   };
 }
 
