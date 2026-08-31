@@ -1,9 +1,11 @@
 /* eslint-disable react/no-unknown-property */
-import { RoundedBox } from "@react-three/drei";
+import { Clone, RoundedBox, useGLTF } from "@react-three/drei";
 import { useMemo,useState } from "react";
+import { Box3, Vector3 } from "three";
 import { TWIN_COLORS } from "./twin-config.js";
 
 const WALL=.18;
+const DOOR_MODEL="/models/digital-twin/door-single.glb";
 const close=(a,b)=>Math.abs(a-b)<.04;
 
 function Wall({position,size,color="#D7D8D5"}) {
@@ -43,9 +45,14 @@ function Floor({zone,visibleZones,alarm,selected,onSelect}) {
   return <group position={[zone.center[0],0,zone.center[1]]}><mesh receiveShadow position={[0,.012,0]} rotation={[-Math.PI/2,0,0]} onClick={(event)=>{event.stopPropagation();onSelect?.(zone);}} onPointerEnter={()=>setHovered(true)} onPointerLeave={()=>setHovered(false)}><planeGeometry args={[Math.max(.1,width-.08),Math.max(.1,depth-.08)]}/><meshPhysicalMaterial color="#AEB4B5" roughness={.46} clearcoat={.13}/></mesh><mesh position={[0,.018,0]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[Math.max(.1,width-.18),Math.max(.1,depth-.18)]}/><meshStandardMaterial color={alarm?TWIN_COLORS.danger:zone.color} transparent opacity={alarm?.2:(selected?.18:hovered?.12:(visibleZones?.07:.012))} roughness={.82}/></mesh></group>;
 }
 function Door({axis,fixed,middle,height=2.15}) {
+  const {scene}=useGLTF(DOOR_MODEL);
+  const fit=useMemo(()=>{
+    const bounds=new Box3().setFromObject(scene);const size=bounds.getSize(new Vector3());const center=bounds.getCenter(new Vector3());
+    return {scale:Math.min(.9/Math.max(size.x,.001),height/Math.max(size.y,.001)),offset:[-center.x,-bounds.min.y,-center.z]};
+  },[height,scene]);
   const rotation=axis==="x"?0:Math.PI/2;
-  const position=axis==="x"?[middle,height/2,fixed]:[fixed,height/2,middle];
-  return <group position={position} rotation={[0,rotation,0]}><mesh castShadow position={[-.43,0,.08]} rotation={[0,-.42,0]}><boxGeometry args={[.86,height,.075]}/><meshStandardMaterial color="#7A583D" roughness={.6}/></mesh><mesh position={[-.74,.05,.02]}><sphereGeometry args={[.035,12,8]}/><meshStandardMaterial color="#C8A85B" metalness={.8} roughness={.25}/></mesh></group>;
+  const position=axis==="x"?[middle,0,fixed]:[fixed,0,middle];
+  return <group position={position} rotation={[0,rotation,0]} scale={fit.scale}><group position={fit.offset}><Clone object={scene} castShadow receiveShadow/></group></group>;
 }
 function WallWithDoor({edge,height,color}) {
   const length=edge.end-edge.start;const opening=Math.min(.95,Math.max(.72,length*.25));const middle=(edge.start+edge.end)/2;const segment=(length-opening)/2;
@@ -73,3 +80,4 @@ export function LaboratoryArchitecture({zones=[],visibleZones=true,alarmZoneId,c
   if(!plan)return null;
   return <group><BuildingSlab plan={plan}/>{zones.map((zone)=><Floor key={zone.id} zone={zone} visibleZones={visibleZones} alarm={alarmZoneId===zone.id} selected={selectedZoneId===zone.id} onSelect={onZoneSelect}/>)}<Envelope plan={plan} walkMode={walkMode}/><Partitions plan={plan}/><Utilities plan={plan}/><Lighting zones={zones} plan={plan}/>{ceilingMode!=="cutaway"&&<mesh receiveShadow position={[plan.center[0],plan.height,plan.center[1]]}><boxGeometry args={[plan.width+.18,.1,plan.depth+.18]}/><meshPhysicalMaterial color="#E3E3DF" transparent={ceilingMode==="transparent"} opacity={ceilingMode==="transparent"?.16:1}/></mesh>}</group>;
 }
+useGLTF.preload(DOOR_MODEL);

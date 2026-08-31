@@ -46,7 +46,7 @@ function Scene({ zones = [], assets, sensors, cameras=[], placements = [], place
     {placement&&<PlacementScene placement={placement}/>}
     <TwinDataFlows sensors={sensors} assets={assets} visible={layers.dataFlow} />
     <ZoneLabels zones={zones} visible={layers.zones} selectedId={selection?.kind==="zone"?selection.item.id:null}/>
-    <ContactShadows position={[0, .025, 0]} opacity={.34} scale={23} blur={2.1} far={7} resolution={512} />
+    <ContactShadows position={[0, .025, 0]} opacity={.3} scale={23} blur={2.2} far={6} resolution={256} frames={1} />
     <TwinCameraController mode={cameraMode} focusPosition={selection?.item?.position} resetNonce={resetNonce} zones={zones}/>
   </>;
 }
@@ -55,5 +55,5 @@ function Fallback() { return <div className="twin-canvas-fallback" role="alert">
 
 export function DigitalTwinCanvas(props) {
   if (!supportsWebGL()) return <Fallback />;
-  return <TwinBoundary fallback={<Fallback />}><div className="twin-canvas-shell" aria-label="Laboratori operacional 3D"><Canvas shadows dpr={[1, 1.5]} frameloop="always" performance={{ min: .55, debounce: 250 }} gl={{ antialias: true, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, outputColorSpace: SRGBColorSpace }} onPointerMissed={() => props.onSelect(null)}><Scene {...props} /></Canvas></div></TwinBoundary>;
+  return <TwinBoundary fallback={<Fallback />}><div className="twin-canvas-shell" aria-label="Laboratori operacional 3D"><Canvas shadows dpr={[1, 1.25]} frameloop="demand" performance={{ min: .5, debounce: 350 }} gl={{ antialias: true, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, outputColorSpace: SRGBColorSpace, preserveDrawingBuffer: false }} onPointerMissed={() => props.onSelect(null)}><Scene {...props} /></Canvas></div></TwinBoundary>;
 }

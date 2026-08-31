@@ -33,3 +33,10 @@ All files below were downloaded from the official Poly Haven asset API at 1K tex
 - Original Google Poly asset ID: `aL6uHwsMCVF`
 
 Architectural meshes (walls, floors, doors, windows, cable trays, and fixed panels) are original CampusLab Twin procedural components. Procedural geometry is not used for chairs, desks, computers, shelving, the robotic arm, cameras, the drill press, or fire extinguishers.
+
+## Single Door
+
+- File: `door-single.glb`
+- Source: supplied directly by the CampusLab Twin project owner on 2026-09-01
+- License: project-owner supplied asset; redistribution rights must be confirmed by the project owner before public distribution
+- Usage: interior laboratory door model
