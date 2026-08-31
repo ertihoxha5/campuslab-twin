@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DigitalTwinCanvas } from "./DigitalTwinCanvas.jsx";
 
-vi.mock("@react-three/fiber", () => ({ Canvas: ({ frameloop }) => <div data-testid="r3f-canvas" data-frameloop={frameloop} /> }));
+vi.mock("@react-three/fiber", () => ({ Canvas: ({ frameloop,gl }) => <div data-testid="r3f-canvas" data-frameloop={frameloop} data-preserve-buffer={String(gl.preserveDrawingBuffer)} /> }));
 vi.mock("@react-three/drei", () => ({ ContactShadows: () => null, Html: ({ children }) => <div>{children}</div>, PerspectiveCamera: () => null }));
 vi.mock("./LaboratoryArchitecture.jsx", () => ({ LaboratoryArchitecture: () => null }));
 vi.mock("./LaboratoryAssets.jsx", () => ({ LaboratoryAssets: () => null }));
@@ -16,6 +16,6 @@ vi.mock("./TwinCameraController.jsx", () => ({ TwinCameraController: () => null 
 const props = { assets: [], sensors: [], selection: null, onSelect: vi.fn(), layers: { zones: false, equipment: true, sensors: true, dataFlow: false }, cameraMode: "overview", resetNonce: 0 };
 describe("DigitalTwinCanvas rebuilt foundation", () => {
   beforeEach(() => { vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({}); vi.stubGlobal("WebGL2RenderingContext", class WebGL2RenderingContext {}); });
-  it("renders on demand to protect the WebGL context", () => { render(<DigitalTwinCanvas {...props}/>); expect(screen.getByLabelText("Laboratori operacional 3D")).toBeInTheDocument(); expect(screen.getByTestId("r3f-canvas")).toHaveAttribute("data-frameloop", "demand"); });
+  it("renders on demand while preserving the visible WebGL frame", () => { render(<DigitalTwinCanvas {...props}/>); expect(screen.getByLabelText("Laboratori operacional 3D")).toBeInTheDocument(); expect(screen.getByTestId("r3f-canvas")).toHaveAttribute("data-frameloop", "demand"); expect(screen.getByTestId("r3f-canvas")).toHaveAttribute("data-preserve-buffer", "true"); });
   it("shows a clear state without WebGL", () => { vi.stubGlobal("WebGL2RenderingContext", undefined); render(<DigitalTwinCanvas {...props}/>); expect(screen.getByText("Pamja 3D nuk mund të hapet")).toBeInTheDocument(); });
 });
