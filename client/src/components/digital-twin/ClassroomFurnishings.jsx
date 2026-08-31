@@ -1,16 +1,18 @@
 /* eslint-disable react/no-unknown-property */
-import { Center, Clone, useGLTF } from "@react-three/drei";
-import { memo, useMemo } from "react";
-import { Box3, Vector3 } from "three";
+import { Center,Clone,useGLTF } from "@react-three/drei";
+import { memo,useMemo } from "react";
+import { Box3,Vector3 } from "three";
 
 const ROOT="/models/digital-twin";
-const DESK=`${ROOT}/SchoolDesk_01/SchoolDesk_01_1k.gltf`;
-const CHAIR=`${ROOT}/SchoolChair_01/SchoolChair_01_1k.gltf`;
-
-function Model({src,height}) { const gltf=useGLTF(src);const scale=useMemo(()=>height/Math.max(new Box3().setFromObject(gltf.scene).getSize(new Vector3()).y,.001),[gltf.scene,height]);return <group scale={scale}><Center top><Clone object={gltf.scene} castShadow receiveShadow/></Center></group>; }
-function Classroom({zone}) {
-  const columns=zone.size[0]>5?3:2;const rows=2;const usableX=Math.max(1,zone.size[0]-1.5);const usableZ=Math.max(1,zone.size[1]-1.5);
-  return <group>{Array.from({length:columns*rows},(_,index)=>{const col=index%columns,row=Math.floor(index/columns);const x=zone.center[0]-usableX/2+(col+.5)*(usableX/columns);const z=zone.center[1]-usableZ/2+(row+.5)*(usableZ/rows);return <group key={index} position={[x,0,z]}><Model src={DESK} height={.72}/><group position={[0,0,.58]} rotation={[0,Math.PI,0]}><Model src={CHAIR} height={.82}/></group></group>;})}</group>;
-}
-export const ClassroomFurnishings=memo(function ClassroomFurnishings({zones=[],visible=true}) { if(!visible)return null;return <group>{zones.filter((zone)=>/m[eë]sim|class|learning/i.test(`${zone.name} ${zone.code}`)).map((zone)=><Classroom key={zone.id} zone={zone}/>)}</group>; });
-useGLTF.preload(DESK);useGLTF.preload(CHAIR);
+const MODELS={desk:`${ROOT}/SchoolDesk_01/SchoolDesk_01_1k.gltf`,chair:`${ROOT}/SchoolChair_01/SchoolChair_01_1k.gltf`,office:`${ROOT}/metal_office_desk/metal_office_desk_1k.gltf`,laptop:`${ROOT}/classic_laptop/classic_laptop_1k.gltf`,shelf:`${ROOT}/steel_frame_shelves_01/steel_frame_shelves_01_1k.gltf`,rack:`${ROOT}/worn_metal_rack/worn_metal_rack_1k.gltf`,drill:`${ROOT}/drill_press_01/drill_press_01_1k.gltf`,extinguisher:`${ROOT}/korean_fire_extinguisher_01/korean_fire_extinguisher_01_1k.gltf`};
+function Model({src,height,rotation=0}) { const gltf=useGLTF(src);const scale=useMemo(()=>height/Math.max(new Box3().setFromObject(gltf.scene).getSize(new Vector3()).y,.001),[gltf.scene,height]);return <group scale={scale} rotation={[0,rotation,0]}><Center top><Clone object={gltf.scene} castShadow receiveShadow/></Center></group>; }
+function At({zone,x,z,rotation=0,children}) { return <group position={[zone.center[0]+x*zone.size[0],0,zone.center[1]+z*zone.size[1]]} rotation={[0,rotation,0]}>{children}</group>; }
+function DeskSet({office=false}) { return <group><Model src={office?MODELS.office:MODELS.desk} height={office?.76:.72}/><group position={[0,office?.77:.72,-.05]}><Model src={MODELS.laptop} height={.18}/></group><group position={[0,0,.58]} rotation={[0,Math.PI,0]}><Model src={MODELS.chair} height={.82}/></group></group>; }
+function Classroom({zone}) { const columns=zone.size[0]>5?3:2;return <group>{Array.from({length:columns*2},(_,index)=>{const col=index%columns,row=Math.floor(index/columns);return <At key={index} zone={zone} x={-.3+(col*(.6/Math.max(1,columns-1)))} z={-.18+row*.34}><DeskSet/></At>;})}<At zone={zone} x={0} z={-.4}><DeskSet office/></At></group>; }
+function ControlLab({zone}) { return <group><At zone={zone} x={-.25} z={-.18}><DeskSet office/></At><At zone={zone} x={.2} z={-.18}><DeskSet office/></At><At zone={zone} x={-.38} z={-.38}><Model src={MODELS.rack} height={1.85}/></At></group>; }
+function EngineeringLab({zone}) { return <group><At zone={zone} x={-.25} z={-.22}><DeskSet office/></At><At zone={zone} x={.2} z={-.22}><DeskSet office/></At><At zone={zone} x={-.38} z={.25}><Model src={MODELS.drill} height={1.4}/></At><At zone={zone} x={.36} z={.28}><Model src={MODELS.shelf} height={1.65} rotation={Math.PI/2}/></At></group>; }
+function Storage({zone}) { return <group>{[-.3,0,.3].map((x)=><At key={x} zone={zone} x={x} z={-.28} rotation={Math.PI/2}><Model src={MODELS.shelf} height={1.7}/></At>)}<At zone={zone} x={-.3} z={.27}><Model src={MODELS.rack} height={1.65}/></At></group>; }
+function Safety({zone}) { return <group><At zone={zone} x={-.38} z={-.35}><Model src={MODELS.extinguisher} height={.78}/></At><At zone={zone} x={.22} z={-.25}><Model src={MODELS.shelf} height={1.45} rotation={Math.PI/2}/></At></group>; }
+function FurnishZone({zone}) { const key=`${zone.name} ${zone.code}`.toLowerCase();if(/m[eë]sim|class|informat|computer/.test(key))return <Classroom zone={zone}/>;if(/depo|storage|mir[eë]mbajt/.test(key))return <Storage zone={zone}/>;if(/sigur|safety/.test(key))return <Safety zone={zone}/>;if(/robot|automat|elektron|engineering/.test(key))return <EngineeringLab zone={zone}/>;return <ControlLab zone={zone}/>; }
+export const ClassroomFurnishings=memo(function ClassroomFurnishings({zones=[],visible=true}) { if(!visible)return null;return <group>{zones.map((zone)=><FurnishZone key={zone.id} zone={zone}/>)}</group>; });
+Object.values(MODELS).forEach((src)=>useGLTF.preload(src));

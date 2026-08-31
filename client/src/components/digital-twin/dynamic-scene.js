@@ -55,17 +55,18 @@ export function buildDynamicScene({ zones = [], equipment = [], sensors = [], re
       zoneId: zone?.id ?? null,
       zoneName: zone?.name ?? "Pa zonë",
       assetId: linkedAsset?.id ?? null,
-      position: sensorPosition(zone, index),
+      position: sensorPosition(zone, index, sensor, linkedAsset),
       value: Number.isFinite(value) ? value : 0,
       unit: sensor.unit ?? "",
       state: sensor.status === "offline" || sensor.status === "inactive" ? "offline" : thresholdState(sensor, value),
       lastUpdate: reading?.recordedAt ?? sensor.updatedAt ?? new Date().toISOString(),
     };
   });
-  return { zones: normalizedZones, assets, sensors: dynamicSensors };
+  const enrichedZones=normalizedZones.map((zone)=>({...zone,deviceCount:assets.filter((asset)=>asset.zoneId===zone.id).length,sensorCount:dynamicSensors.filter((sensor)=>sensor.zoneId===zone.id).length,alertCount:assets.filter((asset)=>asset.zoneId===zone.id&&asset.status==="alarm").length}));
+  return { zones: enrichedZones, assets, sensors: dynamicSensors };
 }
 
-function normalizeZones(zones) {
+export function normalizeZones(zones) {
   if (!zones.length) return [];
   const raw = zones.map((zone) => ({
     ...zone,
@@ -90,6 +91,10 @@ function normalizeZones(zones) {
     center: [(zone.x + zone.width / 2 - centerX) * scale, (zone.z + zone.depth / 2 - centerZ) * scale],
     size: [zone.width * scale, zone.depth * scale],
     wallHeight: Math.min(3.2, zone.height * scale),
+    type: "zone",
+    status: "operational",
+    lastUpdate: zone.updatedAt ?? new Date().toISOString(),
+    position: [(zone.x + zone.width / 2 - centerX) * scale, 0, (zone.z + zone.depth / 2 - centerZ) * scale],
   }));
 }
 
@@ -111,8 +116,12 @@ function positionInZone(zone, globalIndex, localIndex) {
   return [Number.isFinite(x) ? Math.max(minX, Math.min(maxX, x)) : globalIndex, 0, Math.max(minZ, Math.min(maxZ, z))];
 }
 
-function sensorPosition(zone, index) {
+function sensorPosition(zone, index, sensor, linkedAsset) {
   if (!zone) return [0, 1.8, 0];
+  if(linkedAsset)return [linkedAsset.position[0],1.15,linkedAsset.position[2]+.18];
+  if(/occupancy|presence|smoke/i.test(sensor.sensorType))return [zone.center[0],Math.min(2.55,zone.wallHeight-.08),zone.center[1]];
+  if(/door/i.test(sensor.sensorType))return [zone.center[0]+.52,1.05,zone.center[1]+zone.size[1]/2-.12];
+  if(/energy|power|voltage/i.test(sensor.sensorType))return [zone.center[0]+zone.size[0]/2-.12,1.2,zone.center[1]];
   const side = index % 4;
   if (side === 0) return [zone.center[0] - zone.size[0] / 2 + .15, 1.75, zone.center[1]];
   if (side === 1) return [zone.center[0] + zone.size[0] / 2 - .15, 1.75, zone.center[1]];

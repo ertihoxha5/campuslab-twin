@@ -1,7 +1,6 @@
 import { describe,expect,it } from "vitest";
 import { snapPlacement,validatePlacement } from "./placement-geometry.js";
-
-const zone={id:"4",code:"ROBOT-01",name:"Zona e Robotikës"};
+const zone={id:"zone-4",sourceId:"4",code:"ROBOT-01",name:"Zona e Robotikës",center:[1.25,3.25],size:[5,4]};
 describe("Digital Twin placement geometry",()=>{
  it("snaps floor placement to the scene grid",()=>expect(snapPlacement({x:1.13,y:.4,z:3.37},"floor")).toEqual({x:1.25,y:.08,z:3.25}));
  it("accepts a clear point inside the selected zone",()=>expect(validatePlacement({position:{x:1.25,y:.08,z:3.25},zone,surface:"floor"}).valid).toBe(true));

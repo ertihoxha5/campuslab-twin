@@ -116,6 +116,24 @@
 }
 
 .twin-editor-toggle { left: 132px; }
+.twin-edit-status{position:absolute;z-index:11;top:62px;left:132px;display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid rgba(110,122,79,.45);border-radius:8px;background:rgba(21,28,37,.92);color:#f4f3f1;font-size:.62rem;font-weight:720;backdrop-filter:blur(12px)}
+.twin-edit-status i{width:7px;height:7px;border-radius:50%;background:#4fd18b;box-shadow:0 0 10px rgba(79,209,139,.8)}
+.twin-edit-status span{color:#8fa0a8;font-size:.55rem;font-weight:600}
+.twin-zone-label.selected{border-color:#43d4e8;box-shadow:0 0 0 1px rgba(67,212,232,.25),0 8px 20px rgba(0,0,0,.25)}
+.twin-placement-inspector{display:grid;gap:9px;margin-top:12px;padding:10px;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:rgba(255,255,255,.025)}
+.twin-inspector-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.twin-inspector-tools button,.twin-inspector-actions button{display:flex;min-height:32px;align-items:center;justify-content:center;gap:5px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.04);color:#d9dde1;font:inherit;font-size:.58rem;cursor:pointer}
+.twin-inspector-tools button.active{border-color:#6e7a4f;background:#6e7a4f;color:#fff}
+.twin-placement-inspector label{display:grid;gap:4px;color:#929ba6;font-size:.58rem}
+.twin-placement-inspector label>div{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.twin-placement-inspector input{min-width:0;height:30px;padding:0 5px;border:1px solid rgba(255,255,255,.1);border-radius:5px;background:#1b232d;color:#fff;font:inherit;font-size:.6rem}
+.twin-inspector-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.twin-inspector-actions button.danger{border-color:rgba(214,76,76,.35);color:#ef8585}
+.twin-context-menu{position:fixed;z-index:100;display:grid;width:175px;padding:5px;border:1px solid rgba(255,255,255,.13);border-radius:9px;background:#151c25;color:#f4f3f1;box-shadow:0 16px 38px rgba(0,0,0,.38)}
+.twin-context-menu button{display:flex;min-height:33px;align-items:center;gap:8px;padding:0 9px;border:0;border-radius:6px;background:transparent;color:inherit;font:inherit;font-size:.66rem;text-align:left;cursor:pointer}.twin-context-menu button:hover{background:rgba(110,122,79,.25)}.twin-context-menu button.danger{color:#ef8585}
+.twin-equipment-drawer{top:64px;bottom:12px;width:min(340px,calc(100% - 24px));grid-template-rows:auto auto minmax(0,1fr) auto;overflow:hidden}
+.twin-equipment-drawer>nav{display:grid;grid-template-columns:1fr 1fr;padding:4px;border:1px solid rgba(255,255,255,.08);border-radius:7px;background:rgba(255,255,255,.025)}.twin-equipment-drawer>nav button{height:32px;border:0;border-radius:6px;background:transparent;color:#929ba6;font:inherit;font-size:.61rem;font-weight:700;cursor:pointer}.twin-equipment-drawer>nav button.active{background:#6e7a4f;color:#fff}
+.twin-equipment-library,.twin-placement-fields{min-height:0;overflow:auto;display:grid;align-content:start;gap:8px}.twin-equipment-search{display:flex!important;align-items:center;grid-template-columns:auto 1fr!important;gap:6px!important;padding:0 8px;border:1px solid rgba(255,255,255,.1);border-radius:7px;background:#1b232d}.twin-equipment-search input{border:0!important;background:transparent!important}.twin-equipment-library article{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.03)}.twin-equipment-library article>div{display:grid;min-width:0}.twin-equipment-library strong{overflow:hidden;font-size:.65rem;text-overflow:ellipsis;white-space:nowrap}.twin-equipment-library span,.twin-equipment-library small{color:#929ba6;font-size:.54rem}.twin-equipment-library article>button{min-height:29px;padding:0 9px;border:0;border-radius:6px;background:#6e7a4f;color:#fff;font:inherit;font-size:.57rem;font-weight:700;cursor:pointer}.twin-placement-fields{padding-right:2px}
 
 .twin-lab-dashboard {
   position: absolute;

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Vector3 } from "three";
 import { CAMERA_PRESETS } from "./twin-config.js";
 
-export function TwinCameraController({ mode, focusPosition, resetNonce }) {
+export function TwinCameraController({ mode, focusPosition, resetNonce, zones=[] }) {
   const camera = useThree((state) => state.camera);
   const controls = useRef();
   const transition = useRef(null);
@@ -12,6 +12,7 @@ export function TwinCameraController({ mode, focusPosition, resetNonce }) {
   const forward = useRef(new Vector3());
   const right = useRef(new Vector3());
   const target = useMemo(() => mode === "focus" && focusPosition ? new Vector3(...focusPosition).add(new Vector3(0, .7, 0)) : new Vector3(...(CAMERA_PRESETS[mode]?.target ?? CAMERA_PRESETS.overview.target)), [focusPosition, mode]);
+  const bounds=useMemo(()=>zones.length?{minX:Math.min(...zones.map((zone)=>zone.center[0]-zone.size[0]/2))+.28,maxX:Math.max(...zones.map((zone)=>zone.center[0]+zone.size[0]/2))-.28,minZ:Math.min(...zones.map((zone)=>zone.center[1]-zone.size[1]/2))+.28,maxZ:Math.max(...zones.map((zone)=>zone.center[1]+zone.size[1]/2))-.28}:{minX:-9.25,maxX:9.25,minZ:-5.85,maxZ:5.85},[zones]);
 
   useEffect(() => {
     if (mode === "walk") { camera.position.set(0, 1.65, -.25); camera.lookAt(0, 1.5, 3); return; }
@@ -42,8 +43,8 @@ export function TwinCameraController({ mode, focusPosition, resetNonce }) {
       if (pressed.current.has("KeyS")) movement.addScaledVector(forward.current, -speed);
       if (pressed.current.has("KeyD")) movement.addScaledVector(right.current, speed);
       if (pressed.current.has("KeyA")) movement.addScaledVector(right.current, -speed);
-      camera.position.x = Math.max(-9.25, Math.min(9.25, camera.position.x + movement.x));
-      camera.position.z = Math.max(-5.85, Math.min(5.85, camera.position.z + movement.z));
+      camera.position.x = Math.max(bounds.minX, Math.min(bounds.maxX, camera.position.x + movement.x));
+      camera.position.z = Math.max(bounds.minZ, Math.min(bounds.maxZ, camera.position.z + movement.z));
       camera.position.y = 1.65;
       return;
     }

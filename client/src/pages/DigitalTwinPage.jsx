@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Box, FolderTree, LayoutDashboard } from "lucide-react";
 import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
@@ -7,10 +7,11 @@ import { DigitalTwinCanvas } from "@/components/digital-twin/DigitalTwinCanvas.j
 import { buildDynamicScene } from "@/components/digital-twin/dynamic-scene.js";
 import { TwinOperationsPanel } from "@/components/digital-twin/TwinOperationsPanel.jsx";
 import { TwinLaboratoryDashboard } from "@/components/digital-twin/TwinLaboratoryDashboard.jsx";
-import { SECURITY_CAMERAS } from "@/components/digital-twin/security-camera-records.js";
+import { buildCameraRecords } from "@/components/digital-twin/security-camera-records.js";
 import { SceneEditorPanel } from "@/components/digital-twin/SceneEditorPanel.jsx";
 import { TwinSelectionPanel } from "@/components/digital-twin/TwinSelectionPanel.jsx";
 import { TwinTelemetryHeader } from "@/components/digital-twin/TwinTelemetryHeader.jsx";
+import { TwinContextMenu } from "@/components/digital-twin/TwinContextMenu.jsx";
 import { TwinViewerToolbar } from "@/components/digital-twin/TwinViewerToolbar.jsx";
 import { useAssetPlacement } from "@/components/digital-twin/useAssetPlacement.js";
 import { useTwinOperations } from "@/components/digital-twin/useTwinOperations.js";
@@ -40,6 +41,7 @@ export function DigitalTwinPage() {
   const [ceilingMode, setCeilingMode] = useState("cutaway");
   const [greenMode, setGreenMode] = useState(false);
   const [transformMode, setTransformMode] = useState("translate");
+  const [contextMenu,setContextMenu]=useState(null);
 
   const operations = useTwinOperations({ laboratoryId, alerts, setAlerts });
   const user = useAuthStore((state) => state.user);
@@ -88,13 +90,14 @@ export function DigitalTwinPage() {
 
   const twin = useTwinSimulation({ apiEquipment, apiSensors, apiReadings, apiEnergy, alerts });
   const scene = useMemo(() => buildDynamicScene({ zones: laboratoryZones, equipment: apiEquipment, sensors: apiSensors, readings: apiReadings, energy: apiEnergy, alerts }), [alerts, apiEnergy, apiEquipment, apiReadings, apiSensors, laboratoryZones]);
+  const cameras=useMemo(()=>buildCameraRecords(scene.zones),[scene.zones]);
   const activeLaboratory = laboratories.find((laboratory) => String(laboratory.id) === String(laboratoryId));
   const selection = useMemo(() => {
     if (!selectionKey) return null;
-    const collection = selectionKey.kind === "sensor" ? scene.sensors : selectionKey.kind === "camera" ? SECURITY_CAMERAS : selectionKey.kind === "placement" ? operations.placements : scene.assets;
+    const collection = selectionKey.kind === "sensor" ? scene.sensors : selectionKey.kind === "camera" ? cameras : selectionKey.kind === "placement" ? operations.placements : selectionKey.kind === "zone" ? scene.zones : scene.assets;
     const item = collection.find((candidate) => String(candidate.id) === String(selectionKey.id));
     return item ? { kind: selectionKey.kind, item: { ...item, type: item.type ?? item.assetType, energyWatts: item.energyWatts ?? 0, maintenance: item.maintenance ?? item.status, lastUpdate: item.lastUpdate ?? item.updatedAt ?? new Date().toISOString() } } : null;
-  }, [operations.placements, scene.assets, scene.sensors, selectionKey]);
+  }, [cameras,operations.placements, scene.assets, scene.sensors, scene.zones, selectionKey]);
   const telemetry = useMemo(() => ({ now: twin.now, occupancy: scene.sensors.find((sensor) => sensor.type === "occupancy")?.value ?? twin.occupancy, temperature: scene.sensors.find((sensor) => sensor.type === "temperature")?.value ?? 22.4, humidity: scene.sensors.find((sensor) => sensor.type === "humidity")?.value ?? 48, energyWatts: scene.assets.reduce((sum, asset) => sum + asset.energyWatts, 0), alerts: alerts.filter((alert) => !["resolved", "closed"].includes(alert.status)).length }), [alerts, scene.assets, scene.sensors, twin.now, twin.occupancy]);
 
   function selectObject(next) { if (!placement.open) { setOperationsTab(null); setEditorOpen(false); setDashboardOpen(false); setSelectionKey(next ? { kind: next.kind, id: next.item.id } : null); } }
@@ -103,7 +106,10 @@ export function DigitalTwinPage() {
   function resetCamera() { setCameraMode("overview"); setResetNonce((value) => value + 1); }
   async function resetSelected() { if (selection?.kind === "placement") await operations.updatePlacement(selection.item, { rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }); }
   async function duplicateSelected() { if (selection?.kind === "placement") selectObject({ kind: "placement", item: await operations.duplicatePlacement(selection.item) }); }
-  async function deleteSelected() { if (selection?.kind !== "placement" || !window.confirm(`Ta hiqni “${selection.item.name}” nga skena?`)) return; await operations.removePlacement(selection.item); setSelectionKey(null); }
+  const deleteSelected=useCallback(async()=>{if(selection?.kind!=="placement"||!window.confirm("Jeni të sigurt që dëshironi ta largoni këtë objekt nga Digital Twin?"))return;await operations.removePlacement(selection.item);setSelectionKey(null);},[operations,selection]);
+  async function contextAction(action,item){setContextMenu(null);setSelectionKey({kind:"placement",id:item.id});if(action==="focus"){setCameraMode("focus");return;}if(["translate","rotate","scale"].includes(action)){setEditorOpen(true);setDashboardOpen(false);setTransformMode(action);return;}if(action==="duplicate"){const copy=await operations.duplicatePlacement(item);setSelectionKey({kind:"placement",id:copy.id});return;}if(action==="delete"&&window.confirm("Jeni të sigurt që dëshironi ta largoni këtë objekt nga Digital Twin?")){await operations.removePlacement(item);setSelectionKey(null);}}
+
+  useEffect(()=>{function onKeyDown(event){if(event.target instanceof HTMLInputElement||event.target instanceof HTMLTextAreaElement||event.target instanceof HTMLSelectElement)return;if(event.key==="Escape"){if(placement.open)placement.cancel();else if(cameraMode==="walk")setCameraMode("overview");else setSelectionKey(null);return;}if(!editorOpen||selection?.kind!=="placement")return;const key=event.key.toLowerCase();if(key==="w")setTransformMode("translate");if(key==="e")setTransformMode("rotate");if(key==="r")setTransformMode("scale");if(event.key==="Delete")deleteSelected();}window.addEventListener("keydown",onKeyDown);return()=>window.removeEventListener("keydown",onKeyDown);},[cameraMode,deleteSelected,editorOpen,placement,selection]);
 
   if (loading) return <div className="twin-page-state"><Box size={28}/><strong>Po përgatitet Digital Twin…</strong></div>;
   if (!laboratoryId) return <div className="twin-page-state"><Box size={28}/><strong>Nuk ka laborator aktiv</strong><p>Krijo një laborator për ta hapur mjedisin operacional 3D.</p></div>;
@@ -117,13 +123,15 @@ export function DigitalTwinPage() {
         <TwinViewerToolbar cameraMode={cameraMode} onCameraMode={(mode) => { if (mode !== "focus" || selection) setCameraMode(mode); }} onReset={resetCamera} layers={layers} onToggle={toggleLayer} ceilingMode={ceilingMode} onCeilingMode={() => setCeilingMode((current) => current === "cutaway" ? "transparent" : current === "transparent" ? "closed" : "cutaway")} greenMode={greenMode} onGreenMode={() => { setGreenMode((current) => !current); setLayers((current) => ({...current,sensors:true,cameras:true,sensorLabels:true})); }}/>
         <TwinOperationsPanel operations={operations} openTab={operationsTab} onOpen={openOperations} onClose={() => setOperationsTab(null)}/>
         <button type="button" className={`twin-dashboard-toggle ${dashboardOpen ? "active" : ""}`} onClick={() => { setOperationsTab(null); setSelectionKey(null); setEditorOpen(false); setDashboardOpen((current) => !current); }}><LayoutDashboard size={16}/><span>Dashboard</span></button>
-        {canPlace && <button type="button" className={`twin-editor-toggle ${editorOpen ? "active" : ""}`} onClick={() => { setOperationsTab(null); setSelectionKey(null); setDashboardOpen(false); setEditorOpen((current) => !current); }}><FolderTree size={16}/><span>Objektet</span></button>}
+        {canPlace && <button type="button" className={`twin-editor-toggle ${editorOpen ? "active" : ""}`} onClick={() => { setOperationsTab(null); setSelectionKey(null); setDashboardOpen(false); setEditorOpen((current) => !current); }}><FolderTree size={16}/><span>{editorOpen?"Mënyra e editimit":"Edito Digital Twin"}</span></button>}
+        {editorOpen&&<div className="twin-edit-status"><i/>Mënyra e editimit <span>Ruajtje automatike</span></div>}
         {canPlace && !placement.open && <button type="button" className="twin-add-asset" onClick={() => placement.begin()}>+ Shto pajisje</button>}
-        {editorOpen && <SceneEditorPanel operations={operations} selection={selection} onSelect={selectObject} onAdd={placement.begin} canManage={canPlace} transformMode={transformMode} onTransformMode={setTransformMode} onReset={resetSelected} onDuplicate={duplicateSelected} onDelete={deleteSelected}/>}
+        {editorOpen && <SceneEditorPanel zones={scene.zones} operations={operations} selection={selection} onSelect={selectObject} onAdd={placement.begin} canManage={canPlace} transformMode={transformMode} onTransformMode={setTransformMode} onReset={resetSelected} onDuplicate={duplicateSelected} onDelete={deleteSelected}/>}
         {dashboardOpen && <TwinLaboratoryDashboard laboratory={activeLaboratory} zones={scene.zones} assets={scene.assets} sensors={scene.sensors} onClose={() => setDashboardOpen(false)} onSelect={selectObject}/>}
-        <DigitalTwinCanvas zones={scene.zones} assets={scene.assets} sensors={scene.sensors} placements={operations.placements} placement={placement} selection={selection} onSelect={selectObject} onTransformEnd={(item, changes) => operations.updatePlacement(item, changes)} transformMode={selection?.kind === "placement" && canPlace ? transformMode : null} layers={layers} cameraMode={cameraMode} resetNonce={resetNonce} ceilingMode={ceilingMode} greenMode={greenMode}/>
-        <AssetPlacementPanel placement={placement}/>
-        <TwinSelectionPanel selection={selection} history={selection ? twin.histories[selection.item.id] ?? [] : []} onClose={() => setSelectionKey(null)} onFocus={() => setCameraMode("focus")}/>
+        <DigitalTwinCanvas zones={scene.zones} assets={scene.assets} sensors={scene.sensors} placements={operations.placements} placement={placement} selection={selection} onSelect={(next)=>{setContextMenu(null);selectObject(next);}} onContextMenu={(item,event)=>{setSelectionKey({kind:"placement",id:item.id});setContextMenu({item,x:event.clientX,y:event.clientY});}} onTransformEnd={(item, changes) => operations.updatePlacement(item, changes)} transformMode={selection?.kind === "placement" && canPlace ? transformMode : null} layers={layers} cameraMode={cameraMode} resetNonce={resetNonce} ceilingMode={ceilingMode} greenMode={greenMode}/>
+        <TwinContextMenu menu={contextMenu} onAction={contextAction} onClose={()=>setContextMenu(null)}/>
+        <AssetPlacementPanel placement={placement} library={operations.library}/>
+        <TwinSelectionPanel selection={selection} history={selection ? twin.histories[selection.item.id] ?? [] : []} onClose={() => setSelectionKey(null)} onFocus={() => setCameraMode("focus")} canEdit={editorOpen&&canPlace} transformMode={transformMode} onTransformMode={setTransformMode} onUpdate={(item,changes)=>operations.updatePlacement(item,changes)} onDuplicate={duplicateSelected} onDelete={deleteSelected}/>
         {cameraMode === "walk" && <div className="twin-walk-help">Kliko skenën · W A S D për lëvizje · Esc për dalje</div>}
       </div>
     </div>

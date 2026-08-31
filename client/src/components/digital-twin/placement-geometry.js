@@ -1,14 +1,10 @@
-import { TWIN_ZONES } from "./twin-config.js";
-
 const SNAP = .25;
 const round = (value) => Math.round(value / SNAP) * SNAP;
 
 export function sceneZoneFor(zone) {
   if (!zone) return null;
-  const code = String(zone.code ?? "").toUpperCase();
-  return TWIN_ZONES.find((item) => item.code === code)
-    ?? TWIN_ZONES.find((item) => String(zone.name ?? "").toLowerCase().includes(item.id))
-    ?? null;
+  if (Array.isArray(zone.center) && Array.isArray(zone.size)) return zone;
+  return null;
 }
 
 export function snapPlacement(point, surface) {
@@ -22,11 +18,12 @@ export function validatePlacement({ position, zone, surface, placements = [], ed
   const mapped = sceneZoneFor(zone);
   if (!mapped) return { valid: false, reason: "Kjo zonë nuk ka planimetri 3D." };
   const halfX = mapped.size[0] / 2, halfZ = mapped.size[1] / 2;
-  const inside = position.x >= mapped.center[0] - halfX && position.x <= mapped.center[0] + halfX
-    && position.z >= mapped.center[1] - halfZ && position.z <= mapped.center[1] + halfZ;
+  const margin=surface==="floor"?.35:.08;
+  const inside = position.x >= mapped.center[0] - halfX+margin && position.x <= mapped.center[0] + halfX-margin
+    && position.z >= mapped.center[1] - halfZ+margin && position.z <= mapped.center[1] + halfZ-margin;
   if (!inside) return { valid: false, reason: "Pika është jashtë zonës së zgjedhur." };
   if (surface === "wall") {
-    const nearWall = Math.abs(Math.abs(position.x) - 9.65) < .45 || Math.abs(Math.abs(position.z) - 6.05) < .45;
+    const nearWall = Math.abs(position.x-(mapped.center[0]-halfX))<.45||Math.abs(position.x-(mapped.center[0]+halfX))<.45||Math.abs(position.z-(mapped.center[1]-halfZ))<.45||Math.abs(position.z-(mapped.center[1]+halfZ))<.45;
     if (!nearWall) return { valid: false, reason: "Zgjidh një sipërfaqe muri." };
   }
   const collision = placements.some((item) => String(item.id) !== String(editingId)
