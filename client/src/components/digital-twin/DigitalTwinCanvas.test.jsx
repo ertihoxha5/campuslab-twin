@@ -16,6 +16,6 @@ vi.mock("./TwinCameraController.jsx", () => ({ TwinCameraController: () => null 
 const props = { assets: [], sensors: [], selection: null, onSelect: vi.fn(), layers: { zones: false, equipment: true, sensors: true, dataFlow: false }, cameraMode: "overview", resetNonce: 0 };
 describe("DigitalTwinCanvas rebuilt foundation", () => {
   beforeEach(() => { vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({}); vi.stubGlobal("WebGL2RenderingContext", class WebGL2RenderingContext {}); });
-  it("renders on demand while preserving the visible WebGL frame", () => { render(<DigitalTwinCanvas {...props}/>); expect(screen.getByLabelText("Laboratori operacional 3D")).toBeInTheDocument(); expect(screen.getByTestId("r3f-canvas")).toHaveAttribute("data-frameloop", "demand"); expect(screen.getByTestId("r3f-canvas")).toHaveAttribute("data-preserve-buffer", "true"); });
+  it("renders continuously so interactions never clear the visible WebGL frame", () => { render(<DigitalTwinCanvas {...props}/>); expect(screen.getByLabelText("Laboratori operacional 3D")).toBeInTheDocument(); expect(screen.getByTestId("r3f-canvas")).toHaveAttribute("data-frameloop", "always"); expect(screen.getByTestId("r3f-canvas")).toHaveAttribute("data-preserve-buffer", "false"); });
   it("shows a clear state without WebGL", () => { vi.stubGlobal("WebGL2RenderingContext", undefined); render(<DigitalTwinCanvas {...props}/>); expect(screen.getByText("Pamja 3D nuk mund të hapet")).toBeInTheDocument(); });
 });

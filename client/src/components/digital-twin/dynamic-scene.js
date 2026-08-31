@@ -118,6 +118,12 @@ function positionInZone(zone, globalIndex, localIndex) {
 
 function sensorPosition(zone, index, sensor, linkedAsset) {
   if (!zone) return [0, 1.8, 0];
+  const zoneKey=`${zone.name ?? ""} ${zone.code ?? ""}`.toLowerCase();
+  if(/robot|automat/.test(zoneKey)) {
+    const availableDepth=Math.max(.4,zone.size[1]-.8);
+    const offset=((index%5)-2)*Math.min(.55,availableDepth/5);
+    return [zone.center[0]+zone.size[0]/2-.11,1.55,Math.max(zone.center[1]-availableDepth/2,Math.min(zone.center[1]+availableDepth/2,zone.center[1]+offset))];
+  }
   if(linkedAsset)return [linkedAsset.position[0],1.15,linkedAsset.position[2]+.18];
   if(/occupancy|presence|smoke/i.test(sensor.sensorType))return [zone.center[0],Math.min(2.55,zone.wallHeight-.08),zone.center[1]];
   if(/door/i.test(sensor.sensorType))return [zone.center[0]+.52,1.05,zone.center[1]+zone.size[1]/2-.12];

@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 import { ContactShadows, Html, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
-import { Canvas, useThree } from "@react-three/fiber";
-import { Component, Suspense, useEffect } from "react";
+import { Canvas } from "@react-three/fiber";
+import { Component, Suspense } from "react";
 import { ACESFilmicToneMapping, SRGBColorSpace } from "three";
 import { IoTDevices } from "./IoTDevices.jsx";
 import { ClassroomFurnishings } from "./ClassroomFurnishings.jsx";
@@ -20,12 +20,6 @@ class TwinBoundary extends Component {
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
-function RenderOnChange({ values }) {
-  const invalidate = useThree((state) => state.invalidate);
-  useEffect(() => { invalidate(); }, [invalidate, values]);
-  return null;
-}
-
 function ZoneLabels({ zones, visible, selectedId }) {
   if (!visible && !selectedId) return null;
   return <group>{zones.filter((zone)=>visible||zone.id===selectedId).map((zone) => <Html key={zone.id} center distanceFactor={18} position={[zone.center[0], 2.35, zone.center[1]]}><div className={`twin-zone-label ${zone.id===selectedId?"selected":""}`}><strong>{zone.name}</strong><span>{zone.code}</span></div></Html>)}</group>;
@@ -34,7 +28,6 @@ function ZoneLabels({ zones, visible, selectedId }) {
 function Scene({ zones = [], assets, sensors, cameras=[], placements = [], placement, selection, onSelect, onContextMenu, onTransformEnd, transformMode, layers, cameraMode, resetNonce, ceilingMode, greenMode=false }) {
   const alarmAsset = assets.find((asset) => asset.status === "alarm");
   return <>
-    <RenderOnChange values={[zones,assets,sensors,cameras,placements,placement,selection,transformMode,layers,cameraMode,resetNonce,ceilingMode,greenMode]}/>
     <color attach="background" args={[greenMode?"#07120F":"#171D26"]} />
     <fog attach="fog" args={[greenMode?"#07120F":"#171D26", 30, 52]} />
     <ambientLight intensity={greenMode?.2:.46} color={greenMode?"#7EF0B0":"#FFFFFF"}/>
@@ -62,5 +55,5 @@ function Fallback() { return <div className="twin-canvas-fallback" role="alert">
 
 export function DigitalTwinCanvas(props) {
   if (!supportsWebGL()) return <Fallback />;
-  return <TwinBoundary fallback={<Fallback />}><div className="twin-canvas-shell" aria-label="Laboratori operacional 3D"><Canvas shadows dpr={[1, 1.25]} frameloop="demand" performance={{ min: .5, debounce: 350 }} gl={{ antialias: true, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, outputColorSpace: SRGBColorSpace, preserveDrawingBuffer: true }} onPointerMissed={() => props.onSelect(null)}><Scene {...props} /></Canvas></div></TwinBoundary>;
+  return <TwinBoundary fallback={<Fallback />}><div className="twin-canvas-shell" aria-label="Laboratori operacional 3D"><Canvas shadows dpr={[1, 1.2]} frameloop="always" performance={{ min: .5, debounce: 350 }} gl={{ antialias: true, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, outputColorSpace: SRGBColorSpace, preserveDrawingBuffer: false }} onPointerMissed={() => props.onSelect(null)}><Scene {...props} /></Canvas></div></TwinBoundary>;
 }
