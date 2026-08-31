@@ -182,6 +182,22 @@ export function createLaboratoryRepository(pool) {
 
         await query(
           connection,
+          `INSERT INTO simulation_scenarios (
+             university_id, laboratory_id, name, scenario_type, description,
+             configuration_json, seed_value, status, created_by_user_id
+           ) VALUES (?, ?, ?, 'temperature_rise', ?, JSON_OBJECT(), ?, 'active', ?)`,
+          [
+            universityId,
+            laboratoryId,
+            `Skenari bazë — ${laboratory.name}`,
+            "Skenar fillestar për gjenerimin dhe testimin e telemetrisë së laboratorit.",
+            Number(laboratoryId) * 1000,
+            userId,
+          ],
+        );
+
+        await query(
+          connection,
           `INSERT INTO activity_logs (
              university_id, user_id, action, entity_type, entity_id,
              description, metadata_json, ip_address

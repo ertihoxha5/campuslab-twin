@@ -229,6 +229,9 @@ test("laboratory creation and tenant audit are atomic", async () => {
 
   assert.equal(result.id, "15");
   assert.deepEqual(events, ["begin", "commit", "release"]);
+  assert.ok(
+    calls.some(({ sql }) => sql.includes("INSERT INTO simulation_scenarios")),
+  );
   assert.ok(calls.some(({ sql }) => sql.includes("INSERT INTO activity_logs")));
   assert.equal(calls[0].parameters[0], "7");
 });
