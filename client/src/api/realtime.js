@@ -5,6 +5,17 @@ const realtimeUrl = (import.meta.env.VITE_API_URL ?? "").replace(
   "",
 );
 
+const realtimeOptions = {
+  withCredentials: true,
+  transports: ["polling", "websocket"],
+  upgrade: true,
+  timeout: 8_000,
+  reconnection: true,
+  reconnectionDelay: 1_000,
+  reconnectionDelayMax: 10_000,
+  randomizationFactor: .35,
+};
+
 export const DASHBOARD_REALTIME_EVENTS = [
   "dashboard:refresh",
   "sensor:readings",
@@ -29,10 +40,7 @@ export function connectDashboardRealtime({
   onOperationalChange,
   onConnectionChange,
 }) {
-  const socket = io(realtimeUrl || undefined, {
-    withCredentials: true,
-    transports: ["websocket"],
-  });
+  const socket = io(realtimeUrl || undefined, realtimeOptions);
 
   const joinSelectedLaboratory = () => {
     if (laboratoryId) {
@@ -64,10 +72,7 @@ export function connectMonitoringRealtime({
   onEvent,
   onConnectionChange,
 }) {
-  const socket = io(realtimeUrl || undefined, {
-    withCredentials: true,
-    transports: ["websocket"],
-  });
+  const socket = io(realtimeUrl || undefined, realtimeOptions);
 
   socket.on("connect", () => {
     onConnectionChange?.("connected");

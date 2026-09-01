@@ -18,6 +18,20 @@ const createSocket = () => ({
 });
 
 describe("connectMonitoringRealtime", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("starts with HTTP polling and upgrades to WebSocket when available", () => {
+    io.mockReturnValue(createSocket());
+    connectMonitoringRealtime({ laboratoryId: "15", onEvent: vi.fn() });
+    expect(io).toHaveBeenCalledWith(undefined, expect.objectContaining({
+      transports: ["polling", "websocket"],
+      upgrade: true,
+      reconnectionDelayMax: 10_000,
+    }));
+  });
+
   it("forwards the event name and payload for the selected laboratory", () => {
     const socket = createSocket();
     io.mockReturnValue(socket);
