@@ -198,3 +198,4 @@
   .twin-editor-toggle { left: 52px; }
   .twin-lab-dashboard { top: 58px; right: 8px; bottom: 58px; left: 8px; width: min(325px, calc(100% - 16px)); }
 }
+.twin-webgl-recovering{position:absolute;inset:0;z-index:40;display:grid;place-items:center;background:#171d26;color:#f4f3f1;font-weight:700;letter-spacing:.01em;pointer-events:none}

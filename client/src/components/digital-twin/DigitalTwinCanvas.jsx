@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 import { ContactShadows, Html, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Component, Suspense } from "react";
+import { Component, Suspense, useCallback, useState } from "react";
 import { ACESFilmicToneMapping, SRGBColorSpace } from "three";
 import { IoTDevices } from "./IoTDevices.jsx";
 import { ClassroomFurnishings } from "./ClassroomFurnishings.jsx";
@@ -54,6 +54,20 @@ function Scene({ zones = [], assets, sensors, cameras=[], placements = [], place
 function Fallback() { return <div className="twin-canvas-fallback" role="alert"><strong>Pamja 3D nuk mund të hapet</strong><p>Aktivizo WebGL dhe përshpejtimin grafik në shfletues.</p></div>; }
 
 export function DigitalTwinCanvas(props) {
+  const [canvasGeneration,setCanvasGeneration]=useState(0);
+  const [recovering,setRecovering]=useState(false);
+  const handleCreated=useCallback(({gl})=>{
+    const canvas=gl.domElement;
+    const recover=(event)=>{
+      event.preventDefault();
+      setRecovering(true);
+      window.setTimeout(()=>{
+        setCanvasGeneration((generation)=>generation+1);
+        setRecovering(false);
+      },80);
+    };
+    canvas.addEventListener("webglcontextlost",recover,{once:true});
+  },[]);
   if (!supportsWebGL()) return <Fallback />;
-  return <TwinBoundary fallback={<Fallback />}><div className="twin-canvas-shell" aria-label="Laboratori operacional 3D"><Canvas shadows dpr={[1, 1.2]} frameloop="always" performance={{ min: .5, debounce: 350 }} gl={{ antialias: true, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, outputColorSpace: SRGBColorSpace, preserveDrawingBuffer: false }} onPointerMissed={() => props.onSelect(null)}><Scene {...props} /></Canvas></div></TwinBoundary>;
+  return <TwinBoundary fallback={<Fallback />}><div className="twin-canvas-shell" aria-label="Laboratori operacional 3D">{recovering&&<div className="twin-webgl-recovering" role="status">Po rikthehet pamja 3D…</div>}<Canvas key={canvasGeneration} onCreated={handleCreated} shadows="percentage" dpr={[1, 1.2]} frameloop="always" performance={{ min: .5, debounce: 350 }} gl={{ antialias: true, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, outputColorSpace: SRGBColorSpace, preserveDrawingBuffer: false }} onPointerMissed={() => props.onSelect(null)}><Scene {...props} /></Canvas></div></TwinBoundary>;
 }
