@@ -4,12 +4,14 @@ import {
   Archive,
   ArrowLeft,
   Boxes,
+  Building2,
   Cpu,
   ExternalLink,
   MapPin,
   Pencil,
   Plus,
   RefreshCw,
+  ScanLine,
   Trash2,
   Users,
   X,
@@ -267,31 +269,37 @@ export function LaboratoryDetailPage() {
 
   return (
     <section className="laboratory-detail-page">
-      <Link className="workspace-back-link" to="/aplikacioni/laboratoret">
-        <ArrowLeft size={16} /> Laboratorët
-      </Link>
-      <PageHeader
-        eyebrow={`${laboratory.code} · ${laboratory.faculty}`}
-        title={laboratory.name}
-        description={`${laboratory.building}, kati ${laboratory.floor} · Kapaciteti ${laboratory.capacity} persona`}
-        meta={<StatusBadge tone={statusTones[laboratory.status]}>{statusLabels[laboratory.status] ?? laboratory.status}</StatusBadge>}
-        actions={<>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => loadDetail()}
-            disabled={loading}
-          >
-            <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko
-          </Button>
-          {canManage && (
-            <Button type="button" size="sm" onClick={() => setEditing(true)}>
-              <Pencil size={16} /> Ndrysho
+      <div className="laboratory-detail-identity">
+        <Link className="workspace-back-link" to="/aplikacioni/laboratoret">
+          <ArrowLeft size={16} /> Të gjithë laboratorët
+        </Link>
+        <PageHeader
+          eyebrow={`${laboratory.code} · ${laboratory.faculty}`}
+          title={laboratory.name}
+          description={`${laboratory.building}, kati ${laboratory.floor} · Kapaciteti ${laboratory.capacity} persona`}
+          meta={<StatusBadge tone={statusTones[laboratory.status]}>{statusLabels[laboratory.status] ?? laboratory.status}</StatusBadge>}
+          actions={<>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => loadDetail()}
+              disabled={loading}
+            >
+              <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko
             </Button>
-          )}
-        </>}
-      />
+            {canManage && (
+              <Button type="button" size="sm" onClick={() => setEditing(true)}>
+                <Pencil size={16} /> Ndrysho
+              </Button>
+            )}
+          </>}
+        />
+        <div className="laboratory-identity-mark" aria-hidden="true">
+          <ScanLine size={30} />
+          <span><i /> LIVE</span>
+        </div>
+      </div>
 
       {message.text && (
         <p className={`form-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>
@@ -305,10 +313,10 @@ export function LaboratoryDetailPage() {
         aria-label="Seksionet e laboratorit"
       >
         {[
-          ["summary", "Përmbledhja"],
-          ["zones", `Zonat (${zones.length})`],
-          ["virtual", "Pamja virtuale"],
-        ].map(([value, label]) => (
+          ["summary", "Përmbledhja", Building2],
+          ["zones", `Zonat (${zones.length})`, Boxes],
+          ["virtual", "Pamja virtuale", ScanLine],
+        ].map(([value, label, Icon]) => (
           <button
             key={value}
             type="button"
@@ -316,7 +324,7 @@ export function LaboratoryDetailPage() {
             aria-selected={activeTab === value}
             onClick={() => setActiveTab(value)}
           >
-            {label}
+            <Icon size={15} /> {label}
           </button>
         ))}
       </nav>
