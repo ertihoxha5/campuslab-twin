@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Box, FolderTree, LayoutDashboard } from "lucide-react";
+import { Activity, AlertTriangle, Box, ChevronRight, Cpu, FolderTree, LayoutDashboard, Radio, ScanLine } from "lucide-react";
 import { api } from "@/api/client.js";
 import { connectMonitoringRealtime } from "@/api/realtime.js";
 import { AssetPlacementPanel } from "@/components/digital-twin/AssetPlacementPanel.jsx";
@@ -37,7 +37,7 @@ export function DigitalTwinPage() {
   const [error, setError] = useState("");
   const [operationsTab, setOperationsTab] = useState(null);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [dashboardOpen, setDashboardOpen] = useState(true);
+  const [dashboardOpen, setDashboardOpen] = useState(false);
   const [ceilingMode, setCeilingMode] = useState("cutaway");
   const [greenMode, setGreenMode] = useState(false);
   const [transformMode, setTransformMode] = useState("translate");
@@ -60,7 +60,7 @@ export function DigitalTwinPage() {
   useEffect(() => {
     if (!laboratoryId) return undefined;
     let active = true;
-    setError(""); setSelectionKey(null); setCameraMode("overview"); setOperationsTab(null); setEditorOpen(false); setDashboardOpen(true);
+    setError(""); setSelectionKey(null); setCameraMode("overview"); setOperationsTab(null); setEditorOpen(false); setDashboardOpen(false);
     Promise.all([
       api.get(`/api/sensors?laboratoryId=${laboratoryId}&page=1&pageSize=100&sort=name&direction=asc`),
       api.get(`/api/equipment?laboratoryId=${laboratoryId}&page=1&pageSize=100&sort=name&direction=asc`),
@@ -115,11 +115,26 @@ export function DigitalTwinPage() {
   if (!laboratoryId) return <div className="twin-page-state"><Box size={28}/><strong>Nuk ka laborator aktiv</strong><p>Krijo një laborator për ta hapur mjedisin operacional 3D.</p></div>;
 
   return <section className="twin-page">
-    <div className="twin-page-heading"><div><span>Laboratori virtual</span><h1>Digital Twin operacional</h1></div><label><span>Laboratori</span><select value={laboratoryId} onChange={(event) => setLaboratoryId(event.target.value)}>{laboratories.map((laboratory) => <option key={laboratory.id} value={laboratory.id}>{laboratory.name} ({laboratory.code})</option>)}</select></label></div>
+    <header className="twin-page-heading">
+      <div className="twin-heading-copy">
+        <span><Box size={13}/> Digital Twin <ChevronRight size={12}/> {activeLaboratory?.code}</span>
+        <h1>Digital Twin operacional</h1>
+        <p>Monitorim, simulim dhe kontroll vizual i laboratorit në kohë reale.</p>
+      </div>
+      <div className="twin-heading-context">
+        <div className="twin-context-metrics" aria-label="Gjendja e skenës">
+          <span><Radio size={14}/><strong>{apiSensors.length}</strong> sensorë</span>
+          <span><Cpu size={14}/><strong>{apiEquipment.length}</strong> pajisje</span>
+          <span><ScanLine size={14}/><strong>{laboratoryZones.length}</strong> zona</span>
+        </div>
+        <label><span>Laboratori aktiv</span><select value={laboratoryId} onChange={(event) => setLaboratoryId(event.target.value)}>{laboratories.map((laboratory) => <option key={laboratory.id} value={laboratory.id}>{laboratory.name} ({laboratory.code})</option>)}</select></label>
+      </div>
+    </header>
     {error && <div className="twin-error" role="alert"><AlertTriangle size={18}/><span>{error}</span></div>}
     <div className="twin-workspace">
       <TwinTelemetryHeader telemetry={telemetry}/>
       <div className={`twin-viewer ${selection ? "has-selection" : ""}`}>
+        <div className="twin-scene-identity" aria-hidden="true"><Activity size={14}/><span><strong>{activeLaboratory?.name}</strong><small>{cameraMode === "overview" ? "Pamje e përgjithshme" : cameraMode === "top" ? "Pamje nga lart" : cameraMode === "focus" ? "Fokus në objekt" : "Inspektim në ecje"}</small></span></div>
         <TwinViewerToolbar cameraMode={cameraMode} onCameraMode={(mode) => { if (mode !== "focus" || selection) setCameraMode(mode); }} onReset={resetCamera} layers={layers} onToggle={toggleLayer} ceilingMode={ceilingMode} onCeilingMode={() => setCeilingMode((current) => current === "cutaway" ? "transparent" : current === "transparent" ? "closed" : "cutaway")} greenMode={greenMode} onGreenMode={() => { setGreenMode((current) => !current); setLayers((current) => ({...current,sensors:true,cameras:true,sensorLabels:true})); }}/>
         <TwinOperationsPanel operations={operations} openTab={operationsTab} onOpen={openOperations} onClose={() => setOperationsTab(null)}/>
         <button type="button" className={`twin-dashboard-toggle ${dashboardOpen ? "active" : ""}`} onClick={() => { setOperationsTab(null); setSelectionKey(null); setEditorOpen(false); setDashboardOpen((current) => !current); }}><LayoutDashboard size={16}/><span>Dashboard</span></button>
