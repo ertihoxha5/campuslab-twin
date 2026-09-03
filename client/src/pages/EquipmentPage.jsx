@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
+  ArrowUpRight,
   Cpu,
+  Gauge,
   MapPin,
   Plus,
   RefreshCw,
@@ -149,6 +151,19 @@ export function EquipmentPage() {
         </>}
       />
 
+      <section className="equipment-overview" aria-label="Përmbledhja e pajisjeve">
+        <div className="equipment-overview-copy">
+          <span><i /> REGJISTRI I ASETEVE</span>
+          <h2>Gjendja e çdo pajisjeje, në një pamje të vetme.</h2>
+          <p>Monitoroni shëndetin, energjinë dhe vendosjen e infrastrukturës laboratorike.</p>
+        </div>
+        <div className="equipment-overview-metrics">
+          <article><Cpu size={17}/><span><strong>{pagination?.total ?? equipment.length}</strong><small>Pajisje gjithsej</small></span></article>
+          <article><Activity size={17}/><span><strong>{equipment.filter((item) => item.status === "active").length}</strong><small>Aktive në këtë faqe</small></span></article>
+          <article><Gauge size={17}/><span><strong>{equipment.length ? Math.round(equipment.reduce((sum, item) => sum + Number(item.healthScore || 0), 0) / equipment.length) : 0} mes.</strong><small>Shëndeti nga 100</small></span></article>
+        </div>
+      </section>
+
       <div className="laboratory-filters">
         <form onSubmit={submitSearch}>
           <Search size={17} aria-hidden="true" />
@@ -219,6 +234,14 @@ export function EquipmentPage() {
           <div className="equipment-card-grid">
             {equipment.map((item) => (
               <article className="equipment-card" key={item.id}>
+                <div className="equipment-card-visual" aria-hidden="true">
+                  <span><Cpu size={25}/></span>
+                  <div>
+                    <small>SHËNDETI I ASETIT</small>
+                    <strong>{Number(item.healthScore).toLocaleString("sq-AL")} / 100</strong>
+                  </div>
+                  <i style={{ "--equipment-health": `${Math.max(0, Math.min(100, Number(item.healthScore) || 0))}%` }} />
+                </div>
                 <header>
                   <span className="laboratory-code">{item.code}</span>
                   <StatusBadge tone={statusTones[item.status]}>{statusLabels[item.status] ?? item.status}</StatusBadge>
@@ -259,7 +282,7 @@ export function EquipmentPage() {
                   className="equipment-card-link"
                   to={`/aplikacioni/pajisjet/${item.id}`}
                 >
-                  Hap detajet
+                  <span>Hap detajet</span><ArrowUpRight size={15}/>
                 </Link>
               </article>
             ))}
