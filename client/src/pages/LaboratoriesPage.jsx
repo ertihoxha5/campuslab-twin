@@ -3,7 +3,10 @@ import { Link } from "react-router-dom";
 import {
   Archive,
   ArchiveRestore,
+  ArrowUpRight,
+  Activity,
   Building2,
+  Layers3,
   MapPin,
   Plus,
   RefreshCw,
@@ -161,6 +164,28 @@ export function LaboratoriesPage() {
         </div>
       </div>
 
+      <section className="laboratories-overview" aria-label="Përmbledhja e laboratorëve">
+        <div className="laboratories-overview-copy">
+          <span><i /> INFRASTRUKTURA AKADEMIKE</span>
+          <h2>Menaxhoni hapësirat që fuqizojnë mësimin dhe inovacionin.</h2>
+          <p>Një pamje e përbashkët për laboratorët, kapacitetet dhe gjendjen e tyre operative.</p>
+        </div>
+        <div className="laboratories-overview-stats">
+          <article>
+            <Building2 size={17} />
+            <span><strong>{pagination?.total ?? laboratories.length}</strong><small>{archiveMode ? "Në arkiv" : "Laboratorë"}</small></span>
+          </article>
+          <article>
+            <Activity size={17} />
+            <span><strong>{laboratories.filter((item) => item.status === "active").length}</strong><small>Aktivë në këtë faqe</small></span>
+          </article>
+          <article>
+            <Layers3 size={17} />
+            <span><strong>{new Set(laboratories.map((item) => item.building).filter(Boolean)).size}</strong><small>Ndërtesa</small></span>
+          </article>
+        </div>
+      </section>
+
       <div className="laboratory-filters">
         <form onSubmit={submitSearch}>
           <Search size={17} aria-hidden="true" />
@@ -228,6 +253,10 @@ export function LaboratoriesPage() {
           <div className="laboratory-card-grid">
             {laboratories.map((laboratory) => (
               <article className="laboratory-card" key={laboratory.id}>
+                <div className="laboratory-card-visual" aria-hidden="true">
+                  <Building2 size={24} />
+                  <span>Hapësirë laboratorike</span>
+                </div>
                 <header>
                   <span className="laboratory-code">{laboratory.code}</span>
                   <span
@@ -270,7 +299,7 @@ export function LaboratoriesPage() {
                     className="laboratory-open-link"
                     to={`/aplikacioni/laboratoret/${laboratory.id}`}
                   >
-                    Hap laboratorin
+                    <span>Hap laboratorin</span><ArrowUpRight size={15} />
                   </Link>
                 )}
               </article>
