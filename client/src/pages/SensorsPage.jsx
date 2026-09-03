@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
+  ArrowUpRight,
   Box,
   Clock3,
   Plus,
   RadioTower,
   RefreshCw,
   Search,
+  Wifi,
   X,
 } from "lucide-react";
 import { api } from "@/api/client.js";
@@ -144,6 +146,19 @@ export function SensorsPage() {
         </>}
       />
 
+      <section className="sensors-overview" aria-label="Përmbledhja e sensorëve">
+        <div className="sensors-overview-copy">
+          <span><i /> RRJETI I TELEMETRISË</span>
+          <h2>Sinjale live nga çdo hapësirë laboratorike.</h2>
+          <p>Mbani nën kontroll lidhjen, ritmin e matjeve dhe burimet e të dhënave.</p>
+        </div>
+        <div className="sensors-overview-metrics">
+          <article><RadioTower size={17}/><span><strong>{pagination?.total ?? sensors.length}</strong><small>Sensorë gjithsej</small></span></article>
+          <article><Wifi size={17}/><span><strong>{sensors.filter((item) => item.status === "online").length}</strong><small>Online në këtë faqe</small></span></article>
+          <article><Clock3 size={17}/><span><strong>{sensors.length ? Math.round(sensors.reduce((sum, item) => sum + Number(item.samplingIntervalSeconds || 0), 0) / sensors.length) : 0}s</strong><small>Intervali mesatar</small></span></article>
+        </div>
+      </section>
+
       <div className="laboratory-filters sensor-filters">
         <form onSubmit={submitSearch}>
           <Search size={17} />
@@ -217,6 +232,11 @@ export function SensorsPage() {
           <div className="equipment-card-grid">
             {sensors.map((sensor) => (
               <article className="equipment-card sensor-card" key={sensor.id}>
+                <div className={`sensor-card-signal is-${sensor.status}`} aria-hidden="true">
+                  <span><RadioTower size={24}/></span>
+                  <div><small>SINJALI I SENSORIT</small><strong>{sensor.status === "online" ? "Transmetim live" : statusLabels[sensor.status]}</strong></div>
+                  <figure>{[8,16,11,24,14,20,9,18,12].map((height, index) => <i key={index} style={{ height: `${height}px` }}/>)}</figure>
+                </div>
                 <header>
                   <span className="laboratory-code">{sensor.code}</span>
                   <StatusBadge tone={statusTones[sensor.status]}>{statusLabels[sensor.status] ?? sensor.status}</StatusBadge>
@@ -249,7 +269,7 @@ export function SensorsPage() {
                   className="equipment-card-link"
                   to={`/aplikacioni/sensoret/${sensor.id}`}
                 >
-                  Hap detajet
+                  <span>Hap detajet</span><ArrowUpRight size={15}/>
                 </Link>
               </article>
             ))}
