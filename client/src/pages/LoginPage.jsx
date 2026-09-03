@@ -36,12 +36,14 @@ export function LoginPage() {
 
   return (
     <AuthPageShell
+      variant="login"
       eyebrow="Qasje universitare"
       title="Kyçu në hapësirën tuaj"
       description="Përdorni kredencialet e llogarisë aktive të universitetit."
       asideTitle="Operacionet e laboratorëve në një vend."
       asideItems={["Monitorim dhe alarme në kohë reale", "Digital Twin dhe asetet laboratorike", "Raporte të kufizuara sipas rolit"]}
     >
+      <div className="login-welcome-line"><span><i /> Portal i sigurt</span><small>Sesioni mbrohet me cookie HTTP-only</small></div>
       <form className="auth-form" onSubmit={submit}>
         <label htmlFor="login-email">Email-i institucional</label>
         <div className="auth-input-wrap">
@@ -69,6 +71,7 @@ export function LoginPage() {
           {loading ? "Duke u kyçur…" : "Kyçu"}<ArrowRight size={18} />
         </Button>
       </form>
+      <div className="login-role-strip" aria-label="Rolet që mund të kyçen"><span>Admin universiteti</span><i /><span>Teknik</span><i /><span>Staf</span></div>
       <p className="auth-footnote">Universiteti nuk është regjistruar? <Link to="/regjistrohu">Dërgo kërkesën</Link></p>
       <p className="auth-admin-note">Administrator i platformës? <Link to="/administrimi/kycu">Hap hyrjen administrative</Link></p>
     </AuthPageShell>

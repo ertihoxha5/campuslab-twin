@@ -12,6 +12,7 @@ export function RegisterPage() {
   const formRef = useRef(null);
   const [logoPreview, setLogoPreview] = useState("");
   const [state, setState] = useState(initialState);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => () => { if (logoPreview) URL.revokeObjectURL(logoPreview); }, [logoPreview]);
 
@@ -49,6 +50,13 @@ export function RegisterPage() {
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoPreview("");
     setState(initialState);
+    setProgress(100);
+  }
+
+  function updateProgress(event) {
+    const required = [...event.currentTarget.querySelectorAll("[required]")];
+    const completed = required.filter((field) => field.type === "checkbox" ? field.checked : field.value.trim()).length;
+    setProgress(Math.round((completed / required.length) * 100));
   }
 
   async function submit(event) {
@@ -65,6 +73,7 @@ export function RegisterPage() {
       form.reset();
       if (logoPreview) URL.revokeObjectURL(logoPreview);
       setLogoPreview("");
+      setProgress(0);
       setState({ loading: false, message: result.data.message, error: false, details: null });
     } catch (error) {
       setState({ loading: false, message: error.message, error: true, details: error.details ?? null });
@@ -73,20 +82,22 @@ export function RegisterPage() {
 
   return (
     <AuthPageShell
+      variant="registration"
       eyebrow="Regjistrimi institucional"
       title="Regjistro universitetin"
       description="Plotësoni të dhënat institucionale. Kërkesa shqyrtohet nga administratori i platformës para aktivizimit."
       asideTitle="Niseni me të dhëna reale ose testuese."
       asideItems={["Universitetet testuese pranohen me domain .test", "Të dhënat verifikohen para aktivizimit", "Administratori krijohet pas aprovimit"]}
     >
+      <div className="registration-progress"><div><span>Progresi i kërkesës</span><strong>{progress}%</strong></div><i><b style={{ width: `${progress}%` }} /></i><small>{progress === 100 ? "Gati për verifikim" : "Plotësoni fushat e detyrueshme"}</small></div>
       <div className="registration-test-callout">
         <FlaskConical size={19} />
         <div><strong>Po testoni sistemin?</strong><p>Gjeneroni automatikisht një universitet të vlefshëm me domain të rezervuar.</p></div>
         <Button type="button" variant="outline" size="sm" onClick={fillTestUniversity}>Plotëso testin</Button>
       </div>
 
-      <form ref={formRef} className="registration-form auth-registration-form" onSubmit={submit}>
-        <fieldset>
+      <form ref={formRef} className="registration-form auth-registration-form" onSubmit={submit} onInput={updateProgress}>
+        <fieldset data-step="01">
           <legend><Building2 size={17} /> Institucioni</legend>
           <div className="registration-fields">
             <label className="wide">Emri i universitetit<input name="universityName" required minLength="3" /></label>
@@ -101,7 +112,7 @@ export function RegisterPage() {
           </div>
         </fieldset>
 
-        <fieldset>
+        <fieldset data-step="02">
           <legend><UserRound size={17} /> Përfaqësuesi</legend>
           <div className="registration-fields">
             <label>Emri i përfaqësuesit<input name="representativeName" required /></label>
@@ -110,7 +121,7 @@ export function RegisterPage() {
           </div>
         </fieldset>
 
-        <fieldset>
+        <fieldset data-step="03">
           <legend><ShieldCheck size={17} /> Siguria</legend>
           <div className="registration-fields">
             <label>Fjalëkalimi<input name="password" type="password" autoComplete="new-password" minLength="12" aria-describedby="password-help" required /><span id="password-help" className="field-help">Të paktën 12 karaktere me shkronjë të madhe, të vogël, numër dhe simbol.</span></label>
