@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Building2, Cpu, Radio, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button.jsx";
@@ -11,6 +11,8 @@ const capabilities = [
 ];
 
 export function HomePage() {
+  const [introVisible, setIntroVisible] = useState(() => sessionStorage.getItem("campuslab-home-intro") !== "seen");
+
   useEffect(()=>{
     const elements=[...document.querySelectorAll(".home-reveal")];
     if(!("IntersectionObserver" in window)||window.matchMedia("(prefers-reduced-motion: reduce)").matches){elements.forEach((element)=>element.classList.add("is-visible"));return undefined;}
@@ -18,7 +20,17 @@ export function HomePage() {
     elements.forEach((element)=>observer.observe(element));
     return()=>observer.disconnect();
   },[]);
+  useEffect(() => {
+    if (!introVisible) return undefined;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => {
+      setIntroVisible(false);
+      sessionStorage.setItem("campuslab-home-intro", "seen");
+    }, reducedMotion ? 80 : 1700);
+    return () => window.clearTimeout(timer);
+  }, [introVisible]);
   return <main className="home-v2">
+    {introVisible && <div className="home-intro-loader" role="status" aria-label="CampusLab Twin po ngarkohet"><div className="loader-symbol"><span>CT</span><i /><i /><i /></div><strong>CampusLab Twin</strong><p>Po lidhim laboratorin me binjakun digjital…</p><div className="loader-progress"><i /></div><small>HAPËSIRA · SENSORË · INTELIGJENCË</small></div>}
     <HeroCarousel />
     <section className="home-proof" aria-label="Pikat kryesore të platformës"><div className="site-container home-proof-inner"><p><span>Një platformë</span> për gjithë ciklin operacional</p><dl><div><dt>Izolim</dt><dd>Të dhëna sipas universitetit</dd></div><div><dt>Realtime</dt><dd>Sensorë dhe alarme live</dd></div><div><dt>3D</dt><dd>Digital Twin sipas zonave</dd></div></dl></div></section>
     <section className="home-word-stream" aria-label="Aftësitë e platformës"><div><span>Digital Twin</span><i>•</i><span>Sensorë live</span><i>•</i><span>Mirëmbajtje</span><i>•</i><span>Analitikë</span><i>•</i><span>Siguri</span><i>•</i><span>Energji</span><i>•</i><span>Digital Twin</span><i>•</i><span>Sensorë live</span><i>•</i></div></section>

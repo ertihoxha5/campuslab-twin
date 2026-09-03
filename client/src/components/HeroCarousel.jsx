@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Activity, ArrowRight, ChevronLeft, ChevronRight, ScanLine, Thermometer, Users, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button.jsx";
 
@@ -23,21 +23,30 @@ const slides = [
 
 export function HeroCarousel() {
   const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const heroRef = useRef(null);
 
   useEffect(() => {
     const interval = window.setInterval(
-      () => setActive((value) => (value + 1) % slides.length),
+      () => { if (!paused) setActive((value) => (value + 1) % slides.length); },
       6500,
     );
     return () => window.clearInterval(interval);
-  }, []);
+  }, [paused]);
 
   const move = (direction) => {
     setActive((value) => (value + direction + slides.length) % slides.length);
   };
 
+  const moveLight = (event) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty("--pointer-x", `${event.clientX - bounds.left}px`);
+    event.currentTarget.style.setProperty("--pointer-y", `${event.clientY - bounds.top}px`);
+  };
+
   return (
-    <section className="hero-carousel" aria-roledescription="carousel">
+    <section ref={heroRef} className={`hero-carousel ${scanning ? "is-scanning" : ""}`} aria-roledescription="carousel" onPointerMove={moveLight} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <div className="hero-slides">
         {slides.map((slide, index) => (
           <img
@@ -50,6 +59,7 @@ export function HeroCarousel() {
         ))}
       </div>
       <div className="hero-overlay" />
+      <div className="hero-magic-light" aria-hidden="true" />
       <div className="site-container hero-content">
         <p className="hero-eyebrow"><span /> Platformë operative për universitetet</p>
         <h1>Laboratori juaj, i kuptueshëm në çdo moment.</h1>
@@ -68,6 +78,13 @@ export function HeroCarousel() {
           </Button>
         </div>
       </div>
+      <aside className="hero-live-console" aria-label="Shembull i telemetrisë live">
+        <header><span><i /> LIVE LAB</span><small>AUT-01</small></header>
+        <div className="hero-live-grid"><span><Users /><b>8</b><small>Persona</small></span><span><Thermometer /><b>22.8°</b><small>Temperatura</small></span><span><Zap /><b>2.82</b><small>kW tani</small></span></div>
+        <div className="hero-signal"><Activity /><i><b /></i><small>12 sensorë online</small></div>
+        <button type="button" onClick={() => setScanning((value) => !value)}><ScanLine /> {scanning ? "Ndalo skanimin" : "Skano laboratorin"}</button>
+      </aside>
+      <div className="hero-scan-line" aria-hidden="true" />
       <div className="hero-controls">
         <button
           type="button"
