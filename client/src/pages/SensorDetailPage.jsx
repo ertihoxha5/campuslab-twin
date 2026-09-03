@@ -12,6 +12,7 @@ import {
   Pencil,
   RadioTower,
   Plus,
+  Wifi,
   X,
 } from "lucide-react";
 import { api } from "@/api/client.js";
@@ -198,43 +199,46 @@ export function SensorDetailPage() {
 
   return (
     <section className="sensor-detail-page">
-      <Link className="workspace-back-link" to="/aplikacioni/sensoret">
-        <ArrowLeft size={17} /> Kthehu te sensorët
-      </Link>
-
-      <div className="equipment-detail-heading">
-        <div>
-          <p className="eyebrow">Sensor laboratorik · {sensor.code}</p>
-          <h1>{sensor.name}</h1>
-          <p>
-            {type?.label} · {sensor.unit}
-          </p>
+      <div className="sensor-detail-identity">
+        <Link className="workspace-back-link" to="/aplikacioni/sensoret">
+          <ArrowLeft size={17} /> Të gjithë sensorët
+        </Link>
+        <div className="equipment-detail-heading">
+          <div>
+            <p className="eyebrow"><RadioTower size={13}/> BURIM TELEMETRIE · {sensor.code}</p>
+            <h1>{sensor.name}</h1>
+            <p>{type?.label} · Matje në {sensor.unit}</p>
+          </div>
+          <div className="laboratories-heading-actions">
+            <span className={`status-badge status-${sensor.status}`}>
+              {statusLabels[sensor.status]}
+            </span>
+            {canManage && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditing(true);
+                    setMessage({ type: "", text: "" });
+                  }}
+                >
+                  <Pencil size={16} /> Ndrysho
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setConfirmArchive(true)}
+                >
+                  <Archive size={16} /> Arkivo
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-        <div className="laboratories-heading-actions">
-          <span className={`status-badge status-${sensor.status}`}>
-            {statusLabels[sensor.status]}
-          </span>
-          {canManage && (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setEditing(true);
-                  setMessage({ type: "", text: "" });
-                }}
-              >
-                <Pencil size={16} /> Ndrysho
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setConfirmArchive(true)}
-              >
-                <Archive size={16} /> Arkivo
-              </Button>
-            </>
-          )}
+        <div className={`sensor-signal-orbit is-${sensor.status}`} aria-hidden="true">
+          <Wifi size={23}/><strong>{sensor.status === "online" ? "LIVE" : statusLabels[sensor.status]}</strong><small>{sensor.samplingIntervalSeconds}s interval</small>
+          <i/><i/><i/>
         </div>
       </div>
 
