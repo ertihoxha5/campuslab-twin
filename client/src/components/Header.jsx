@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { FlaskConical, Menu, Moon, Sun, X } from "lucide-react";
+import { Menu, Moon, Sun, X } from "lucide-react";
 import { Link, NavLink } from"react-router-dom";
+import { BrandLogo } from "@/components/BrandLogo.jsx";
 import { Button } from "@/components/ui/button.jsx";
 
 const navigation = [ 
@@ -31,11 +32,9 @@ export function Header({ theme, onToggleTheme }) {
     <header className="site-header">
       <div className="site-container header-inner">
         <Link className="brand" to="/" onClick={closeMenu}>
-          <span className="brand-icon">
-            <FlaskConical size={19} aria-hidden="true" />
-          </span>
-          <span>
-            CampusLab <strong>Twin</strong>
+          <BrandLogo />
+          <span className="brand-wordmark">
+            CampusLab <strong>Twin</strong><small>Digital laboratory operations</small>
           </span>
         </Link>
 

@@ -51,11 +51,11 @@ export function HeroCarousel() {
       </div>
       <div className="hero-overlay" />
       <div className="site-container hero-content">
-        <p className="hero-eyebrow">CampusLab Twin</p>
-        <h1>Laboratorë më të qartë. Vendime më të sigurta.</h1>
+        <p className="hero-eyebrow"><span /> Platformë operative për universitetet</p>
+        <h1>Laboratori juaj, i kuptueshëm në çdo moment.</h1>
         <p>
-          Një platformë për regjistrim institucional dhe qasje të sigurt në
-          hapësirën e çdo universiteti.
+          Monitoroni hapësirat, pajisjet dhe sensorët në kohë reale përmes një
+          Digital Twin të ndërtuar sipas laboratorit tuaj.
         </p>
         <div className="hero-actions">
           <Button asChild size="lg">
@@ -64,7 +64,7 @@ export function HeroCarousel() {
             </Link>
           </Button>
           <Button asChild size="lg" className="hero-secondary">
-            <Link to="/kycu">Kyçu</Link>
+            <Link to="/funksionalitetet">Shiko platformën</Link>
           </Button>
         </div>
       </div>
