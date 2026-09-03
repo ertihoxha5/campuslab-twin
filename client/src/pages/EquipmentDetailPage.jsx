@@ -9,6 +9,8 @@ import {
   Cpu,
   MapPin,
   Pencil,
+  Radio,
+  ShieldCheck,
   UserRound,
   X,
   Zap,
@@ -155,34 +157,40 @@ export function EquipmentDetailPage() {
 
   return (
     <section className="equipment-detail-page">
-      <Link className="workspace-back-link" to="/aplikacioni/pajisjet">
-        <ArrowLeft size={17} /> Kthehu te pajisjet
-      </Link>
-
-      <div className="equipment-detail-heading">
-        <div>
-          <p className="eyebrow">Pajisje laboratorike · {equipment.code}</p>
-          <h1>{equipment.name}</h1>
-          <p>{equipment.type}</p>
+      <div className="equipment-detail-identity">
+        <Link className="workspace-back-link" to="/aplikacioni/pajisjet">
+          <ArrowLeft size={17} /> Të gjitha pajisjet
+        </Link>
+        <div className="equipment-detail-heading">
+          <div>
+            <p className="eyebrow"><Radio size={13}/> ASET I MONITORUAR · {equipment.code}</p>
+            <h1>{equipment.name}</h1>
+            <p>{equipment.type} · {equipment.manufacturer || "Prodhues i pacaktuar"}</p>
+          </div>
+          <div className="laboratories-heading-actions">
+            <span className={`status-badge status-${equipment.status}`}>
+              {statusLabels[equipment.status]}
+            </span>
+            {canManage && (
+              <>
+                <Button type="button" variant="outline" onClick={openEditor}>
+                  <Pencil size={16} /> Ndrysho
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setConfirmArchive(true)}
+                >
+                  <Archive size={16} /> Arkivo
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-        <div className="laboratories-heading-actions">
-          <span className={`status-badge status-${equipment.status}`}>
-            {statusLabels[equipment.status]}
-          </span>
-          {canManage && (
-            <>
-              <Button type="button" variant="outline" onClick={openEditor}>
-                <Pencil size={16} /> Ndrysho
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setConfirmArchive(true)}
-              >
-                <Archive size={16} /> Arkivo
-              </Button>
-            </>
-          )}
+        <div className="equipment-health-orbit" style={{ "--asset-health": Number(equipment.healthScore) }}>
+          <ShieldCheck size={22}/>
+          <strong>{Number(equipment.healthScore).toLocaleString("sq-AL")}%</strong>
+          <small>shëndeti</small>
         </div>
       </div>
 
