@@ -200,7 +200,7 @@ export function RealtimeMonitoringPage() {
         eyebrow="Operacionet live"
         title="Monitorimi në kohë reale"
         description="Leximet, energjia dhe alarmet e laboratorit të zgjedhur, të përditësuara nga kanali realtime."
-        meta={<StatusBadge tone={liveState.tone}>{liveState.label}</StatusBadge>}
+        meta={<span role="status" aria-live="polite"><StatusBadge tone={liveState.tone}>{liveState.label}</StatusBadge></span>}
         actions={<Button
           type="button"
           variant="outline"
@@ -212,29 +212,37 @@ export function RealtimeMonitoringPage() {
         </Button>}
       />
 
-      <div className="realtime-toolbar">
-        <label>
-          <span>Laboratori</span>
-          <select
-            value={laboratoryId}
-            onChange={(event) => setLaboratoryId(event.target.value)}
-          >
-            {laboratories.length === 0 && (
-              <option value="">Nuk ka laborator aktiv</option>
-            )}
-            {laboratories.map((laboratory) => (
-              <option key={laboratory.id} value={laboratory.id}>
-                {laboratory.name} ({laboratory.code})
-              </option>
-            ))}
-          </select>
-        </label>
-        <span className="realtime-last-update">
-          {lastUpdate
-            ? `Leximi i fundit: ${timeLabel(lastUpdate)}`
-            : "Në pritje të leximit të parë"}
-        </span>
-      </div>
+      <section className="realtime-command-deck" aria-label="Kontrolli i monitorimit live">
+        <div className="realtime-command-copy">
+          <span><i className={connection}/> KANALI REALTIME</span>
+          <h2>Laboratori juaj, duke komunikuar tani.</h2>
+          <p>Sinjalet, konsumi dhe alarmet rifreskohen automatikisht sapo arrijnë.</p>
+        </div>
+        <div className="realtime-toolbar">
+          <label>
+            <span>Laboratori aktiv</span>
+            <select
+              value={laboratoryId}
+              onChange={(event) => setLaboratoryId(event.target.value)}
+            >
+              {laboratories.length === 0 && (
+                <option value="">Nuk ka laborator aktiv</option>
+              )}
+              {laboratories.map((laboratory) => (
+                <option key={laboratory.id} value={laboratory.id}>
+                  {laboratory.name} ({laboratory.code})
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className="realtime-last-update">
+            <Radio size={14}/>
+            {lastUpdate
+              ? `Leximi i fundit: ${timeLabel(lastUpdate)}`
+              : "Në pritje të leximit të parë"}
+          </span>
+        </div>
+      </section>
 
       <p className="visually-hidden" aria-live="polite" aria-atomic="true">
         {announcement}
@@ -295,7 +303,7 @@ export function RealtimeMonitoringPage() {
           </div>
           {chartData.length === 0 ? (
             <EmptyState compact icon={Activity} title="Në pritje të telemetrisë"
-              description="Grafiku plotësohet sapo të mbërrijë leximi i parë realtime." />
+              description="Në pritje të leximeve realtime nga simulatori." />
           ) : (
             <div className="realtime-chart">
               <ResponsiveContainer width="100%" height="100%">
