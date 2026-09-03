@@ -1,0 +1,281 @@
+/* ===========================================================================
+   About page — "Historia e binjakut digjital" interactive timeline
+   Loaded after styles.css. Keeps the existing about palette (grape / reseda).
+   =========================================================================== */
+
+.about-history {
+  padding: clamp(90px, 12vw, 140px) 0;
+  background: var(--background);
+}
+.about-history > .site-container > header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.9fr);
+  gap: 60px;
+  align-items: end;
+  margin-bottom: 56px;
+}
+.about-history header h2 {
+  margin: 10px 0 0;
+  color: var(--text);
+  font-size: clamp(2.3rem, 4.4vw, 4.4rem);
+  font-weight: 610;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+.about-history header > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+
+/* --- year selector -------------------------------------------------- */
+.about-history-track {
+  position: relative;
+  display: flex;
+  gap: clamp(8px, 4vw, 40px);
+  padding: 0 4px 30px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.about-history-track::-webkit-scrollbar {
+  display: none;
+}
+.about-history-track > button {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+  padding: 0 2px 4px;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.about-history-track > button span {
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.about-history-track > button i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--border);
+  box-shadow: 0 0 0 4px transparent;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+.about-history-track > button:hover {
+  color: var(--text);
+  transform: translateY(-2px);
+}
+.about-history-track > button.active {
+  color: var(--grape);
+}
+.about-history-track > button.active i {
+  background: var(--grape);
+  box-shadow: 0 0 0 5px rgba(109, 79, 163, 0.16);
+  transform: scale(1.15);
+}
+.about-history-progress {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 8px;
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+}
+.about-history-progress i {
+  display: block;
+  width: var(--p, 0%);
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--grape), var(--reseda));
+  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* --- stage --------------------------------------------------------- */
+.about-history-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 30px 80px rgba(37, 43, 55, 0.08);
+  animation: aboutHistoryIn 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.about-history-metric {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 46px;
+  overflow: hidden;
+  color: #f4f3f1;
+  background:
+    radial-gradient(90% 70% at 25% 15%, rgba(88, 66, 124, 0.45), transparent 60%),
+    #252b37;
+}
+.about-history-metric strong {
+  font-size: clamp(3.2rem, 7vw, 6rem);
+  font-weight: 720;
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.about-history-metric small {
+  max-width: 22ch;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+.about-history-motif {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 22px;
+  height: 46px;
+}
+.about-history-motif i {
+  width: 8px;
+  border-radius: 3px;
+  background: rgba(174, 190, 135, 0.7);
+  animation: aboutHistoryBar 1.8s ease-in-out infinite;
+}
+.about-history-motif i:nth-child(1) { height: 40%; }
+.about-history-motif i:nth-child(2) { height: 78%; animation-delay: 0.25s; }
+.about-history-motif i:nth-child(3) { height: 55%; animation-delay: 0.5s; }
+.about-history-motif b {
+  width: 26px;
+  height: 26px;
+  margin-left: 8px;
+  border: 1px solid #61d9ec;
+  border-radius: 50%;
+  box-shadow: 0 0 0 6px rgba(97, 217, 236, 0.1);
+  align-self: center;
+}
+
+.about-history-detail {
+  display: flex;
+  flex-direction: column;
+  padding: 46px;
+  background: var(--background);
+}
+.about-history-year {
+  color: var(--grape);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.about-history-detail h3 {
+  margin: 16px 0 16px;
+  color: var(--text);
+  font-size: clamp(1.6rem, 2.9vw, 2.7rem);
+  font-weight: 620;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+.about-history-detail > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.75;
+}
+.about-history-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 30px;
+}
+.about-history-nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 0.72rem;
+  font-weight: 720;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+.about-history-nav button:hover:not(:disabled) {
+  border-color: var(--grape);
+  transform: translateY(-2px);
+}
+.about-history-nav button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.about-history-nav button:first-child svg {
+  transform: rotate(180deg);
+}
+
+@keyframes aboutHistoryIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes aboutHistoryBar {
+  50% {
+    transform: scaleY(0.55);
+    transform-origin: bottom;
+  }
+}
+
+@media (max-width: 900px) {
+  .about-history > .site-container > header {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .about-history-stage {
+    grid-template-columns: 1fr;
+  }
+  .about-history-metric {
+    padding: 34px;
+  }
+  .about-history-detail {
+    padding: 34px;
+  }
+}
+@media (max-width: 600px) {
+  .about-history-track {
+    gap: 22px;
+  }
+  .about-history-nav {
+    flex-direction: column;
+  }
+  .about-history-nav button {
+    justify-content: center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .about-history-stage {
+    animation: none;
+  }
+  .about-history-motif i {
+    animation: none;
+  }
+}

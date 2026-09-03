@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { Activity, Building2, CircleAlert, Cpu, RefreshCw, ShieldCheck, Users, Zap } from "lucide-react";
+import { Activity, ArrowUpRight, Box, Building2, CircleAlert, Clock3, Cpu, Radio, RefreshCw, ShieldCheck, Users, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 import { api } from "@/api/client.js";
 import { connectDashboardRealtime } from "@/api/realtime.js";
 import { Button } from "@/components/ui/button.jsx";
@@ -58,6 +59,7 @@ export function UniversityOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [realtimeStatus, setRealtimeStatus] = useState("connecting");
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const realtimeRefreshTimer = useRef(null);
 
   const loadSummary = useCallback(async () => {
@@ -77,6 +79,10 @@ export function UniversityOverviewPage() {
   }, [hours, laboratoryId]);
 
   useEffect(() => { loadSummary(); }, [loadSummary]);
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const scheduleRefresh = () => {
@@ -105,11 +111,7 @@ export function UniversityOverviewPage() {
         eyebrow="Përmbledhja operative"
         title={`Mirë se vini, ${user?.fullName?.split(" ")[0] ?? ""}`}
         description={`Pamja aktuale e laboratorëve të ${user?.university.name}, e kufizuar sipas rolit dhe lejeve tuaja.`}
-        actions={(
-          <Button type="button" variant="outline" size="sm" onClick={loadSummary} disabled={loading}>
-            <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko
-          </Button>
-        )}
+        actions={<div className="overview-header-actions"><span><Clock3 />{new Intl.DateTimeFormat("sq-AL", { hour: "2-digit", minute: "2-digit" }).format(currentTime)}</span><Button type="button" variant="outline" size="sm" onClick={loadSummary} disabled={loading}><RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Rifresko</Button></div>}
       />
 
       <div className="dashboard-command-bar" aria-label="Filtrat e dashboard-it">
@@ -157,6 +159,11 @@ export function UniversityOverviewPage() {
         />
       ) : summary ? (
         <>
+          <section className="dashboard-spotlight" aria-label="Qendra operative">
+            <div className="spotlight-copy"><span><i className={`is-${realtimeStatus}`} /> QENDRA OPERATIVE</span><h2>{infrastructureHealth >= 90 ? "Sistemet po punojnë normalisht." : infrastructureHealth >= 70 ? "Disa sisteme kërkojnë vëmendje." : "Kërkohet ndërhyrje operative."}</h2><p>{laboratoryId ? "Pamje e fokusuar për laboratorin e zgjedhur." : `Pamje e përbashkët për ${summary.metrics.laboratories} laboratorë aktivë.`}</p><div className="spotlight-actions"><Link to="/aplikacioni/digital-twin"><Box /> Hap Digital Twin <ArrowUpRight /></Link><Link to="/aplikacioni/monitorimi"><Activity /> Monitorimi live <ArrowUpRight /></Link></div></div>
+            <div className="spotlight-health"><div className="health-orbit" style={{ "--health": `${infrastructureHealth * 3.6}deg` }}><span><strong>{infrastructureHealth}%</strong><small>Shëndeti</small></span><i /><i /><i /></div><div className="health-caption"><span><i /> Live</span><small>Përditësim automatik</small></div></div>
+            <div className="spotlight-feed"><header><span>Sinjale kryesore</span><small>Tani</small></header><article><Cpu /><span><strong>{summary.metrics.activeEquipment ?? 0}</strong><small>Pajisje aktive</small></span><i className="ok" /></article><article><Radio /><span><strong>{summary.metrics.onlineSensors ?? 0}</strong><small>Sensorë online</small></span><i className="ok" /></article><article><CircleAlert /><span><strong>{summary.metrics.activeAlerts ?? 0}</strong><small>Alarme aktive</small></span><i className={(summary.metrics.activeAlerts ?? 0) > 0 ? "alert" : "ok"} /></article><Link to="/aplikacioni/laboratoret">Shiko laboratorët <ArrowUpRight /></Link></div>
+          </section>
           <div className="dashboard-metric-grid is-primary">
             {metricDefinitions.map(({ key, label, icon: Icon, format, alert }) => {
               const value = summary.metrics[key] ?? 0;

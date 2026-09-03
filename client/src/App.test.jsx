@@ -44,7 +44,7 @@ describe("public frontend", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Laboratorë më të mençur. Vendime më të qarta.",
+        name: "Historia e binjakut digjital, deri te laboratori juaj.",
       }),
     ).toBeInTheDocument();
   });

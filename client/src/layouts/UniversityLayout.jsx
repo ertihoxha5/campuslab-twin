@@ -69,6 +69,7 @@ export function UniversityLayout() {
   const user = useAuthStore((state) => state.user);
   const clearSession = useAuthStore((state) => state.clearSession);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [now, setNow] = useState(() => new Date());
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => window.localStorage.getItem("clt-sidebar-collapsed") === "true",
   );
@@ -88,6 +89,11 @@ export function UniversityLayout() {
     document.title = `${current?.label ?? "Aplikacioni"} · ${user?.university.acronym ?? "CampusLab Twin"}`;
     return () => { document.title = "CampusLab Twin"; };
   }, [current?.label, user?.university.acronym]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   function toggleSidebar() {
     setSidebarCollapsed((currentValue) => {
@@ -114,6 +120,7 @@ export function UniversityLayout() {
           <div className="university-brand-copy">
             <strong>{user?.university.acronym}</strong>
             <small>{user?.university.name}</small>
+            <span>CampusLab Twin</span>
           </div>
           <button type="button" className="sidebar-close" aria-label="Mbyll navigimin" onClick={() => setMenuOpen(false)}>
             <X size={19} />
@@ -134,6 +141,11 @@ export function UniversityLayout() {
           ))}
         </nav>
 
+        <div className="sidebar-system-state">
+          <span><i /> Sistemi aktiv</span>
+          <small>Të dhënat sinkronizohen live</small>
+        </div>
+
         <button type="button" className="sidebar-collapse" onClick={toggleSidebar}
           aria-label={sidebarCollapsed ? "Zgjero navigimin" : "Ngushto navigimin"}
           title={sidebarCollapsed ? "Zgjero navigimin" : "Ngushto navigimin"}>
@@ -152,12 +164,26 @@ export function UniversityLayout() {
             <Building2 size={16} aria-hidden="true" /><span>{user?.university.acronym ?? "Universiteti"}</span>
             <ChevronRight size={15} aria-hidden="true" /><strong>{current?.label}</strong>
           </div>
+          <div className="workspace-mobile-title">
+            <small>{user?.university.acronym}</small>
+            <strong>{current?.label}</strong>
+          </div>
           <div className="university-account">
+            <div className="workspace-live-state">
+              <i />
+              <span>
+                <strong>LIVE</strong>
+                <small>{now.toLocaleTimeString("sq-AL", { hour: "2-digit", minute: "2-digit" })}</small>
+              </span>
+            </div>
             <NotificationMenu />
-            <div>
+            <div className="account-copy">
               <strong>{user?.fullName}</strong>
               <small>{(user?.roles ?? []).map((role) => roleLabels[role] ?? role).join(", ")}</small>
             </div>
+            <span className="account-avatar" aria-hidden="true">
+              {user?.fullName?.split(" ").map((part) => part[0]).slice(0, 2).join("")}
+            </span>
             <Button type="button" variant="outline" size="sm" onClick={logout}>
               <LogOut size={16} /><span className="logout-label">Dil</span>
             </Button>

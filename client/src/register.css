@@ -1,0 +1,212 @@
+/* ===========================================================================
+   University registration — stepped wizard
+   Loaded after styles.css. Keeps the existing auth palette (grape / reseda).
+   =========================================================================== */
+
+.auth-registration-page .auth-shell,
+.auth-registration-page .auth-context {
+  min-height: 660px;
+}
+.auth-registration-page .auth-card {
+  padding: clamp(32px, 4vw, 54px);
+}
+.auth-registration-page .auth-card > header {
+  margin-bottom: 4px;
+}
+
+/* --- stepper -------------------------------------------------------- */
+.reg-stepper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 26px 0 18px;
+  padding: 0;
+  list-style: none;
+}
+.reg-stepper li {
+  position: relative;
+  min-width: 0;
+}
+.reg-stepper li::after {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: calc(50% + 20px);
+  right: calc(-50% + 20px);
+  height: 2px;
+  background: var(--border);
+  transition: background 0.3s ease;
+}
+.reg-stepper li:last-child::after {
+  display: none;
+}
+.reg-stepper li.is-done::after {
+  background: var(--reseda);
+}
+.reg-stepper li > button {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--muted);
+  text-align: center;
+}
+.reg-stepper li > button:disabled {
+  cursor: default;
+}
+.reg-stepper-dot {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease;
+}
+.reg-stepper li.is-active .reg-stepper-dot {
+  background: var(--grape);
+  border-color: var(--grape);
+  color: #fff;
+  transform: scale(1.08);
+  box-shadow: 0 0 0 5px rgba(88, 66, 124, 0.14);
+}
+.reg-stepper li.is-done .reg-stepper-dot {
+  background: var(--reseda);
+  border-color: var(--reseda);
+  color: #fff;
+}
+.reg-stepper-label {
+  display: grid;
+  gap: 2px;
+  font-size: 0.74rem;
+  font-weight: 750;
+  line-height: 1.15;
+  color: var(--text);
+}
+.reg-stepper li:not(.is-active):not(.is-done) .reg-stepper-label {
+  color: var(--muted);
+}
+.reg-stepper-label small {
+  color: var(--muted);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* --- step navigation --------------------------------------------- */
+.registration-step-nav {
+  display: flex;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+/* --- animated step swap ----------------------------------------- */
+.auth-registration-form fieldset[hidden] {
+  display: none;
+}
+.auth-registration-form fieldset:not([hidden]) {
+  animation: regStepIn 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@keyframes regStepIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- success panel -------------------------------------------- */
+.registration-done {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  margin-top: 34px;
+  padding: 36px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.registration-done-mark {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  color: #fff;
+  background: var(--reseda);
+  border-radius: 14px;
+  box-shadow: 0 0 0 6px rgba(108, 118, 83, 0.14);
+}
+.registration-done h2 {
+  margin: 8px 0 0;
+  color: var(--text);
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: 620;
+  letter-spacing: -0.03em;
+}
+.registration-done p {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.7;
+}
+.registration-done-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.registration-done-restart {
+  padding: 0;
+  color: var(--grape);
+  background: none;
+  border: 0;
+  font-size: 0.76rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.registration-done-restart:hover {
+  color: var(--reseda);
+}
+
+/* --- responsive ---------------------------------------------- */
+@media (max-width: 560px) {
+  .reg-stepper-label {
+    font-size: 0.66rem;
+  }
+  .reg-stepper li::after {
+    left: calc(50% + 18px);
+    right: calc(-50% + 18px);
+  }
+  .registration-submit {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .registration-step-nav {
+    width: 100%;
+  }
+  .registration-step-nav .inline-flex {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-registration-form fieldset:not([hidden]) {
+    animation: none;
+  }
+}
