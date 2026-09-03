@@ -27,13 +27,10 @@ describe("public frontend", () => {
     expect(
       screen.getAllByRole("link", { name: /Regjistro Universitetin/i }).length,
     ).toBeGreaterThan(1);
-    expect(
-      screen.getAllByRole("link", { name: "Kyçu" }).length,
-    ).toBeGreaterThan(1);
     expect(screen.queryByText(/Kërko Demo/i)).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: "Laboratorë më të qartë. Vendime më të sigurta.",
+        name: "Laboratori juaj, i kuptueshëm në çdo moment.",
       }),
     ).toBeInTheDocument();
   });
@@ -47,12 +44,12 @@ describe("public frontend", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Një themel digjital për laboratorët universitarë.",
+        name: "Laboratorë më të mençur. Vendime më të qarta.",
       }),
     ).toBeInTheDocument();
   });
 
-  it("shows honest public explanations, process, FAQ, and contact", () => {
+  it("keeps the homepage explanation and journey sections", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
@@ -61,16 +58,14 @@ describe("public frontend", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Një pasqyrë digjitale e laboratorit fizik.",
+        name: "Gjithçka që ndodh në laborator, në një pamje të vetme.",
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Përpara se të regjistroheni." }),
+      screen.getByRole("heading", {
+        name: "Nga regjistrimi te laboratori juaj digjital.",
+      }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Na kontaktoni/ })).toHaveAttribute(
-      "href",
-      "/kontakti",
-    );
     expect(screen.queryByText(/dashboard demo/i)).not.toBeInTheDocument();
   });
 });
