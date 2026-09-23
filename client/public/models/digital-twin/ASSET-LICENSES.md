@@ -1,5 +1,13 @@
 # Digital Twin 3D assets
 
+## CampusLab server rack
+
+- File: `server-rack.glb`
+- Author: CampusLab Twin / OpenAI Codex, generated in Blender 5.2 from `client/scripts/build_server_rack.py`
+- Source: original project asset (no external source URL)
+- License: project-owned; may be used and modified within CampusLab Twin
+- Design: 42U enclosure, open glass door, server modules, ventilation, status LEDs, cable rails and feet
+
 ## Sheen Chair
 
 - File: `sheen-chair.glb`

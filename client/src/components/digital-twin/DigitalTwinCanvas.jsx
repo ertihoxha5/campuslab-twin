@@ -1,17 +1,15 @@
 /* eslint-disable react/no-unknown-property */
 import { ContactShadows, Html, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Component, Suspense, useCallback, useState } from "react";
+import { Component, Suspense, useCallback, useMemo, useState } from "react";
 import { ACESFilmicToneMapping, SRGBColorSpace } from "three";
 import { IoTDevices } from "./IoTDevices.jsx";
-import { ClassroomFurnishings } from "./ClassroomFurnishings.jsx";
 import { LaboratoryArchitecture } from "./LaboratoryArchitecture.jsx";
 import { LaboratoryAssets } from "./LaboratoryAssets.jsx";
 import { PlacedAssets, PlacementScene } from "./PlacementScene.jsx";
 import { TwinCameraController } from "./TwinCameraController.jsx";
 import { TwinDataFlows } from "./TwinDataFlows.jsx";
-import { SecurityCameras } from "./SecurityCameras.jsx";
-import { buildCameraRecords } from "./security-camera-records.js";
+import { visibleSceneContent } from "./scene-content.js";
 import { supportsWebGL } from "./webgl.js";
 
 class TwinBoundary extends Component {
@@ -25,7 +23,8 @@ function ZoneLabels({ zones, visible, selectedId }) {
   return <group>{zones.filter((zone)=>visible||zone.id===selectedId).map((zone) => <Html key={zone.id} center distanceFactor={18} position={[zone.center[0], 2.35, zone.center[1]]}><div className={`twin-zone-label ${zone.id===selectedId?"selected":""}`}><strong>{zone.name}</strong><span>{zone.code}</span></div></Html>)}</group>;
 }
 
-function Scene({ zones = [], assets, sensors, cameras=[], placements = [], placement, selection, onSelect, onContextMenu, onTransformEnd, transformMode, layers, cameraMode, resetNonce, ceilingMode, greenMode=false }) {
+function Scene({ zones = [], assets, sensors, placements = [], placement, selection, onSelect, onContextMenu, onTransformEnd, transformMode, layers, cameraMode, resetNonce, ceilingMode, greenMode=false }) {
+  const content = useMemo(() => visibleSceneContent(assets, placements), [assets, placements]);
   const alarmAsset = assets.find((asset) => asset.status === "alarm");
   return <>
     <color attach="background" args={[greenMode?"#07120F":"#171D26"]} />
@@ -37,14 +36,12 @@ function Scene({ zones = [], assets, sensors, cameras=[], placements = [], place
     <LaboratoryArchitecture zones={zones} visibleZones={layers.zones} alarmZoneId={alarmAsset?.zoneId} ceilingMode={cameraMode==="walk"?"closed":ceilingMode} walkMode={cameraMode==="walk"} selectedZoneId={selection?.kind==="zone"?selection.item.id:null} onZoneSelect={(item)=>onSelect({kind:"zone",item})}/>
     {!zones.length && <Html center><div className="twin-model-loading">Ky laborator nuk ka ende zona të konfiguruara.</div></Html>}
     <Suspense fallback={<Html center><div className="twin-model-loading">Po ngarkohen pajisjet 3D…</div></Html>}>
-      <LaboratoryAssets assets={assets} visible={layers.equipment} selectedId={selection?.kind === "asset" ? selection.item.id : null} onSelect={(item) => onSelect({ kind: "asset", item })} />
-      <ClassroomFurnishings zones={zones} visible={layers.equipment}/>
-      <SecurityCameras records={cameras.length?cameras:buildCameraRecords(zones)} visible={layers.cameras} greenMode={greenMode} onSelect={(item)=>onSelect({kind:"camera",item})}/>
+      <LaboratoryAssets assets={content.assets} visible={layers.equipment} cameraVisible={layers.cameras} selectedId={selection?.kind === "asset" ? selection.item.id : null} onSelect={(item) => onSelect({ kind: "asset", item })} />
     </Suspense>
     <IoTDevices sensors={sensors} visible={layers.sensors} showLabels={layers.sensorLabels} greenMode={greenMode} selectedId={selection?.kind === "sensor" ? selection.item.id : null} onSelect={(item) => onSelect({ kind: "sensor", item })} />
-    <Suspense fallback={null}><PlacedAssets items={placements} visible={layers.equipment||layers.sensors} selectedId={selection?.kind==="placement"?selection.item.id:null} transformMode={transformMode} onTransformEnd={onTransformEnd} onSelect={(item)=>onSelect({kind:"placement",item})} onContextMenu={onContextMenu}/></Suspense>
+    <Suspense fallback={null}><PlacedAssets items={content.placements} visible={layers.equipment||layers.sensors||layers.cameras} selectedId={selection?.kind==="placement"?selection.item.id:null} transformMode={transformMode} onTransformEnd={onTransformEnd} onSelect={(item)=>onSelect({kind:"placement",item})} onContextMenu={onContextMenu}/></Suspense>
     {placement&&<PlacementScene placement={placement}/>}
-    <TwinDataFlows sensors={sensors} assets={assets} visible={layers.dataFlow} />
+    <TwinDataFlows sensors={sensors} assets={content.assets} visible={layers.dataFlow} />
     <ZoneLabels zones={zones} visible={layers.zones} selectedId={selection?.kind==="zone"?selection.item.id:null}/>
     <ContactShadows position={[0, .025, 0]} opacity={.3} scale={23} blur={2.2} far={6} resolution={256} frames={1} />
     <TwinCameraController mode={cameraMode} focusPosition={selection?.item?.position} resetNonce={resetNonce} zones={zones}/>

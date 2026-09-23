@@ -22,4 +22,12 @@ describe("dynamic laboratory scene", () => {
     expect(scene.sensors[0].position[1]).toBe(1.55);
     expect(scene.sensors[0].position).not.toEqual([scene.assets[0].position[0],1.15,scene.assets[0].position[2]+.18]);
   });
+
+  it("does not invent a workstation model for an unknown equipment type", () => {
+    const scene = buildDynamicScene({
+      zones: [{ id: 2, name: "Laboratori A", position: { x: 0, z: 0 }, dimensions: { width: 5, depth: 4, height: 3 } }],
+      equipment: [{ id: 11, zoneId: 2, name: "PLC S7-1200", type: "plc" }],
+    });
+    expect(scene.assets[0].type).toBe("generic");
+  });
 });

@@ -3,28 +3,34 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { Vector3 } from "three";
 import { CAMERA_PRESETS } from "./twin-config.js";
+import { fitLaboratoryZoom } from "./camera-fit.js";
 
 export function TwinCameraController({ mode, focusPosition, resetNonce, zones=[] }) {
   const camera = useThree((state) => state.camera);
   const invalidate = useThree((state) => state.invalidate);
+  const viewport = useThree((state) => state.size);
+  const fittedZoom = fitLaboratoryZoom(zones, viewport, mode);
   const controls = useRef();
   const transition = useRef(null);
   const pressed = useRef(new Set());
   const forward = useRef(new Vector3());
   const right = useRef(new Vector3());
-  const target = useMemo(() => mode === "focus" && focusPosition ? new Vector3(...focusPosition).add(new Vector3(0, .7, 0)) : new Vector3(...(CAMERA_PRESETS[mode]?.target ?? CAMERA_PRESETS.overview.target)), [focusPosition, mode]);
+  const focusX = focusPosition?.[0];
+  const focusY = focusPosition?.[1];
+  const focusZ = focusPosition?.[2];
+  const target = useMemo(() => mode === "focus" && focusX != null ? new Vector3(focusX, focusY ?? 0, focusZ ?? 0).add(new Vector3(0, .7, 0)) : new Vector3(...(CAMERA_PRESETS[mode]?.target ?? CAMERA_PRESETS.overview.target)), [focusX, focusY, focusZ, mode]);
   const bounds=useMemo(()=>zones.length?{minX:Math.min(...zones.map((zone)=>zone.center[0]-zone.size[0]/2))+.28,maxX:Math.max(...zones.map((zone)=>zone.center[0]+zone.size[0]/2))-.28,minZ:Math.min(...zones.map((zone)=>zone.center[1]-zone.size[1]/2))+.28,maxZ:Math.max(...zones.map((zone)=>zone.center[1]+zone.size[1]/2))-.28}:{minX:-9.25,maxX:9.25,minZ:-5.85,maxZ:5.85},[zones]);
 
   useEffect(() => {
     if (mode === "walk") { camera.position.set(0, 1.65, -.25); camera.lookAt(0, 1.5, 3); invalidate(); return; }
     const preset = CAMERA_PRESETS[mode] ?? CAMERA_PRESETS.overview;
-    const endPosition = mode === "focus" && focusPosition ? new Vector3(...focusPosition).add(new Vector3(4.2, 3.5, 4.4)) : new Vector3(...preset.position);
+    const endPosition = mode === "focus" && focusX != null ? new Vector3(focusX, focusY ?? 0, focusZ ?? 0).add(new Vector3(4.2, 3.5, 4.4)) : new Vector3(...preset.position);
     transition.current = { from: camera.position.clone(), to: endPosition, elapsed: 0, duration: .72 };
     if (camera.isPerspectiveCamera) camera.fov = preset.fov;
-    if (camera.isOrthographicCamera) camera.zoom = mode === "focus" ? 86 : mode === "top" ? 49 : 54;
+    if (camera.isOrthographicCamera) camera.zoom = mode === "focus" ? Math.min(86, viewport.width / 5.5, viewport.height / 5) : fittedZoom;
     camera.updateProjectionMatrix();
     invalidate();
-  }, [camera, focusPosition, invalidate, mode, resetNonce]);
+  }, [camera, fittedZoom, focusX, focusY, focusZ, invalidate, mode, resetNonce, viewport.height, viewport.width]);
 
   useEffect(() => {
     const down = (event) => pressed.current.add(event.code);

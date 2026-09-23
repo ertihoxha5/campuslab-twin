@@ -1,10 +1,12 @@
+import { zoneSlotPosition } from "./zone-layout.js";
+
 const zoneColors = ["#6D4FA3", "#6E7A4F", "#3E8794", "#8B7047", "#A04B4B", "#5F6E82"];
 
 const assetTypeAliases = [
   [/(robot|krahu)/i, "robot"],
+  [/(storage.?rack|raft|shelf)/i, "storage-rack"],
   [/(network.?rack|server|rack)/i, "network-rack"],
   [/(rrjet|network|server)/i, "network-rack"],
-  [/(storage.?rack|raft|shelf)/i, "storage-rack"],
   [/(workstation|stacion|computer|kompjuter)/i, "workstation"],
   [/(display|ekran|monitor)/i, "display"],
   [/(camera|kamer)/i, "camera"],
@@ -19,7 +21,9 @@ export function buildDynamicScene({ zones = [], equipment = [], sensors = [], re
   const assets = equipment.map((item, index) => {
     const zone = zoneById.get(String(item.zoneId)) ?? normalizedZones[index % Math.max(normalizedZones.length, 1)];
     const type = normalizeAssetType(`${item.type ?? ""} ${item.name ?? ""} ${item.code ?? ""}`);
-    const position = type === "robot" && zone ? [zone.center[0], 0, zone.center[1]] : positionInZone(zone, index, equipment.filter((candidate) => String(candidate.zoneId) === String(item.zoneId)).findIndex((candidate) => String(candidate.id) === String(item.id)));
+    const sameType = equipment.filter((candidate) => String(candidate.zoneId) === String(item.zoneId) && normalizeAssetType(`${candidate.type ?? ""} ${candidate.name ?? ""} ${candidate.code ?? ""}`) === type);
+    const typeIndex = sameType.findIndex((candidate) => String(candidate.id) === String(item.id));
+    const position = zoneSlotPosition(zone, type, typeIndex) ?? positionInZone(zone, index, equipment.filter((candidate) => String(candidate.zoneId) === String(item.zoneId)).findIndex((candidate) => String(candidate.id) === String(item.id)));
     const alert = activeAlerts.find((candidate) => String(candidate.equipmentId) === String(item.id));
     const energyReading = energy[String(item.id)];
     return {
@@ -136,7 +140,7 @@ function sensorPosition(zone, index, sensor, linkedAsset) {
 }
 
 function normalizeAssetType(value = "") {
-  return assetTypeAliases.find(([pattern]) => pattern.test(value))?.[1] ?? "workstation";
+  return assetTypeAliases.find(([pattern]) => pattern.test(value))?.[1] ?? "generic";
 }
 
 function baselineFor(type) {
