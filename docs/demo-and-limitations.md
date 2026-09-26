@@ -25,7 +25,7 @@ në prodhim.
 
 1. Ekzekutoni `npm run db:migrate`, `npm run db:seed` dhe `npm run db:verify`.
 2. Ekzekutoni `npm test`, `npm run lint` dhe `npm run build`.
-3. Verifikoni `GET http://localhost:3000/api/health` dhe hapni klientin.
+3. Verifikoni `GET http://localhost:3001/api/health` dhe hapni klientin.
 4. Përdorni dy profile të ndara të shfletuesit për dy universitetet, që cookie-t
    `HttpOnly` të mos zëvendësojnë njëra-tjetrën.
 

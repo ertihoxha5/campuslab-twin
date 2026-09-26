@@ -458,7 +458,7 @@ export function createSimulatorRepository(pool) {
       );
       const run = runRows[0];
       if (!run) return null;
-      const [sensors, equipment] = await Promise.all([
+      const [sensors, equipment, laboratory] = await Promise.all([
         query(
           pool,
           `SELECT id, equipment_id AS equipmentId, name,
@@ -481,11 +481,13 @@ export function createSimulatorRepository(pool) {
            ORDER BY id`,
           [universityId, laboratoryId],
         ),
+        query(pool, `SELECT capacity FROM laboratories WHERE university_id = ? AND id = ? LIMIT 1`, [universityId, laboratoryId]),
       ]);
       return {
         id: String(run.id),
         universityId: String(universityId),
         laboratoryId: String(laboratoryId),
+        laboratoryCapacity: laboratory[0]?.capacity,
         status: run.status,
         seedValue: run.seedValue,
         input: parseJson(run.input) ?? {},

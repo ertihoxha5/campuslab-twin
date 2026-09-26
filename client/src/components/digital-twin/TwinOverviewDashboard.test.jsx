@@ -16,7 +16,7 @@ describe("laboratory Digital Twin dashboard", () => {
       onClose={vi.fn()}
     />);
     expect(screen.getByText("Laboratori i Automatizimit")).toBeTruthy();
-    expect(screen.getByText("22.4°C")).toBeTruthy();
+    expect(screen.getByText("22,4 °C")).toBeTruthy();
     fireEvent.click(screen.getByText("Pajisjet"));
     fireEvent.click(screen.getByText("Krahu robotik"));
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ kind: "asset", item: expect.objectContaining({ id: "asset-1" }) }));

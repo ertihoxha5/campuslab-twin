@@ -116,7 +116,7 @@ describe("RealtimeMonitoringPage", () => {
 
     act(() => onConnectionChange("connected"));
 
-    expect(await screen.findByText(/23,1 °C/)).toBeInTheDocument();
+    expect((await screen.findAllByText(/23,1 °C/)).length).toBeGreaterThan(0);
     await waitFor(() =>
       expect(
         api.get.mock.calls.filter(([path]) =>
@@ -170,7 +170,7 @@ describe("RealtimeMonitoringPage", () => {
     });
 
     expect(screen.getByText("Lidhur drejtpërdrejt")).toBeInTheDocument();
-    expect(screen.getByText(/22,5 °C/)).toBeInTheDocument();
+    expect(screen.getAllByText(/22,5 °C/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Temperaturë").length).toBeGreaterThan(0);
     expect(screen.queryByText("temperature")).not.toBeInTheDocument();
     expect(screen.getByText(/1[.,]?200 W/)).toBeInTheDocument();

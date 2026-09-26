@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/ui/EmptyState.jsx";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
 import { PageHeader } from "@/components/ui/PageHeader.jsx";
 import { StatusBadge } from "@/components/ui/StatusBadge.jsx";
+import { MonitoringIndicators } from "@/components/MonitoringIndicators.jsx";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus.js";
 import {
   localizedLabel,
@@ -39,6 +40,8 @@ export function RealtimeMonitoringPage() {
   const [laboratoryId, setLaboratoryId] = useState("");
   const [alerts, setAlerts] = useState([]);
   const [readings, setReadings] = useState({});
+  const [sensorMetadata, setSensorMetadata] = useState([]);
+  const [equipment, setEquipment] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [energy, setEnergy] = useState(null);
   const [connection, setConnection] = useState("connecting");
@@ -132,6 +135,8 @@ export function RealtimeMonitoringPage() {
 
   useEffect(() => {
     setReadings({});
+    setSensorMetadata([]);
+    setEquipment([]);
     setChartData([]);
     setEnergy(null);
     setLastUpdate(null);
@@ -139,7 +144,17 @@ export function RealtimeMonitoringPage() {
     loadSnapshot();
     if (!laboratoryId) return undefined;
 
-    return connectMonitoringRealtime({
+    let active = true;
+    Promise.allSettled([
+      api.get(`/api/sensors?laboratoryId=${laboratoryId}&page=1&pageSize=100`),
+      api.get(`/api/equipment?laboratoryId=${laboratoryId}&page=1&pageSize=100`),
+    ]).then(([sensorResult, equipmentResult]) => {
+      if (!active) return;
+      if (sensorResult.status === "fulfilled") setSensorMetadata(sensorResult.value.data.sensors ?? []);
+      if (equipmentResult.status === "fulfilled") setEquipment(equipmentResult.value.data.equipment ?? []);
+    });
+
+    const disconnect = connectMonitoringRealtime({
       laboratoryId,
       onConnectionChange(status) {
         setConnection(status);
@@ -179,9 +194,16 @@ export function RealtimeMonitoringPage() {
         }
       },
     });
+    return () => { active = false; disconnect(); };
   }, [laboratoryId, loadSnapshot]);
 
   const latestReadings = useMemo(() => Object.values(readings), [readings]);
+  const selectedLaboratory = laboratories.find((laboratory) => String(laboratory.id) === laboratoryId);
+  const indicatorSensors = latestReadings.map((reading) => ({
+    ...sensorMetadata.find((sensor) => String(sensor.id) === String(reading.sensorId)),
+    ...reading,
+    type: reading.sensorType,
+  }));
   const chartSensors = useMemo(
     () => latestReadings.slice(0, colors.length),
     [latestReadings],
@@ -294,6 +316,7 @@ export function RealtimeMonitoringPage() {
           </strong>
         </article>
       </div>
+      <MonitoringIndicators laboratory={selectedLaboratory} sensors={indicatorSensors} powerWatts={energy?.powerWatts} equipment={equipment}/>
 
       <div className="realtime-content-grid">
         <article className="realtime-panel realtime-chart-panel">

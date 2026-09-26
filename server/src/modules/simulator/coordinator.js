@@ -161,6 +161,9 @@ function runtimeReference(runtime) {
 
 function runtimeConfiguration(runtime) {
   const configuration = { ...(runtime.input.configuration ?? {}) };
+  if (configuration.occupancyCapacity == null && Number(runtime.laboratoryCapacity) > 0) {
+    configuration.occupancyCapacity = Number(runtime.laboratoryCapacity);
+  }
   const ratedWatts = runtime.equipment.reduce(
     (total, item) => total + Number(item.energyRatingWatts ?? 0),
     0,

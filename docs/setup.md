@@ -34,7 +34,7 @@ Në Linux ose macOS përdorni `cp .env.example .env`. Plotësoni këto vlera:
 | Variabla                               | Qëllimi                                            |
 | -------------------------------------- | -------------------------------------------------- |
 | `NODE_ENV`                             | `development`, `test` ose `production`             |
-| `PORT`                                 | Porta e API-së; lokalisht `3000`                   |
+| `PORT`                                 | Porta e API-së; lokalisht `3001`                   |
 | `CLIENT_ORIGIN`                        | Origjina e lejuar e klientit, pa slash në fund     |
 | `DB_HOST`, `DB_PORT`                   | Adresa dhe porta e MySQL-it                        |
 | `DB_NAME`                              | Emri i databazës; migruesi mund ta krijojë         |
@@ -81,12 +81,12 @@ npm run dev
 ```
 
 - Klienti: `http://localhost:5173`
-- API: `http://localhost:3000`
-- Health check: `http://localhost:3000/api/health`
+- API: `http://localhost:3001`
+- Health check: `http://localhost:3001/api/health`
 
-Porta `3000` duhet të jetë e lirë. Nëse shfaqet `EADDRINUSE`, ndaloni procesin e
-vjetër që po e përdor; mos nisni një kopje të dytë të serverit në të njëjtën
-portë. Vite i përcjell kërkesat `/api` dhe Socket.IO te backend-i lokal.
+Porta `3001` duhet të jetë e lirë. Nëse shfaqet `EADDRINUSE`, identifikoni
+procesin që e përdor; mos ndaloni aplikacione të tjera pa e verifikuar.
+Vite i përcjell kërkesat `/api` dhe Socket.IO te backend-i lokal në këtë portë.
 
 ## 5. Verifikimi
 

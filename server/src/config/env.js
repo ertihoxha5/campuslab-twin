@@ -4,7 +4,7 @@ const environmentSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
-  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   CLIENT_ORIGIN: z.url("CLIENT_ORIGIN duhet të jetë një URL e vlefshme."),
   DB_HOST: z
     .string({ error: "DB_HOST është i detyrueshëm." })

@@ -69,11 +69,11 @@ describe("UniversityOverviewPage", () => {
 
     renderOverview();
 
-    expect(await screen.findByText("Numri i laboratorëve")).toBeInTheDocument();
+    expect(await screen.findByText("Laboratorë")).toBeInTheDocument();
     expect(screen.getByText("2,45 kW")).toBeInTheDocument();
-    expect(screen.getByText("86%")).toBeInTheDocument();
+    expect(screen.getAllByText("86%").length).toBeGreaterThan(0);
     expect(
-      screen.getByText("Përmban të dhëna të simuluara"),
+      screen.getByText("Përmban simulim"),
     ).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith("/api/dashboard/summary?hours=24");
   });
@@ -127,11 +127,11 @@ describe("UniversityOverviewPage", () => {
     });
     renderOverview();
 
-    await screen.findByText("Numri i laboratorëve");
+    await screen.findByText("Laboratorë");
     fireEvent.change(screen.getByLabelText("Laboratori"), {
       target: { value: "3" },
     });
-    fireEvent.change(screen.getByLabelText("Intervali i energjisë"), {
+    fireEvent.change(screen.getByLabelText("Periudha"), {
       target: { value: "168" },
     });
 
@@ -155,7 +155,7 @@ describe("UniversityOverviewPage", () => {
     });
 
     renderOverview();
-    await screen.findByText("Numri i laboratorëve");
+    await screen.findByText("Laboratorë");
 
     const realtimeOptions = connectDashboardRealtime.mock.calls[0][0];
     realtimeOptions.onOperationalChange();

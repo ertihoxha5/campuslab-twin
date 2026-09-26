@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Activity, AlertTriangle, Boxes, ChevronLeft, Cpu, Radio, Thermometer, Users, Zap } from "lucide-react";
+import { Activity, Boxes, ChevronLeft, Cpu, Radio } from "lucide-react";
+import { MonitoringIndicators } from "@/components/MonitoringIndicators.jsx";
 
 const number = (value, digits = 1) => Number.isFinite(Number(value)) ? Number(value).toFixed(digits) : "—";
 const time = (value) => value && !Number.isNaN(new Date(value).getTime())
@@ -7,20 +8,14 @@ const time = (value) => value && !Number.isNaN(new Date(value).getTime())
 
 export function TwinOverviewDashboard({ laboratory, zones, assets, sensors, events = [], alerts = [], onClose, onSelect }) {
   const [tab, setTab] = useState("overview");
-  const temperature = sensors.find((sensor) => sensor.type === "temperature" && sensor.state !== "offline");
-  const occupancy = sensors.find((sensor) => sensor.type === "occupancy" && sensor.state !== "offline");
   const energy = assets.reduce((sum, asset) => sum + Number(asset.energyWatts || 0), 0);
   const activeAlerts = alerts.filter((alert) => !["resolved", "closed"].includes(alert.status));
   const latestUpdate = [...sensors, ...assets].map((item) => item.lastUpdate).filter(Boolean).sort().at(-1);
 
   return <aside className="twin-lab-dashboard twin-overview-dashboard" aria-label="Dashboard i laboratorit">
     <header><div><span><Radio size={12}/> TË DHËNA LIVE / SIMULIM</span><h2>{laboratory?.name ?? "Laboratori"}</h2><p>{laboratory?.code ?? ""} · Përditësuar {time(latestUpdate)}</p></div><button type="button" onClick={onClose} aria-label="Mbyll dashboard-in"><ChevronLeft size={18}/></button></header>
-    <div className="twin-dashboard-kpis">
-      <Metric icon={Thermometer} value={temperature ? `${number(temperature.value)}°C` : "—"} label="Temperatura"/>
-      <Metric icon={Users} value={occupancy ? number(occupancy.value, 0) : "—"} label="Persona"/>
-      <Metric icon={Zap} value={`${number(energy / 1000, 2)} kW`} label="Konsumi"/>
-      <Metric icon={AlertTriangle} value={activeAlerts.length} label="Alarme aktive" warning={activeAlerts.length > 0}/>
-    </div>
+    <MonitoringIndicators compact laboratory={laboratory} sensors={sensors} powerWatts={assets.length ? energy : null} equipment={assets}/>
+    <p className="twin-dashboard-alert-count">{activeAlerts.length} alarme aktive</p>
     <nav className="twin-dashboard-tabs" aria-label="Seksionet e dashboard-it">
       {[["overview", "Zonat"], ["devices", "Pajisjet"], ["sensors", "Sensorët"], ["activity", "Aktiviteti"]].map(([id, label]) => <button key={id} type="button" className={tab === id ? "active" : ""} onClick={() => setTab(id)}>{label}</button>)}
     </nav>
@@ -36,8 +31,4 @@ export function TwinOverviewDashboard({ laboratory, zones, assets, sensors, even
       {tab === "activity" && <section><div className="twin-dashboard-section-title"><div><Activity size={15}/><strong>Ngjarjet e fundit</strong></div><span>{events.length}</span></div><div className="twin-dashboard-events">{events.slice(0, 20).map((event) => <article key={event.id}><time>{time(event.createdAt)}</time><div><strong>{event.description || event.eventType}</strong><small>{event.zoneName ?? "Laboratori"}</small></div></article>)}</div>{!events.length && <p className="twin-dashboard-empty">Nuk ka ende ngjarje të regjistruara.</p>}</section>}
     </div>
   </aside>;
-}
-
-function Metric({ icon: Icon, value, label, warning = false }) {
-  return <article className={warning ? "warning" : ""}><Icon size={16}/><div><strong>{value}</strong><span>{label}</span></div></article>;
 }

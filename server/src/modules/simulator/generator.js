@@ -124,7 +124,7 @@ export function generateSimulationStep({
 }
 
 function calculateTargets({ configuration, event, previousValues, random }) {
-  const capacity = Math.max(1, numberOr(configuration.occupancyCapacity, 30));
+  const capacity = Math.max(1, numberOr(configuration.occupancyCapacity, 25));
   const configuredOccupancy = clamp(
     numberOr(configuration.baselineOccupancy, 0),
     0,

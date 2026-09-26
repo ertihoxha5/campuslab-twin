@@ -1,6 +1,6 @@
 # Referenca REST API
 
-Base URL lokale është `http://localhost:3000`. Të gjitha përgjigjet JSON përdorin
+Base URL lokale është `http://localhost:3001`. Të gjitha përgjigjet JSON përdorin
 njërën nga format:
 
 ```json
