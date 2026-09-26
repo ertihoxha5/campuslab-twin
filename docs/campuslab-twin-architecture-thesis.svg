@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" width="1200" height="620" font-family="Segoe UI, Arial, Helvetica, sans-serif" role="img" aria-label="Arkitektura e propozuar e sistemit CampusLab Twin">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#D97706"/>
+    </marker>
+    <marker id="ahR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#DC2626"/>
+    </marker>
+    <linearGradient id="dbGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#EDE9FE"/>
+      <stop offset="0.5" stop-color="#F5F3FF"/>
+      <stop offset="1" stop-color="#DDD6FE"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="620" fill="#FFFFFF"/>
+
+  <!-- ===== Përdoruesi ===== -->
+  <rect x="20" y="280" width="120" height="120" rx="14" fill="#F1F5F9" stroke="#475569" stroke-width="2"/>
+  <circle cx="80" cy="318" r="13" fill="#475569"/>
+  <path d="M56,360 Q56,337 80,337 Q104,337 104,360 Z" fill="#475569"/>
+  <text x="80" y="386" text-anchor="middle" font-size="14" font-weight="700" fill="#1E293B">Përdoruesi</text>
+
+  <!-- ===== Klienti ===== -->
+  <rect x="210" y="120" width="220" height="440" rx="16" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+  <rect x="210" y="120" width="220" height="40" rx="16" fill="#2563EB"/>
+  <rect x="210" y="144" width="220" height="16" fill="#2563EB"/>
+  <text x="320" y="146" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF" letter-spacing="0.6">KLIENTI (SHFLETUESI)</text>
+  <text x="320" y="188" text-anchor="middle" font-size="15" font-weight="700" fill="#1E3A8A">Ndërfaqja web</text>
+
+  <g font-size="12.5" fill="#1E3A8A">
+    <rect x="228" y="205" width="184" height="40" rx="8" fill="#FFFFFF" stroke="#93C5FD"/>
+    <circle cx="246" cy="225" r="5" fill="#2563EB"/>
+    <text x="260" y="229">Monitorim në kohë reale</text>
+
+    <rect x="228" y="255" width="184" height="40" rx="8" fill="#FFFFFF" stroke="#93C5FD"/>
+    <circle cx="246" cy="275" r="5" fill="#2563EB"/>
+    <text x="260" y="279">Grafikë dhe analitikë</text>
+
+    <rect x="228" y="305" width="184" height="40" rx="8" fill="#FFFFFF" stroke="#93C5FD"/>
+    <circle cx="246" cy="325" r="5" fill="#2563EB"/>
+    <text x="260" y="329">Digital Twin 3D</text>
+
+    <rect x="228" y="355" width="184" height="40" rx="8" fill="#FFFFFF" stroke="#93C5FD"/>
+    <circle cx="246" cy="375" r="5" fill="#2563EB"/>
+    <text x="260" y="379">Alarme dhe njoftime</text>
+
+    <rect x="228" y="405" width="184" height="40" rx="8" fill="#FFFFFF" stroke="#93C5FD"/>
+    <circle cx="246" cy="425" r="5" fill="#2563EB"/>
+    <text x="260" y="429">Laboratorë dhe pajisje</text>
+  </g>
+  <text x="320" y="486" text-anchor="middle" font-size="11.5" font-style="italic" fill="#3B82F6">React · Vite · three.js</text>
+
+  <!-- ===== Serveri ===== -->
+  <rect x="470" y="30" width="490" height="570" rx="18" fill="#F8FAFC" stroke="#64748B" stroke-width="2"/>
+  <text x="490" y="62" font-size="13" font-weight="700" fill="#334155" letter-spacing="0.6">SERVERI I APLIKACIONIT</text>
+  <text x="940" y="62" text-anchor="end" font-size="11.5" font-style="italic" fill="#64748B">Node.js · Express</text>
+
+  <!-- REST API -->
+  <rect x="500" y="85" width="430" height="95" rx="12" fill="#EEF2FF" stroke="#4F46E5" stroke-width="2"/>
+  <rect x="500" y="85" width="8" height="95" rx="4" fill="#4F46E5"/>
+  <text x="715" y="118" text-anchor="middle" font-size="15" font-weight="700" fill="#312E81">REST API</text>
+  <text x="715" y="142" text-anchor="middle" font-size="12.5" fill="#3730A3">autentikim (JWT në cookie) · kontroll i lejeve (RBAC)</text>
+  <text x="715" y="164" text-anchor="middle" font-size="12.5" fill="#3730A3">laboratorë · sensorë · simulime · raporte</text>
+
+  <!-- Përpunimi i të dhënave -->
+  <rect x="490" y="222" width="450" height="188" rx="14" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="505" y="243" font-size="11" font-weight="700" fill="#64748B" letter-spacing="0.6">PËRPUNIMI I TË DHËNAVE</text>
+
+  <!-- Simulimi -->
+  <rect x="505" y="255" width="190" height="140" rx="12" fill="#ECFDF5" stroke="#059669" stroke-width="2"/>
+  <rect x="505" y="255" width="190" height="34" rx="12" fill="#059669"/>
+  <rect x="505" y="275" width="190" height="14" fill="#059669"/>
+  <text x="600" y="277" text-anchor="middle" font-size="13.5" font-weight="700" fill="#FFFFFF">Moduli i simulimit</text>
+  <g font-size="12" fill="#065F46" text-anchor="middle">
+    <text x="600" y="313">gjeneron lexime për</text>
+    <text x="600" y="330">temperaturë, lagështi, CO₂,</text>
+    <text x="600" y="347">prani dhe energji</text>
+    <text x="600" y="374" font-style="italic">+ skenarë anomalish</text>
+  </g>
+
+  <!-- Anomalitë -->
+  <rect x="735" y="255" width="190" height="140" rx="12" fill="#FEF2F2" stroke="#DC2626" stroke-width="2"/>
+  <rect x="735" y="255" width="190" height="34" rx="12" fill="#DC2626"/>
+  <rect x="735" y="275" width="190" height="14" fill="#DC2626"/>
+  <text x="830" y="277" text-anchor="middle" font-size="13.5" font-weight="700" fill="#FFFFFF">Zbulimi i anomalive</text>
+  <g font-size="12" fill="#7F1D1D" text-anchor="middle">
+    <text x="830" y="313">pragje paralajmëruese</text>
+    <text x="830" y="330">dhe kritike për sensorët</text>
+    <text x="830" y="357">konsum energjie</text>
+    <text x="830" y="374">&gt; 1.2 × fuqia nominale</text>
+  </g>
+
+  <!-- Koha reale -->
+  <rect x="500" y="470" width="430" height="100" rx="12" fill="#FFFBEB" stroke="#D97706" stroke-width="2"/>
+  <rect x="500" y="470" width="8" height="100" rx="4" fill="#D97706"/>
+  <text x="715" y="503" text-anchor="middle" font-size="15" font-weight="700" fill="#78350F">Shërbimi në kohë reale</text>
+  <text x="715" y="527" text-anchor="middle" font-size="12.5" fill="#92400E">Socket.IO · dhomë e veçantë për çdo laborator</text>
+  <text x="715" y="549" text-anchor="middle" font-size="12.5" fill="#92400E">dërgon lexime, alarme dhe njoftime</text>
+
+  <!-- ===== Baza e të dhënave ===== -->
+  <path d="M1030,232 V402 A75,18 0 0 0 1180,402 V232" fill="url(#dbGrad)" stroke="#7C3AED" stroke-width="2"/>
+  <ellipse cx="1105" cy="232" rx="75" ry="18" fill="#DDD6FE" stroke="#7C3AED" stroke-width="2"/>
+  <text x="1105" y="282" text-anchor="middle" font-size="14" font-weight="700" fill="#4C1D95">Baza e të</text>
+  <text x="1105" y="299" text-anchor="middle" font-size="14" font-weight="700" fill="#4C1D95">dhënave</text>
+  <text x="1105" y="320" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6D28D9">MySQL</text>
+  <g font-size="11.5" fill="#5B21B6" text-anchor="middle">
+    <text x="1105" y="346">lexime · alarme</text>
+    <text x="1105" y="363">njoftime · simulime</text>
+    <text x="1105" y="380">laboratorë · pajisje</text>
+  </g>
+
+  <!-- ===== Shigjetat ===== -->
+  <g font-size="11.5" fill="#334155">
+    <!-- Përdoruesi → Klienti -->
+    <path d="M140,340 H207" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ah)"/>
+    <text x="175" y="330" text-anchor="middle">ndërvepron</text>
+
+    <!-- Klienti → API -->
+    <path d="M430,150 H497" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ah)"/>
+    <text x="464" y="127" text-anchor="middle">kërkesa</text>
+    <text x="464" y="141" text-anchor="middle">HTTP</text>
+
+    <!-- API → Simulimi -->
+    <path d="M600,180 V252" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ah)"/>
+    <text x="610" y="202">nis / ndal</text>
+    <text x="610" y="215">simulimin</text>
+
+    <!-- Simulimi → Anomalitë -->
+    <path d="M695,325 H732" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ah)"/>
+    <text x="714" y="316" text-anchor="middle" font-size="10.5">lexime</text>
+
+    <!-- API ↔ DB -->
+    <path d="M930,132 H1105 V211" fill="none" stroke="#334155" stroke-width="2" marker-start="url(#ah)" marker-end="url(#ah)"/>
+    <text x="1030" y="123" text-anchor="middle">lexon / shkruan</text>
+
+    <!-- Përpunimi → DB -->
+    <path d="M940,300 H1027" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ah)"/>
+    <text x="995" y="283" text-anchor="middle">ruan</text>
+    <text x="995" y="295" text-anchor="middle">të dhënat</text>
+
+    <!-- DB → Anomalitë (energjia, periodik) -->
+    <path d="M1030,368 H928" fill="none" stroke="#DC2626" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ahR)"/>
+    <text x="995" y="387" text-anchor="middle" fill="#B91C1C">kontroll</text>
+    <text x="995" y="400" text-anchor="middle" fill="#B91C1C">energjie</text>
+    <text x="995" y="413" text-anchor="middle" fill="#B91C1C">çdo 5 min</text>
+  </g>
+
+  <g font-size="11.5" fill="#B45309">
+    <!-- Simulimi → Koha reale -->
+    <path d="M600,395 V467" fill="none" stroke="#D97706" stroke-width="2" marker-end="url(#ahA)"/>
+    <text x="610" y="444">publikon leximet</text>
+
+    <!-- Anomalitë → Koha reale -->
+    <path d="M830,395 V467" fill="none" stroke="#D97706" stroke-width="2" marker-end="url(#ahA)"/>
+    <text x="840" y="444">publikon alarmet</text>
+
+    <!-- Koha reale → Klienti -->
+    <path d="M500,520 H433" fill="none" stroke="#D97706" stroke-width="2" marker-end="url(#ahA)"/>
+    <text x="466" y="540" text-anchor="middle">përditësime</text>
+    <text x="466" y="553" text-anchor="middle">live</text>
+  </g>
+</svg>
