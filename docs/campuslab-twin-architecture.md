@@ -250,7 +250,7 @@ exports PDF files (pdfkit) and CSV files.
 | File storage | `server/src/storage/*.js`, `server/uploads/` | Private storage for models, logos, assets and evidence |
 | Physical IoT ingestion | No code found; only the `source` enum in `server/migrations/001_initial_schema.up.sql` | **NOT IMPLEMENTED** |
 
-## 6. Thesis diagram
+## 6. Simplified diagram
 
 ```mermaid
 flowchart LR
