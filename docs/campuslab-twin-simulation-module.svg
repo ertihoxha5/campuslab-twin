@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" role="img" aria-labelledby="title description">
+  <title id="title">Figura 5. Moduli i simulimit në CampusLab Twin</title>
+  <desc id="description">Nisja e simulimit, ekzekutimi periodik, gjenerimi i vlerave, skenari jonormal, kontrolli i pragjeve, ruajtja në MySQL dhe përditësimi përmes Socket.IO.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="#68717a" stroke-width="1.5"/></marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#252b37;text-anchor:middle}
+      .heading{font-size:25px;font-weight:700}.sub{font-size:14px;fill:#59636d}.node{fill:#edf2ec;stroke:#6e7a4f;stroke-width:2}.data{fill:#eef5f7;stroke:#3b8290}.result{fill:#f4f3f1;stroke:#6d4fa3}.label{font-size:16px;font-weight:600}.detail{font-size:13px;fill:#59636d}.flow{fill:none;stroke:#68717a;stroke-width:2;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="650" fill="#fff"/>
+  <text x="600" y="49" class="heading">Moduli i simulimit</text>
+  <text x="600" y="74" class="sub">Rrjedha e një hapi periodik në CampusLab Twin</text>
+  <path class="flow" d="M310 165H445"/><path class="flow" d="M745 165H890"/>
+  <path class="flow" d="M1035 208V266H170V296"/>
+  <path class="flow" d="M310 342H445"/><path class="flow" d="M745 342H890"/>
+  <path class="flow" d="M1035 388V437H170V465"/>
+  <path class="flow" d="M310 510H445"/><path class="flow" d="M745 510H890"/>
+  <g>
+    <rect class="node" x="35" y="121" width="275" height="87" rx="12"/><text class="label" x="172" y="155">Nisja nga përdoruesi</text><text class="detail" x="172" y="181">Laboratori dhe skenari</text>
+    <rect class="node" x="445" y="121" width="300" height="87" rx="12"/><text class="label" x="595" y="155">Regjistrohet run-i</text><text class="detail" x="595" y="181">Konfigurimi, seed-i, gjendja fillestare</text>
+    <rect class="node" x="890" y="121" width="275" height="87" rx="12"/><text class="label" x="1028" y="155">Planifikuesi periodik</text><text class="detail" x="1028" y="181">60 s si parazgjedhje</text>
+    <rect class="node" x="35" y="296" width="275" height="92" rx="12"/><text class="label" x="172" y="329">Gjenerimi i vlerave</text><text class="detail" x="172" y="354">Gjendja + parametrat + seed-i</text>
+    <rect class="node" x="445" y="296" width="300" height="92" rx="12"/><text class="label" x="595" y="329">Ngjarja e skenarit</text><text class="detail" x="595" y="354">Vetëm gjatë hapave të caktuar</text>
+    <rect class="node data" x="890" y="296" width="275" height="92" rx="12"/><text class="label" x="1028" y="329">Leximet e reja</text><text class="detail" x="1028" y="354">Sensorë dhe energji</text>
+    <rect class="node data" x="35" y="465" width="275" height="90" rx="12"/><text class="label" x="172" y="498">Kontrolli i pragjeve</text><text class="detail" x="172" y="524">Kandidatë për alarm</text>
+    <rect class="node data" x="445" y="465" width="300" height="90" rx="12"/><text class="label" x="595" y="498">Ruajtja në MySQL</text><text class="detail" x="595" y="524">Lexime, alarme dhe gjendje</text>
+    <rect class="node result" x="890" y="465" width="275" height="90" rx="12"/><text class="label" x="1028" y="498">Socket.IO → ndërfaqja</text><text class="detail" x="1028" y="524">Pas ruajtjes së suksesshme</text>
+  </g>
+  <text x="600" y="614" class="sub">Figura 5. Moduli i simulimit në CampusLab Twin</text>
+</svg>

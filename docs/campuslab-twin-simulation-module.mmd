@@ -1,0 +1,17 @@
+flowchart LR
+    A["Përdoruesi nis simulimin<br/>dhe zgjedh skenarin"] --> B["Regjistrohet ekzekutimi<br/>i simulimit"]
+    B --> C["Planifikuesi<br/>çdo 60 s si parazgjedhje"]
+    C --> D["Gjenerimi i vlerave<br/>nga gjendja, konfigurimi dhe seed-i"]
+    D --> E["Ngjarja e skenarit<br/>në intervalin e caktuar të hapave"]
+    E --> F["Leximet e sensorëve<br/>dhe të energjisë"]
+    F --> G["Kontrolli i pragjeve<br/>të sensorëve"]
+    G --> H["Ruajtja në MySQL<br/>lexime, alarme dhe gjendje"]
+    H --> I["Socket.IO<br/>vetëm pas ruajtjes"]
+    I --> J["Monitorimi në ndërfaqe"]
+
+    classDef primary fill:#edf2ec,stroke:#6e7a4f,color:#252b37,stroke-width:1.5px;
+    classDef data fill:#eef5f7,stroke:#3b8290,color:#252b37,stroke-width:1.5px;
+    classDef result fill:#f4f3f1,stroke:#6d4fa3,color:#252b37,stroke-width:1.5px;
+    class A,B,C,D,E primary;
+    class F,G,H data;
+    class I,J result;
