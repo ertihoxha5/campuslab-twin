@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 830" role="img" aria-labelledby="title desc">
+  <title id="title">CampusLab Twin – Database Structure</title>
+  <desc id="desc">Simplified thesis ERD showing universities, users, laboratories, zones, equipment, sensors, readings, alerts, simulation scenarios and runs, and digital twin assets. Solid lines are required foreign keys; dashed lines are optional foreign keys. Selected main relationships only.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1 1 L7 4 L1 7" fill="none" stroke="#58427c" stroke-width="1.4"/></marker>
+    <marker id="optional-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1 1 L7 4 L1 7" fill="none" stroke="#6e7a4f" stroke-width="1.4"/></marker>
+  </defs>
+  <style>
+    .background{fill:#fff}.title{font:600 32px Inter,Arial,sans-serif;fill:#252b37}.subtitle{font:18px Inter,Arial,sans-serif;fill:#667085}.box{fill:#fff;stroke:#d7d4de;stroke-width:1.5}.head{fill:#f0ebf6}.entity-title{font:600 21px Inter,Arial,sans-serif;fill:#58427c}.field{font:18px Inter,Arial,sans-serif;fill:#252b37}.key{font:600 16px Inter,Arial,sans-serif;fill:#6e7a4f}.edge{fill:none;stroke:#58427c;stroke-width:2;marker-end:url(#arrow)}.optional{fill:none;stroke:#6e7a4f;stroke-width:2;stroke-dasharray:7 6;marker-end:url(#optional-arrow)}.legend{font:17px Inter,Arial,sans-serif;fill:#475467}.caption{font:italic 17px Inter,Arial,sans-serif;fill:#475467}
+  </style>
+  <rect class="background" width="1720" height="830"/>
+  <text class="title" x="42" y="46">CampusLab Twin – Database Structure</text>
+  <text class="subtitle" x="42" y="72">Version i thjeshtuar për tezë · tabelat dhe FK-të kryesore</text>
+
+  <g aria-label="Relationships">
+    <path class="edge" d="M318 172 H380"/>
+    <path class="edge" d="M180 112 V94 H860 V112"/>
+    <path class="edge" d="M998 172 H1060"/>
+    <path class="edge" d="M1338 172 H1400"/>
+    <path class="edge" d="M860 232 V274 H180 V358"/>
+    <path class="edge" d="M860 232 V288 H520 V358"/>
+    <path class="edge" d="M860 232 V358"/>
+    <path class="optional" d="M318 420 H380"/>
+    <path class="edge" d="M180 482 V608"/>
+    <path class="optional" d="M430 482 V545 H270 V608"/>
+    <path class="optional" d="M520 482 V608"/>
+    <path class="optional" d="M658 420 H720"/>
+    <path class="edge" d="M998 420 H1060"/>
+    <path class="optional" d="M860 358 V312 H1540 V358"/>
+    <path class="optional" d="M1540 232 V296 H1200 V358"/>
+  </g>
+
+  <g transform="translate(40 112)"><rect class="box" width="278" height="120" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">universities</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">name</text><text class="field" x="14" y="108">status</text></g>
+  <g transform="translate(380 112)"><rect class="box" width="278" height="120" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">users</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">university_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">email</text></g>
+  <g transform="translate(720 112)"><rect class="box" width="278" height="120" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">laboratories</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">university_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">code · capacity</text></g>
+  <g transform="translate(1060 112)"><rect class="box" width="278" height="120" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">simulation_scenarios</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">laboratory_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">scenario_type</text></g>
+  <g transform="translate(1400 112)"><rect class="box" width="278" height="120" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">simulation_runs</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">scenario_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">status</text></g>
+
+  <g transform="translate(40 358)"><rect class="box" width="278" height="124" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">laboratory_zones</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">laboratory_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">code · zone_type</text></g>
+  <g transform="translate(380 358)"><rect class="box" width="278" height="124" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">equipment</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">laboratory_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">zone_id <tspan class="key">FK, nullable</tspan></text></g>
+  <g transform="translate(720 358)"><rect class="box" width="278" height="124" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">sensors</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">laboratory_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">equipment_id <tspan class="key">FK, nullable</tspan></text></g>
+  <g transform="translate(1060 358)"><rect class="box" width="278" height="124" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">sensor_readings</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">sensor_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">value · recorded_at</text></g>
+  <g transform="translate(1400 358)"><rect class="box" width="278" height="124" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">alerts</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">laboratory_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">sensor_id <tspan class="key">FK, nullable</tspan></text></g>
+
+  <g transform="translate(40 608)"><rect class="box" width="278" height="147" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">digital_twin_assets</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">zone_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">asset_type</text><text class="field" x="14" y="131">parent_equipment_id <tspan class="key">FK</tspan></text></g>
+  <g transform="translate(380 608)"><rect class="box" width="278" height="124" rx="8"/><path class="head" d="M8 0 H270 Q278 0 278 8 V38 H0 V8 Q0 0 8 0"/><text class="entity-title" x="14" y="26">energy_readings</text><text class="field" x="14" y="62">id <tspan class="key">PK</tspan></text><text class="field" x="14" y="85">laboratory_id <tspan class="key">FK</tspan></text><text class="field" x="14" y="108">equipment_id <tspan class="key">FK, nullable</tspan></text></g>
+
+  <g transform="translate(790 631)"><path d="M0 0 H48" class="edge"/><text class="legend" x="58" y="5">FK e detyrueshme · 1:N</text><path d="M0 36 H48" class="optional"/><text class="legend" x="58" y="41">FK opsionale (kolonë nullable)</text></g>
+  <text class="caption" x="40" y="790">Figura X. Struktura e bazës së të dhënave të CampusLab Twin (marrëdhëniet kryesore të përzgjedhura).</text>
+</svg>
