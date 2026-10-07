@@ -1,0 +1,23 @@
+flowchart TD
+    A["Lexim i ri nga sensori i simuluar"] --> B["Krahasimi me kufijtë e sensorit"]
+    B --> C{"A është tejkaluar kufiri?"}
+    C -- "Jo" --> N["Ruhet vetëm leximi; pa alarm të ri"]
+    C -- "Po" --> D{"Cili kufi?"}
+    D -- "Paralajmërues" --> W["Rëndësia: warning"]
+    D -- "Kritik" --> K["Rëndësia: critical"]
+    W --> E["Ruajtja transaksionale"]
+    K --> E
+    E --> F{"Ekziston alarm aktiv me të njëjtin çelës?"}
+    F -- "Jo" --> G["Krijo alarm dhe njoftime"]
+    F -- "Po" --> H["Përditëso alarmin aktiv"]
+    G --> I["Socket.IO: alarm i ri dhe njoftime"]
+    H --> J["Socket.IO: alarm i përditësuar"]
+    I --> L["Ndërfaqja e përdoruesit"]
+    J --> L
+
+    classDef primary fill:#edf2ec,stroke:#6e7a4f,color:#252b37,stroke-width:1.5px;
+    classDef decision fill:#f4f3f1,stroke:#6d4fa3,color:#252b37,stroke-width:1.5px;
+    classDef result fill:#eef5f7,stroke:#3b8290,color:#252b37,stroke-width:1.5px;
+    class A,B,E primary;
+    class C,D,F decision;
+    class N,W,K,G,H,I,J,L result;

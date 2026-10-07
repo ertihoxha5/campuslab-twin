@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" role="img" aria-labelledby="title desc">
+  <title id="title">Figura 8. Procesi i identifikimit të parregullsive dhe krijimit të alarmeve</title>
+  <desc id="desc">Leximi i sensorit krahasohet me kufijtë; vlera normale nuk krijon alarm, ndërsa shkelja paralajmëruese ose kritike ruhet si alarm i ri ose përditësim i alarmit aktiv. Ndërfaqja njoftohet përmes Socket.IO.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#68717a" stroke-width="1.5"/></marker>
+    <style>text{font-family:Arial,Helvetica,sans-serif;fill:#252b37;text-anchor:middle}.heading{font-size:24px;font-weight:700}.node{fill:#edf2ec;stroke:#6e7a4f;stroke-width:2}.decision{fill:#f4f3f1;stroke:#6d4fa3;stroke-width:2}.result{fill:#eef5f7;stroke:#3b8290;stroke-width:2}.label{font-size:15px;font-weight:600}.small{font-size:12px;fill:#59636d}.flow{fill:none;stroke:#68717a;stroke-width:2;marker-end:url(#arrow)}.branch{font-size:12px;fill:#59636d}</style>
+  </defs>
+  <rect width="1200" height="780" fill="#fff"/>
+  <text x="600" y="44" class="heading">Identifikimi i parregullsive dhe krijimi i alarmeve</text>
+  <g class="flow">
+    <path d="M380 119H455"/><path d="M720 119H785"/>
+    <path d="M940 151V190H1075V222"/><path d="M940 151V222"/>
+    <path d="M895 280V325H645V350"/><path d="M1030 280V325H645V350"/>
+    <path d="M645 404V440"/>
+    <path d="M570 498H390V542"/><path d="M720 498H890V542"/>
+    <path d="M390 599V632H600V650"/><path d="M890 599V632H600V650"/>
+    <path d="M600 701V725"/>
+    <path d="M785 119H690V190H195V222"/>
+  </g>
+  <text class="branch" x="741" y="178">Jo</text><text class="branch" x="961" y="183">Po</text>
+  <text class="branch" x="825" y="320">Paralajmërues</text><text class="branch" x="1038" y="320">Kritik</text>
+  <text class="branch" x="460" y="530">Jo</text><text class="branch" x="805" y="530">Po</text>
+  <g>
+    <rect class="node" x="110" y="86" width="270" height="65" rx="10"/><text class="label" x="245" y="125">Lexim i ri i sensorit</text>
+    <rect class="node" x="455" y="86" width="265" height="65" rx="10"/><text class="label" x="587" y="125">Krahasimi me kufijtë</text>
+    <rect class="decision" x="785" y="86" width="310" height="65" rx="10"/><text class="label" x="940" y="125">Kufi i tejkaluar?</text>
+    <rect class="result" x="65" y="222" width="260" height="58" rx="10"/><text class="label" x="195" y="249">Pa alarm të ri</text><text class="small" x="195" y="266">Leximi ruhet</text>
+    <rect class="result" x="755" y="222" width="245" height="58" rx="10"/><text class="label" x="877" y="256">Rëndësia: warning</text>
+    <rect class="result" x="1010" y="222" width="155" height="58" rx="10"/><text class="label" x="1087" y="256">critical</text>
+    <rect class="node" x="505" y="350" width="280" height="54" rx="10"/><text class="label" x="645" y="383">Ruajtja transaksionale</text>
+    <rect class="decision" x="480" y="440" width="330" height="58" rx="10"/><text class="label" x="645" y="475">Alarm aktiv me të njëjtin çelës?</text>
+    <rect class="result" x="245" y="542" width="290" height="57" rx="10"/><text class="label" x="390" y="576">Krijo alarm dhe njoftime</text>
+    <rect class="result" x="755" y="542" width="270" height="57" rx="10"/><text class="label" x="890" y="576">Përditëso alarmin aktiv</text>
+    <rect class="result" x="425" y="650" width="350" height="51" rx="10"/><text class="label" x="600" y="681">Socket.IO → ndërfaqja</text>
+  </g>
+  <text class="small" x="600" y="757">Figura 8. Procesi i identifikimit të parregullsive dhe krijimit të alarmeve</text>
+</svg>
