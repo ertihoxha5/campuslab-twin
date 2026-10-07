@@ -1,10 +1,8 @@
 # CampusLab Twin – Identifikimi i parregullsive dhe krijimi i alarmeve
 
-## Teksti para Figurës 8
 
 Në CampusLab Twin, çdo lexim i gjeneruar për një sensor online krahasohet me kufijtë paralajmërues dhe kritikë të konfiguruar për atë sensor. Nëse një kufi tejkalohet, sistemi përgatit një kandidat alarmi; regjistrimi i tij dhe dërgimi i njoftimeve ndodhin vetëm pasi hapi i simulimit përpunohet me sukses.
 
-## Figura 8. Procesi i identifikimit të parregullsive dhe krijimit të alarmeve
 
 ![Procesi i identifikimit të parregullsive dhe krijimit të alarmeve](campuslab-twin-alert-flow.svg)
 
@@ -31,19 +29,12 @@ flowchart TD
 
 **Saktësim i figurës:** Pyetja për alarmin aktiv paraqet rezultatin logjik të indeksit unik dhe `ON DUPLICATE KEY UPDATE`; kodi nuk kryen një `SELECT` të veçantë. Dega normale ruan leximin në transaksion dhe e publikon si lexim, por nuk krijon alarm të ri. Nuk ka mbyllje automatike të një alarmi ekzistues kur vlera kthehet normale. Përmes të njëjtit `ON DUPLICATE KEY UPDATE`, një alarm `acknowledged` ose `in_progress` mund të përditësohet pa u kthyer në `new`.
 
-## Teksti pas Figurës 8
 
 Përparësi kanë kufijtë kritikë: kodi kontrollon së pari minimumin dhe maksimumin kritik, pastaj kufijtë paralajmërues. Alarmet aktive me të njëjtin çelës deduplikohen në bazën e të dhënave; një shkelje e përsëritur përditëson alarmin ekzistues. Pas ruajtjes, ndërfaqja merr ngjarjen për alarm të ri ose të përditësuar përmes Socket.IO.
 
-## Teksti para Figurës 9
 
 Fragmenti vijues është marrë pa ndryshime nga funksioni `evaluateSensorReading`. Ai tregon rendin e krahasimit të vlerës së sensorit me katër kufijtë dhe klasifikimin e shkeljes si kritike ose paralajmëruese.
 
-## Figura 9. Kontrollimi i kufijve për identifikimin e parregullsive
-
-**File:** `server/src/modules/alerts/rule-engine.js`  
-**Function:** `evaluateSensorReading`  
-**Lines:** **12–24**, përfshirë rreshtin bosh 21; fragmenti është marrë saktësisht nga burimi.
 
 ```js
   const violation = [
@@ -61,7 +52,6 @@ Fragmenti vijues është marrë pa ndryshime nga funksioni `evaluateSensorReadin
   const severity = threshold.startsWith("critical") ? "critical" : "warning";
 ```
 
-## Teksti pas Figurës 9
 
 Metoda `.find()` zgjedh shkeljen e parë të vlefshme, prandaj kufiri kritik ka përparësi ndaj atij paralajmërues. Nëse asnjë kufi nuk shkelet, funksioni kthen `null`; përndryshe, fusha `severity` merr vlerën `critical` ose `warning`. Krahasimet janë strikte (`<` dhe `>`), kështu që barazia me kufirin nuk krijon alarm.
 
@@ -88,10 +78,6 @@ Metoda `.find()` zgjedh shkeljen e parë të vlefshme, prandaj kufiri kritik ka 
 | Notification creation | `server/src/modules/simulator/repository.js` | `persistStep` | 596–642 | Njoftim vetëm për alarm të ri dhe marrës të autorizuar. |
 | Socket.IO publication | `server/src/modules/simulator/coordinator.js`; `server/src/realtime/publisher.js` | `execute`; `publishAlert` | 82–101; 101–135 | Pas ruajtjes emeton alarm të ri/të përditësuar; njoftim vetëm për të riun. |
 
-## Kontrolli i veçantë i anomalive të energjisë
 
-Energjia **nuk ndjek rrjedhën e Figurës 8**. `createEnergyAnomalyWorker` te `server/src/modules/energy/anomaly-worker.js:1–48` ekzekutohet menjëherë në nisje dhe pastaj çdo **5 minuta** si parazgjedhje, me dritare leximesh **15 minuta** dhe shumëzues pragu **1.2**. `generateAnomalyNotifications` te `server/src/modules/energy/anomaly-repository.js:5–95` zgjedh leximin më të fundit për pajisje brenda dritares dhe kontrollon `power_watts > energy_rating_watts × thresholdMultiplier` (rreshtat 11–38). Ajo fut **njoftime `energy_abnormal`** me çelës deduplikimi për pajisje/orë (rreshtat 77–91), por **nuk fut rekord në `alerts`** dhe në këtë rrjedhë **nuk thërret Socket.IO**. Worker-i aktivizohet në `server/src/index.js:233–240,287–293`. Kjo nuk duhet përshkruar si alarm sensori warning/critical.
-
-## Dallimet që duhen shmangur në tekstin e tezës
 
 Teksti aktual i tezës nuk është dhënë për krahasim literal. Kodi **nuk** bën `SELECT` të veçantë për alarm aktiv; **nuk** krijon njoftim të ri për çdo shkelje të përsëritur; **nuk** mbyll automatikisht alarmin kur vlera normalizohet; dhe anomalitë e energjisë krijojnë njoftime, jo alarme në tabelën `alerts`.
