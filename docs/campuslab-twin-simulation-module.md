@@ -1,6 +1,5 @@
 # CampusLab Twin – Moduli i simulimit
 
-**Figura 5. Moduli i simulimit në CampusLab Twin**
 
 ![Skema e modulit të simulimit](campuslab-twin-simulation-module.svg)
 
@@ -36,7 +35,7 @@ Leximet e sensorëve shkojnë në `sensor_readings` me `source='simulated'` dhe 
 
 Pas konfirmimit të transaksionit, koordinatori thërret `publishSimulationStep` dhe `publishAlert` (`coordinator.js:82–101`). Publikuesi dërgon `sensor:readings`, `energy:readings`, `occupancy:updated`, `simulation:updated`, `dashboard:refresh` dhe, nëse ka alarm, `alert:created`/`alert:updated` në dhomën Socket.IO të laboratorit (`server/src/realtime/publisher.js:21–27,34–107`). Anëtarësimi në dhomë kontrollon qasjen te laboratori (`server/src/realtime/create-realtime-server.js:50–82`). Klienti i monitorimit i shndërron paketat në ngjarje për leximet individuale dhe përditëson vlerat/grafikun (`client/src/api/realtime.js:70–104`; `client/src/pages/RealtimeMonitoringPage.jsx:157–195`).
 
-## G. Fragmentet e rekomanduara për kapitullin 5.2
+## G. Fragmentet 
 
 **Fragmenti A — planifikimi periodik.** `server/src/modules/simulator/coordinator.js`, `activate`, rreshtat **23–36** (14 rreshta; mund të shkurtohet në figurën e tezës duke ruajtur kodin fjalë për fjalë):
 
