@@ -14,6 +14,14 @@ export function createAlertRouter({ service, authenticateTenant }) {
   const router = Router();
   router.use(authenticateTenant);
   router.get(
+    "/executed-scenarios",
+    requirePermissions(permissions.MONITORING_VIEW),
+    async (request, response) => {
+      const scenarios = await service.executedScenarios(request.query, context(request));
+      return success(response, { data: { scenarios } });
+    },
+  );
+  router.get(
     "/",
     requirePermissions(permissions.MONITORING_VIEW),
     async (request, response) => {

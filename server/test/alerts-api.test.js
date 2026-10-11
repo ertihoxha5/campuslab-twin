@@ -58,6 +58,24 @@ test("alert detail cannot be looked up without tenant and assignment scope", asy
   assert.deepEqual(calls[0].parameters, ["7", "71", 1, "9"]);
 });
 
+test("executed scenario history is tenant and assignment scoped", async () => {
+  const calls = [];
+  const repository = createAlertRepository({
+    async execute(sql, parameters) {
+      calls.push({ sql, parameters });
+      return [[]];
+    },
+  });
+  const rows = await repository.executedScenarios({
+    universityId: "7", userId: "9", restrictToAssignments: true, laboratoryId: "15",
+  });
+  assert.deepEqual(rows, []);
+  assert.match(calls[0].sql, /run\.university_id = \?/);
+  assert.match(calls[0].sql, /run\.laboratory_id = \?/);
+  assert.match(calls[0].sql, /assignment\.user_id = \?/);
+  assert.deepEqual(calls[0].parameters, ["7", "15", 1, "9"]);
+});
+
 test("alert service validates filters and hides inaccessible details", async () => {
   const service = createAlertService({
     repository: {
@@ -108,6 +126,9 @@ before(async () => {
       rateLimitEnabled: false,
       tenantAuthentication: authenticateTenant,
       alertService: {
+        async executedScenarios(_input, context) {
+          return [{ id: "13", universityId: context.universityId }];
+        },
         async list(_input, context) {
           return {
             items: [{ id: "71", universityId: context.universityId }],
@@ -144,6 +165,17 @@ test("alert endpoints require monitoring permission and server tenant context", 
   assert.equal(forbidden.status, 403);
   assert.equal(allowed.status, 200);
   assert.equal(body.data.alert.universityId, "7");
+});
+
+test("executed scenarios endpoint requires monitoring permission", async () => {
+  const forbidden = await fetch(`${baseUrl}/api/alerts/executed-scenarios?laboratoryId=15`);
+  const allowed = await fetch(`${baseUrl}/api/alerts/executed-scenarios?laboratoryId=15`, {
+    headers: { "x-test-monitoring": "true" },
+  });
+  const body = await allowed.json();
+  assert.equal(forbidden.status, 403);
+  assert.equal(allowed.status, 200);
+  assert.deepEqual(body.data.scenarios, [{ id: "13", universityId: "7" }]);
 });
 
 test("alert status endpoint requires response permission", async () => {

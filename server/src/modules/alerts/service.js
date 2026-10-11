@@ -46,6 +46,15 @@ export function createAlertService({ repository, realtimePublisher }) {
   });
 
   return {
+    async executedScenarios(input = {}, context) {
+      const parsed = z.object({
+        laboratoryId: z.coerce.number().int().positive().transform(String),
+      }).safeParse(input);
+      if (!parsed.success) throw validationError();
+      return repository.executedScenarios({
+        ...access(context), laboratoryId: parsed.data.laboratoryId,
+      });
+    },
     async list(input = {}, context) {
       const parsed = listSchema.safeParse(input);
       if (!parsed.success) throw validationError();

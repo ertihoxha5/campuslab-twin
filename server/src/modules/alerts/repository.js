@@ -17,6 +17,72 @@ const nextStatus = {
 
 export function createAlertRepository(pool) {
   return {
+    async executedScenarios({ universityId, userId, restrictToAssignments, laboratoryId }) {
+      const runs = await query(pool, `
+        SELECT run.id, run.laboratory_id AS laboratoryId, laboratory.name AS laboratoryName,
+          laboratory.code AS laboratoryCode, run.status, run.started_at AS startedAt,
+          run.ended_at AS endedAt, run.result_json AS result
+        FROM simulation_runs run
+        INNER JOIN laboratories laboratory ON laboratory.id = run.laboratory_id
+          AND laboratory.university_id = run.university_id
+        WHERE run.university_id = ? AND run.laboratory_id = ?
+          AND (? = 0 OR EXISTS (
+            SELECT 1 FROM user_laboratory_assignments assignment
+            WHERE assignment.university_id = run.university_id
+              AND assignment.laboratory_id = run.laboratory_id
+              AND assignment.user_id = ?
+          ))
+          AND JSON_UNQUOTE(JSON_EXTRACT(run.result_json, '$.lastEvent.type')) = 'thesis_controlled_input'
+        ORDER BY run.id DESC LIMIT 30`,
+      [universityId, laboratoryId, restrictToAssignments ? 1 : 0, userId]);
+      if (!runs.length) return [];
+      const runIds = runs.map(({ id }) => id);
+      const placeholders = runIds.map(() => "?").join(",");
+      const [readings, events, equipment] = await Promise.all([
+        query(pool, `SELECT reading.simulation_run_id AS runId,
+            sensor.sensor_type AS sensorType, reading.value, sensor.unit
+          FROM sensor_readings reading
+          INNER JOIN sensors sensor ON sensor.id = reading.sensor_id
+            AND sensor.university_id = reading.university_id
+          WHERE reading.university_id = ? AND reading.laboratory_id = ?
+            AND reading.simulation_run_id IN (${placeholders})
+            AND sensor.code LIKE 'CLT-THESIS-%'
+          ORDER BY reading.id`, [universityId, laboratoryId, ...runIds]),
+        query(pool, `SELECT event.simulation_run_id AS runId,
+            event.event_data_json AS eventData, alert_record.severity AS currentSeverity,
+            alert_record.status AS currentStatus
+          FROM simulation_run_events event
+          LEFT JOIN alerts alert_record ON alert_record.id =
+            CAST(JSON_UNQUOTE(JSON_EXTRACT(event.event_data_json, '$.alertId')) AS UNSIGNED)
+            AND alert_record.university_id = event.university_id
+          WHERE event.university_id = ? AND event.simulation_run_id IN (${placeholders})
+            AND event.event_type = 'alert_generated'
+          ORDER BY event.id`, [universityId, ...runIds]),
+        query(pool, `SELECT status FROM equipment WHERE university_id = ?
+          AND laboratory_id = ? AND code = 'CLT-THESIS-DEVICE' AND deleted_at IS NULL
+          LIMIT 1`, [universityId, laboratoryId]),
+      ]);
+      const parseJson = (value) => typeof value === "string" ? JSON.parse(value) : value;
+      return runs.reverse().map((run) => {
+        const marker = parseJson(run.result)?.lastEvent ?? {};
+        const event = events.find((item) => String(item.runId) === String(run.id));
+        const eventData = event ? parseJson(event.eventData) : null;
+        return {
+          id: String(run.id), laboratoryId: String(run.laboratoryId),
+          laboratoryName: run.laboratoryName, laboratoryCode: run.laboratoryCode,
+          scenario: marker.scenario, status: run.status,
+          startedAt: run.startedAt, endedAt: run.endedAt,
+          readings: readings.filter((item) => String(item.runId) === String(run.id))
+            .map(({ sensorType, value, unit }) => ({ sensorType, value: Number(value), unit })),
+          alert: eventData ? {
+            id: String(eventData.alertId), severityAtExecution: eventData.severity,
+            currentSeverity: event.currentSeverity, currentStatus: event.currentStatus,
+          } : null,
+          equipmentCurrentStatus: marker.scenario === "equipment_fault"
+            ? equipment[0]?.status ?? null : null,
+        };
+      });
+    },
     async list({
       universityId,
       userId,

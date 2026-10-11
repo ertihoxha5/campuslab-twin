@@ -11,6 +11,12 @@ import "./AlertsPage.css";
 const severityLabels = { critical: "Kritik", warning: "Paralajmërim", info: "Informues" };
 const statusLabels = { new: "I ri", acknowledged: "I pranuar", in_progress: "Në trajtim", resolved: "I zgjidhur", closed: "I mbyllur" };
 const toneFor = { critical: "danger", warning: "warning", info: "info" };
+const scenarioNames = {
+  normal: "Gjendja normale", high_temperature: "Temperatura e lartë",
+  high_humidity: "Lagështia e lartë", overcapacity: "Tejkalimi i pranisë",
+  high_power: "Fuqia e lartë", equipment_fault: "Defekt në pajisje",
+};
+const readingNames = { temperature: "Temperatura", humidity: "Lagështia", occupancy: "Prania", power: "Fuqia" };
 
 function formatDate(value) {
   if (!value) return "—";
@@ -36,11 +42,20 @@ export function AlertsPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [scenarios, setScenarios] = useState([]);
+  const [scenariosLoading, setScenariosLoading] = useState(false);
+  const [scenariosError, setScenariosError] = useState("");
 
   useEffect(() => {
     let active = true;
     api.get("/api/laboratories?page=1&pageSize=100&status=active")
-      .then((response) => { if (active) setLaboratories(response.data.laboratories ?? []); })
+      .then((response) => {
+        if (!active) return;
+        const items = response.data.laboratories ?? [];
+        setLaboratories(items);
+        const thesisLab = items.find((item) => item.code === "LAB-AUT-01");
+        if (thesisLab) setLaboratoryId(String(thesisLab.id));
+      })
       .catch((cause) => { if (active) setError(cause.message); });
     return () => { active = false; };
   }, []);
@@ -66,6 +81,17 @@ export function AlertsPage() {
   }, [laboratoryId, page, severity, status, submittedSearch]);
 
   useEffect(() => { void loadAlerts(); }, [loadAlerts, refreshKey]);
+  useEffect(() => {
+    if (!laboratoryId) { setScenarios([]); return; }
+    let active = true;
+    setScenariosLoading(true);
+    setScenariosError("");
+    api.get(`/api/alerts/executed-scenarios?laboratoryId=${encodeURIComponent(laboratoryId)}`)
+      .then((response) => { if (active) setScenarios(response.data.scenarios ?? []); })
+      .catch((cause) => { if (active) { setScenarios([]); setScenariosError(cause.message); } })
+      .finally(() => { if (active) setScenariosLoading(false); });
+    return () => { active = false; };
+  }, [laboratoryId, refreshKey]);
   useEffect(() => {
     if (!selectedId) { setDetail(null); return; }
     let active = true;
@@ -100,6 +126,22 @@ export function AlertsPage() {
       </form>
 
       {error && <p className="alerts-error" role="alert">{error}</p>}
+      {laboratoryId && (scenariosLoading || scenariosError || scenarios.length > 0) && <section className="alerts-scenarios" aria-label="Skenarët e ekzekutuar">
+        <div className="alerts-section-heading"><h2>Skenarët e ekzekutuar</h2><span>{scenarios.length} ekzekutime të ruajtura</span></div>
+        <p className="alerts-scenarios-note">Historik nga simulimet e ruajtura. Niveli më poshtë është ai në momentin e ekzekutimit, jo një pohim PASS për testim end-to-end.</p>
+        {scenariosLoading ? <LoadingSkeleton /> : scenariosError ? <p className="alerts-error" role="alert">{scenariosError}</p> :
+          <div className="alerts-scenario-grid">{scenarios.map((scenario) => <article className="alerts-scenario" key={scenario.id}>
+            <div className="alerts-scenario-top"><div><span className="alerts-scenario-run">Run #{scenario.id} · {scenario.laboratoryCode}</span><h3>{scenarioNames[scenario.scenario] ?? scenario.scenario}</h3></div>
+              {scenario.alert ? <StatusBadge tone={toneFor[scenario.alert.severityAtExecution]}>{severityLabels[scenario.alert.severityAtExecution] ?? scenario.alert.severityAtExecution}</StatusBadge>
+                : <StatusBadge tone={scenario.scenario === "equipment_fault" ? "warning" : "success"}>{scenario.scenario === "equipment_fault" ? "Gjendje problematike" : "Normal"}</StatusBadge>}
+            </div>
+            <div className="alerts-scenario-values">{scenario.readings.map((reading) => <span key={reading.sensorType}><b>{readingNames[reading.sensorType] ?? reading.sensorType}:</b> {reading.sensorType === "power" ? `${reading.value / 1000} kW` : `${reading.value} ${reading.unit}`}</span>)}</div>
+            {scenario.scenario === "equipment_fault" && <p>Pajisja testuese, statusi aktual: <strong>{scenario.equipmentCurrentStatus ?? "i panjohur"}</strong></p>}
+            {scenario.alert && <p>Alarm #{scenario.alert.id} · niveli gjatë ekzekutimit: <strong>{severityLabels[scenario.alert.severityAtExecution] ?? scenario.alert.severityAtExecution}</strong>
+              {scenario.alert.currentSeverity !== scenario.alert.severityAtExecution && <> · niveli aktual: <strong>{severityLabels[scenario.alert.currentSeverity] ?? scenario.alert.currentSeverity}</strong></>}</p>}
+            <time dateTime={scenario.startedAt}>{formatDate(scenario.startedAt)}</time>
+          </article>)}</div>}
+      </section>}
       <div className="alerts-layout">
         <section className="alerts-list" aria-label="Lista e alarmeve">
           <div className="alerts-section-heading"><h2>Regjistri i alarmeve</h2><span>{pagination?.total ?? alerts.length} gjithsej</span></div>
