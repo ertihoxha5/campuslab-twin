@@ -24,7 +24,7 @@ import { ProtectedRoute } from "@/routes/ProtectedRoute.jsx";
 import { PermissionRoute } from "@/routes/PermissionRoute.jsx";
 import { UniversityLayout } from "@/layouts/UniversityLayout.jsx";
 import { UniversityOverviewPage } from "@/pages/UniversityOverviewPage.jsx";
-import { WorkspaceSectionPage } from "@/pages/WorkspaceSectionPage.jsx";
+import { AlertsPage } from "@/pages/AlertsPage.jsx";
 import { ReportsPage } from "@/pages/ReportsPage.jsx";
 import { UniversityUsersPage } from "@/pages/UniversityUsersPage.jsx";
 import { UniversitySettingsPage } from "@/pages/UniversitySettingsPage.jsx";
@@ -161,12 +161,7 @@ export default function App() {
             >
               <Route
                 path="alarmet"
-                element={
-                  <WorkspaceSectionPage
-                    title="Alarmet"
-                    description="Alarmet dhe ngjarjet e laboratorëve të autorizuar."
-                  />
-                }
+                element={<AlertsPage />}
               />
             </Route>
             <Route

@@ -2,27 +2,28 @@
 export const thesisTestSensors = Object.freeze([
   Object.freeze({
     code: "CLT-THESIS-TEMP",
-    name: "Temperatura — testi i tezës",
+    name: "Temperatura e laboratorit",
     sensorType: "temperature",
     unit: "°C",
     warningMin: 18,
-    warningMax: 26,
-    criticalMin: 15,
-    criticalMax: 31,
+    warningMax: 27,
+    criticalMin: null,
+    criticalMax: 32,
   }),
   Object.freeze({
     code: "CLT-THESIS-HUM",
-    name: "Lagështia — testi i tezës",
+    name: "Lagështia e laboratorit",
     sensorType: "humidity",
     unit: "%",
     warningMin: 30,
     warningMax: 60,
-    criticalMin: 20,
-    criticalMax: 72,
+    criticalMin: null,
+    // The rule engine uses > and the column has four decimal places.
+    criticalMax: 71.9999,
   }),
   Object.freeze({
     code: "CLT-THESIS-OCC",
-    name: "Prania — testi i tezës",
+    name: "Prania në laborator",
     sensorType: "occupancy",
     unit: "persona",
     warningMin: null,
@@ -32,13 +33,13 @@ export const thesisTestSensors = Object.freeze([
   }),
   Object.freeze({
     code: "CLT-THESIS-POWER",
-    name: "Fuqia e laboratorit — testi i tezës",
+    name: "Fuqia e laboratorit",
     sensorType: "power",
     unit: "W",
     warningMin: 500,
     warningMax: 5000,
     criticalMin: null,
-    criticalMax: 6000,
+    criticalMax: 6999.9999,
   }),
 ]);
 
