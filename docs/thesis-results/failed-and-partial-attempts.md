@@ -17,7 +17,7 @@ Pragjet e sensorëve ekzistues të `LAB-AUT-01` ishin të ndryshme nga konfiguri
 
 - `npm run db:verify` dështoi sepse universiteti demonstrues i Prishtinës nuk kishte grupin e plotë të të dhënave demo. Ky kontroll nuk ishte verifikim i skenarëve të UBT-së; nuk u rregullua në këtë punë.
 - Nismat e para të testit të frontend-it dhe të Vite brenda sandbox-it dështuan me `spawn EPERM`; testi i `AlertsPage` kaloi pas ekzekutimit jashtë sandbox-it. Kjo nuk është dështim funksional i alarmeve.
-- Një nisje e dytë e backend-it mori `EADDRINUSE` në portën 3001, sepse instanca e nisur gjatë testimit ishte ende aktive. Instanca e parë u identifikua dhe u ndal; porta u lirua. Kjo nuk është dështim i skenarëve.
+- Një nisje e dytë e backend-it mori `EADDRINUSE` në portën 3001, sepse një instancë tjetër e mbante portën. Më 11 tetor u identifikua se procesi i nisur gjatë kësaj pune konkurronte me `node --watch` të përdoruesit; procesi i tepërt u ndal dhe porta u lirua. Më pas backend-i u nis si **një** instancë dhe `/api/health` ktheu `healthy`, edhe nëpërmjet proxy-t të Vite. Kjo nuk është dështim i skenarëve.
 
 ## Rregullimet dhe gjendja pas tyre
 
@@ -25,8 +25,8 @@ Pragjet e sensorëve ekzistues të `LAB-AUT-01` ishin të ndryshme nga konfiguri
 |---|---|---|---|
 | Përgatitja | Kapacitet 24 dhe run 8 aktiv; pragjet ekzistuese nuk ishin konfigurimi i tezës | `server/scripts/prepare-thesis-laboratory.js` ndali run 8 me repository-n e aplikacionit dhe ndryshoi kapacitetin 24 → 25; `server/scripts/seed-thesis-sensors.js` dhe `server/seeds/thesis-test-sensors.js` shtuan katër sensorë të veçantë me pragjet e tezës | Run 9–14 u ekzekutuan dhe u ruajtën. **Nuk** pati tentativë të gjashtë skenarëve me konfigurimin e vjetër, prandaj nuk pretendohet “dështim i parë i pragjeve”. |
 | Temperatura 29 °C — skripti | `JSON.parse` mbi objekt JSON; procesi u ndërpre pasi DB kishte ruajtur rezultatin | `server/scripts/run-thesis-scenarios.js` u ndryshua për të pranuar objekt ose tekst JSON; run 10 u ndal përmes `server/scripts/stop-thesis-run.js`; procesi vazhdoi nga skenari 3 | Evidenca e run 10 u verifikua: 29 °C, Warning, alarm 4, dy njoftime. Run 11–14 përfunduan. Nuk u përsërit artificialisht tentativa e temperaturës. |
-| Faqja “Alarmet” | Placeholder pa kërkesë API | `client/src/App.jsx` tani përdor `AlertsPage`; `client/src/pages/AlertsPage.jsx` dhe `.css` lexojnë `/api/alerts`, ofrojnë filtra dhe detaje; `AlertsPage.test.jsx` kaloi | Implementimi dhe build-i kaluan. **Nuk ka screenshot ose provë live të autentikuar pas ndryshimit**, ndaj rregullimi vizual mbetet për t'u konfirmuar nga përdoruesi. |
-| Fuqia 7 kW — alarmi aktual | Run 15 e mbishkroi nivelin/përshkrimin e ID 7 përmes deduplikimit | Nuk u ndryshua logjika e deduplikimit dhe nuk u ndal run 15 | **I pazgjidhur për screenshot-in aktual**. Ngjarja e run 13 dhe njoftimet kritike ruajnë rezultatin fillestar, por rreshti aktual i alarmit është Warning. |
+| Faqja “Alarmet” | Placeholder pa kërkesë API | `client/src/App.jsx` përdor `AlertsPage`; faqja lexon `/api/alerts`, ofron filtra/detaje dhe tani paraqet edhe gjashtë skenarët historikë nga endpoint-i `/api/alerts/executed-scenarios`. Testi i komponentit, shtatë testet përkatëse të API-së dhe build-i kaluan. | Kodi dhe query-ja reale e DB-së u verifikuan për run 9–14. **Nuk ka screenshot ose provë live të autentikuar pas ndryshimit**, ndaj rregullimi vizual mbetet për t'u konfirmuar. |
+| Fuqia 7 kW — alarmi aktual | Run 15 e mbishkroi nivelin/përshkrimin e ID 7 përmes deduplikimit | Run 15 u ndal më vonë; logjika e deduplikimit nuk u ndryshua. Seksioni historik i faqes “Alarmet” lexon ngjarjen `alert_generated` të run 13 dhe paraqet veçmas nivelin `Critical` atëherë dhe `Warning` aktualisht. | Historia e provës është e lexueshme në kod/query, por **screenshot-i i alarmit aktual nuk provon 7 kW Critical** dhe UI e autentikuar nuk është verifikuar ende vizualisht. |
 
 ## Përgjigjet e kërkuara për Kapitullin 6
 
@@ -36,7 +36,7 @@ Pragjet e sensorëve ekzistues të `LAB-AUT-01` ishin të ndryshme nga konfiguri
 
 **C. Të rregulluara:** kapaciteti/run aktiv/pragjet e testit; gabimi JSON i skriptit; implementimi i faqes “Alarmet” (test unit + build, jo konfirmim live).
 
-**D. Të pazgjidhura:** ID 7 nuk paraqet më 7 kW Critical në alarmet aktuale; screenshot-i end-to-end pas rregullimit të UI nuk është kapur. Gjeneratori gradual, publikimi Socket.IO dhe worker-i i veçantë i energjisë nuk u testuan në këtë seri. `fault` nuk krijon automatikisht alarm, por kjo **nuk është dështim** kundrejt pritshmërisë së këtij skenari, e cila kërkonte vetëm gjendje problematike.
+**D. Të pazgjidhura:** ID 7 nuk paraqet më 7 kW Critical në alarmet *aktuale*; seksioni i ri historik e dallon këtë nga niveli në momentin e run 13. Screenshot-et dhe ri-ekzekutimi end-to-end pas rregullimit të UI nuk janë kryer. Gjeneratori gradual, publikimi Socket.IO dhe worker-i i veçantë i energjisë nuk u testuan në këtë seri. `fault` nuk krijon automatikisht alarm, por kjo **nuk është dështim** kundrejt pritshmërisë së këtij skenari, e cila kërkonte vetëm gjendje problematike.
 
 **E. Rezultati final i gjashtë skenarëve në momentin e ekzekutimit:** normal (run 9, pa alarm), 29 °C (run 10, Warning), 70% (run 11, Warning), 30 persona (run 12, Critical), 7 kW (run 13, Critical nga sensori i fuqisë), `fault` (run 14, status problematik pa alarm të ri). Këto janë **6/6 rezultate backend/DB në momentin e testit**, jo 6/6 teste end-to-end të verifikuara vizualisht. Verifikuesi që lexon *gjendjen aktuale* kthen 5/6, sepse severity e ID 7 u ndryshua më vonë.
 
@@ -48,4 +48,5 @@ Pragjet e sensorëve ekzistues të `LAB-AUT-01` ishin të ndryshme nga konfiguri
 - Ngjarje `alert_generated`: run 10 → alarm 4 Warning; run 11 → 5 Warning; run 12 → 6 Critical; run 13 → 7 Critical. Auditi read-only: `server/scripts/audit-thesis-history.js`.
 - Njoftimet e alarmit 7: ID 1069 dhe 1070, tip `alert_critical`; gjendja aktuale e alarmit 7: Warning, 498.7095 W, përditësuar nga run 15.
 - Faqja e vjetër placeholder u dokumentua në screenshot-in e përdoruesit në bisedë; skedari i screenshot-it nuk është ruajtur në repo. Ndryshimi i faqes dhe testi: `client/src/App.jsx`, `client/src/pages/AlertsPage.jsx`, `client/src/pages/AlertsPage.test.jsx`.
+- Seksioni historik i ri: `server/src/modules/alerts/repository.js`, `service.js`, `router.js` dhe `server/test/alerts-api.test.js`. Query-ja lexoi nga DB run 9–14, leximet përkatëse dhe nivelin `alert_generated` në momentin e ekzekutimit; testi i komponentit dhe shtatë testet e API-së kaluan. Kjo është evidencë kodi/API, jo screenshot UI.
 - Deduplikimi që përditëson rreshtin aktiv: `server/src/modules/simulator/repository.js` (`ON DUPLICATE KEY UPDATE`). Motori i pragjeve: `server/src/modules/alerts/rule-engine.js`.
