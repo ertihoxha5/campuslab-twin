@@ -1,5 +1,7 @@
 # CampusLab Twin — rezultatet e Kapitullit 6
 
+Për tentativat e dështuara, rezultatet e pjesshme, rregullimet dhe problemet e mbetura, shih [failed-and-partial-attempts.md](./failed-and-partial-attempts.md). Tabela më poshtë paraqet rezultatet e run 9–14 në momentin e testit; ajo **nuk** zëvendëson historikun e dështimeve.
+
 Data e provës: 11 tetor 2026. Mjedisi: databaza lokale MySQL, universiteti UBT (ID 6), `LAB-AUT-01` / Laboratori i Automatizimit (ID 5). Simulimi i mëparshëm ID 8 u ndal me mekanizmin e aplikacionit. Kapaciteti u ndryshua nga 24 në 25. Sensorët testues kanë ID 11 (temperaturë), 12 (lagështi), 13 (prani), 14 (fuqi). Pajisja testuese ka ID 13.
 
 Leximet fikse u futën në `createSimulatorRepository.persistStep`, pasi kandidatët e alarmit u llogaritën me **funksionin real** `evaluateSimulationReadings`. Për secilin rast u nis dhe u ndal një `simulation_run` real. Kjo provon rrjedhën e vlerësimit, ruajtjes, krijimit të alarmit dhe njoftimit, por **jo gjeneratorin gradual të vlerave** dhe **jo transmetimin Socket.IO**. Alarmet nuk u futën drejtpërdrejt në databazë. Nuk ka prova HTTP/UI apo screenshot-e të kryera; prandaj asnjë rresht nuk shënohet ende `PASSED` sipas kriterit të plotë të tezës.
