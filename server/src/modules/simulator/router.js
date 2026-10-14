@@ -10,10 +10,23 @@ const context = (request) => ({
   ipAddress: request.ip?.slice(0, 45) ?? null,
 });
 
-export function createSimulatorRouter({ service, authenticateTenant }) {
+export function createSimulatorRouter({ service, thesisFunctionalService, authenticateTenant }) {
   const router = Router();
   router.use(authenticateTenant);
   router.use(requirePermissions(permissions.SIMULATIONS_RUN));
+
+  if (thesisFunctionalService) {
+    router.get("/laboratories/:laboratoryId/thesis-functional", async (request, response) => {
+      const result = await thesisFunctionalService.latest(request.params.laboratoryId, context(request));
+      return success(response, { data: result });
+    });
+    router.post("/laboratories/:laboratoryId/thesis-functional/run",
+      requirePermissions(permissions.UNIVERSITY_PROFILE_MANAGE),
+      async (request, response) => {
+        const result = await thesisFunctionalService.execute(request.params.laboratoryId, context(request));
+        return success(response, { status: 201, data: result });
+      });
+  }
 
   router.get(
     "/laboratories/:laboratoryId/status",

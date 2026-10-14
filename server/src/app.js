@@ -53,6 +53,7 @@ export function createApp({
   equipmentAssetService,
   sensorService,
   simulatorService,
+  thesisFunctionalService,
   alertService,
   maintenanceService,
   maintenanceEvidenceService,
@@ -212,6 +213,7 @@ export function createApp({
       "/api/simulator",
       createSimulatorRouter({
         service: simulatorService,
+        thesisFunctionalService,
         authenticateTenant: tenantAuthentication,
       }),
     );

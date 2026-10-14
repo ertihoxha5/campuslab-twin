@@ -1,0 +1,23 @@
+.thesis-tests { border: 1px solid var(--border); border-radius: 22px; background: var(--surface); padding: clamp(18px, 3vw, 30px); display: grid; gap: 18px; }
+.thesis-tests-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.thesis-tests-header h2 { margin: 8px 0; font-size: clamp(1.35rem, 2vw, 1.8rem); }
+.thesis-tests-header p, .thesis-tests-note, .thesis-tests-empty { margin: 0; color: var(--muted); line-height: 1.55; }
+.thesis-tests-eyebrow { display: inline-flex; align-items: center; gap: 7px; color: #58427c; font-size: .8rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.thesis-tests-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; flex-shrink: 0; }
+.thesis-tests-note { font-size: .84rem; }
+.thesis-tests-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 16px 20px; border-radius: 16px; background: color-mix(in srgb, #6e7a4f 12%, var(--surface)); border: 1px solid color-mix(in srgb, #6e7a4f 30%, var(--border)); }
+.thesis-tests-summary div { display: grid; gap: 2px; }
+.thesis-tests-summary small { color: var(--muted); }
+.thesis-tests-summary strong { font-size: 1.4rem; }
+.thesis-tests-summary p { width: 100%; margin: 0; color: #4c653c; font-weight: 650; }
+.thesis-tests-scroll { overflow-x: auto; }
+.thesis-tests table { width: 100%; min-width: 840px; border-collapse: collapse; text-align: left; }
+.thesis-tests th, .thesis-tests td { padding: 13px 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: .88rem; }
+.thesis-tests thead th { color: var(--muted); font-size: .76rem; text-transform: uppercase; letter-spacing: .04em; }
+.thesis-tests tbody th { font-weight: 600; }
+.thesis-tests tbody th small, .thesis-tests td small { display: block; margin-top: 5px; color: var(--muted); font-weight: 400; }
+.thesis-tests-badge { display: inline-flex; border-radius: 999px; padding: 4px 9px; font-size: .75rem; font-weight: 800; }
+.thesis-tests-badge.pass { background: #e5f2e7; color: #276037; }
+.thesis-tests-badge.fail { background: #f9e4e5; color: #a52d36; }
+.thesis-tests-empty { border: 1px dashed var(--border); border-radius: 14px; padding: 20px; }
+@media (max-width: 780px) { .thesis-tests-header { flex-direction: column; } .thesis-tests-actions { width: 100%; } }

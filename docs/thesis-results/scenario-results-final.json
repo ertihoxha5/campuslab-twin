@@ -1,0 +1,140 @@
+{
+  "title": "CampusLab Twin — Testimi funksional",
+  "batchId": "e14ef4e8-7635-428c-8333-d2e6bf9deab3",
+  "laboratoryCode": "LAB-AUT-01",
+  "generatedAt": "2026-10-11T19:00:18.194Z",
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "allPassed": true
+  },
+  "results": [
+    {
+      "id": "7",
+      "batchId": "e14ef4e8-7635-428c-8333-d2e6bf9deab3",
+      "scenario": "normal",
+      "scenarioName": "Gjendja normale",
+      "input": {
+        "temperature": 23,
+        "humidity": 45,
+        "occupancy": 10,
+        "power": 2000,
+        "equipmentStatus": "active"
+      },
+      "expectedResult": "Pa alarm; pajisja aktive",
+      "actualResult": "Pa alarm; pajisja aktive",
+      "expectedLevel": "Normal",
+      "actualLevel": "Normal",
+      "status": "PASS",
+      "runId": "23",
+      "alertId": null,
+      "executedAt": "2026-10-11T19:00:17.827Z"
+    },
+    {
+      "id": "8",
+      "batchId": "e14ef4e8-7635-428c-8333-d2e6bf9deab3",
+      "scenario": "high_temperature",
+      "scenarioName": "Temperatura e lartë",
+      "input": {
+        "temperature": 29,
+        "humidity": 45,
+        "occupancy": 10,
+        "power": 2000,
+        "equipmentStatus": "active"
+      },
+      "expectedResult": "Alarm paralajmërues",
+      "actualResult": "Alarm paralajmërues",
+      "expectedLevel": "Warning",
+      "actualLevel": "Warning",
+      "status": "PASS",
+      "runId": "24",
+      "alertId": "4",
+      "executedAt": "2026-10-11T19:00:17.889Z"
+    },
+    {
+      "id": "9",
+      "batchId": "e14ef4e8-7635-428c-8333-d2e6bf9deab3",
+      "scenario": "high_humidity",
+      "scenarioName": "Lagështia e lartë",
+      "input": {
+        "temperature": 23,
+        "humidity": 70,
+        "occupancy": 10,
+        "power": 2000,
+        "equipmentStatus": "active"
+      },
+      "expectedResult": "Alarm paralajmërues",
+      "actualResult": "Alarm paralajmërues",
+      "expectedLevel": "Warning",
+      "actualLevel": "Warning",
+      "status": "PASS",
+      "runId": "25",
+      "alertId": "5",
+      "executedAt": "2026-10-11T19:00:18.007Z"
+    },
+    {
+      "id": "10",
+      "batchId": "e14ef4e8-7635-428c-8333-d2e6bf9deab3",
+      "scenario": "overcapacity",
+      "scenarioName": "Tejkalimi i pranisë",
+      "input": {
+        "temperature": 23,
+        "humidity": 45,
+        "occupancy": 30,
+        "power": 2000,
+        "equipmentStatus": "active"
+      },
+      "expectedResult": "Alarm kritik",
+      "actualResult": "Alarm kritik",
+      "expectedLevel": "Critical",
+      "actualLevel": "Critical",
+      "status": "PASS",
+      "runId": "26",
+      "alertId": "6",
+      "executedAt": "2026-10-11T19:00:18.057Z"
+    },
+    {
+      "id": "11",
+      "batchId": "e14ef4e8-7635-428c-8333-d2e6bf9deab3",
+      "scenario": "high_power",
+      "scenarioName": "Fuqia e lartë",
+      "input": {
+        "temperature": 23,
+        "humidity": 45,
+        "occupancy": 10,
+        "power": 7000,
+        "equipmentStatus": "active"
+      },
+      "expectedResult": "Alarm kritik",
+      "actualResult": "Alarm kritik",
+      "expectedLevel": "Critical",
+      "actualLevel": "Critical",
+      "status": "PASS",
+      "runId": "27",
+      "alertId": "7",
+      "executedAt": "2026-10-11T19:00:18.108Z"
+    },
+    {
+      "id": "12",
+      "batchId": "e14ef4e8-7635-428c-8333-d2e6bf9deab3",
+      "scenario": "equipment_fault",
+      "scenarioName": "Defekt në pajisje",
+      "input": {
+        "temperature": 23,
+        "humidity": 45,
+        "occupancy": 10,
+        "power": 2000,
+        "equipmentStatus": "fault"
+      },
+      "expectedResult": "Pajisja në gjendje fault",
+      "actualResult": "Pajisja në gjendje fault",
+      "expectedLevel": "Problem state only",
+      "actualLevel": "Problem state only",
+      "status": "PASS",
+      "runId": "28",
+      "alertId": null,
+      "executedAt": "2026-10-11T19:00:18.153Z"
+    }
+  ]
+}

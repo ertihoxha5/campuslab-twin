@@ -39,7 +39,7 @@ export const thesisTestSensors = Object.freeze([
     warningMin: 500,
     warningMax: 5000,
     criticalMin: null,
-    criticalMax: 6999.9999,
+    criticalMax: 6000,
   }),
 ]);
 

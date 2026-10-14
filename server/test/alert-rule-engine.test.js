@@ -4,6 +4,7 @@ import {
   evaluateSensorReading,
   evaluateSimulationReadings,
 } from "../src/modules/alerts/rule-engine.js";
+import { thesisTestSensors, thesisTestCases } from "../seeds/thesis-test-sensors.js";
 
 const sensor = {
   id: "4",
@@ -43,4 +44,17 @@ test("simulation evaluation matches readings to their tenant-loaded sensors", ()
 
   assert.equal(alerts.length, 1);
   assert.equal(alerts[0].sensorId, "4");
+});
+
+test("thesis power sensor uses strict 5 kW warning and 6 kW critical boundaries", () => {
+  const power = thesisTestSensors.find((item) => item.code === "CLT-THESIS-POWER");
+  assert.equal(power.warningMax, 5000);
+  assert.equal(power.criticalMax, 6000);
+  assert.equal(evaluateSensorReading(power, { value: 5000 }), null);
+  assert.equal(evaluateSensorReading(power, { value: 5000.0001 }).severity, "warning");
+  assert.equal(evaluateSensorReading(power, { value: 6000 }).severity, "warning");
+  assert.equal(evaluateSensorReading(power, { value: 6000.0001 }).severity, "critical");
+  const scenario = thesisTestCases.find((item) => item.key === "high_power");
+  assert.equal(scenario.values.power, 7000);
+  assert.equal(evaluateSensorReading(power, { value: scenario.values.power }).severity, "critical");
 });

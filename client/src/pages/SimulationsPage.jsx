@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button.jsx";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton.jsx";
 import { PageHeader } from "@/components/ui/PageHeader.jsx";
 import { StatusBadge } from "@/components/ui/StatusBadge.jsx";
+import { ThesisFunctionalTests } from "@/components/ThesisFunctionalTests.jsx";
 
 const scenarioLabels = {
   temperature_rise: "Rritje e temperaturës",
@@ -97,7 +98,7 @@ export function SimulationsPage() {
       .then((response) => {
         const items = response.data.laboratories ?? [];
         setLaboratories(items);
-        setLaboratoryId(String(items[0]?.id ?? ""));
+        setLaboratoryId(String(items.find((item) => item.code === "LAB-AUT-01")?.id ?? items[0]?.id ?? ""));
       })
       .catch((error) => setMessage({ type: "error", text: error.message }))
       .finally(() => setLoading(false));
@@ -241,6 +242,8 @@ export function SimulationsPage() {
           {message.text}
         </p>
       )}
+      {laboratories.find((item) => String(item.id) === laboratoryId)?.code === "LAB-AUT-01" &&
+        <ThesisFunctionalTests laboratoryId={laboratoryId} onFinished={loadWorkspace} />}
       {loading && !scenarios.length ? (
         <LoadingSkeleton rows={8} aria-label="Po ngarkohet hapësira e simulimit" />
       ) : !laboratoryId ? (

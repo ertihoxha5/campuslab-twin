@@ -69,6 +69,9 @@ erDiagram
   LABORATORIES ||--o{ SIMULATION_SCENARIOS : definon
   SIMULATION_SCENARIOS o|--o{ SIMULATION_RUNS : ekzekutohet
   SIMULATION_RUNS ||--o{ SIMULATION_RUN_EVENTS : timeline
+  LABORATORIES ||--o{ THESIS_FUNCTIONAL_RESULTS : validon
+  SIMULATION_RUNS o|--o{ THESIS_FUNCTIONAL_RESULTS : burimi_i_testit
+  ALERTS o|--o{ THESIS_FUNCTIONAL_RESULTS : alarmi_i_testit
   LABORATORIES ||--o{ REPORTS : raporton
   USERS ||--o{ REPORTS : gjeneron
   ALERTS o|--o{ NOTIFICATIONS : njofton
@@ -127,6 +130,7 @@ mesataren, numrin e mostrave, intervalin dhe burimin.
 - `simulation_scenarios`
 - `simulation_runs`
 - `simulation_run_events`
+- `thesis_functional_results`
 - `reports`
 - `notifications`
 - `activity_logs`

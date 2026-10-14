@@ -48,6 +48,7 @@ import { createSensorService } from "./modules/sensors/service.js";
 import { createSimulatorRepository } from "./modules/simulator/repository.js";
 import { createSimulatorService } from "./modules/simulator/service.js";
 import { createSimulationCoordinator } from "./modules/simulator/coordinator.js";
+import { createThesisFunctionalService } from "./modules/simulator/thesis-functional-service.js";
 import { createReadingHistoryRepository } from "./modules/simulator/history-repository.js";
 import { createReadingHistoryMaintenance } from "./modules/simulator/history-maintenance.js";
 import { createRealtimePublisher } from "./realtime/publisher.js";
@@ -169,6 +170,11 @@ const simulatorService = createSimulatorService({
   repository: simulatorRepository,
   coordinator: simulatorCoordinator,
 });
+const thesisFunctionalService = createThesisFunctionalService({
+  pool: databasePool,
+  simulatorRepository,
+  realtimePublisher,
+});
 const readingHistoryMaintenance = createReadingHistoryMaintenance({
   repository: createReadingHistoryRepository(databasePool),
   retentionDays: config.READING_RAW_RETENTION_DAYS,
@@ -255,6 +261,7 @@ const app = createApp({
   equipmentAssetService,
   sensorService,
   simulatorService,
+  thesisFunctionalService,
   alertService,
   digitalTwinService,
   maintenanceService,
